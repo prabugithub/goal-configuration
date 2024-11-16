@@ -2,18 +2,14 @@
 
 import React, { useState } from 'react';
 import { Checkbox, FormControlLabel, Typography, Button, Alert, List, ListItem } from '@mui/material';
+import { useGoalConfig } from '../../context/GoalConfigContext';
 
-const GoalHierarchySelection = () => {
+const GoalHierarchySelection = ({onNext}) => {
     // Fixed Yearly level
     const yearly = true;
 
     // State for tracking selected breakdown levels
-    const [levels, setLevels] = useState({
-        quarterly: false,
-        monthly: false,
-        weekly: false,
-        daily: false
-    });
+    const {levels, setLevels} = useGoalConfig();
 
     // State for validation message
     const [validationMessage, setValidationMessage] = useState('');
@@ -25,6 +21,8 @@ const GoalHierarchySelection = () => {
             [level]: !prevLevels[level]
         }));
         setValidationMessage('');
+        console.log('Selected breakdown levels:', levels);
+       
     };
 
     // Handle form submission or "Next" button click
@@ -37,13 +35,14 @@ const GoalHierarchySelection = () => {
             setValidationMessage('');
             // Proceed to next step, save configuration, etc.
             console.log('Selected breakdown levels:', levels);
+            onNext();
         }
     };
     return (
         <div>
-            <Typography variant="h5">Breakdown Configuration</Typography>
+            <Typography variant="h5">Goal Breakdown settings</Typography>
 
-            <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
+            <List sx={{ width: '100%', alignItems: "center", maxWidth: 360, bgcolor: 'background.paper' }}>
                 <ListItem>
                     {/* Fixed Yearly Goal */}
                     <div style={{ marginBottom: '1rem' }}>
@@ -54,9 +53,9 @@ const GoalHierarchySelection = () => {
                     </div>
                 </ListItem>
                 {Object.keys(levels).map((level) => (
-                    <ListItem
+                    <ListItem key={level}
                     >
-                        <div key={level} style={{ marginBottom: '1rem' }}>
+                        <div  style={{ marginBottom: '1rem' }}>
                             <FormControlLabel
                                 control={
                                     <Checkbox
