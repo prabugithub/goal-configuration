@@ -1,15 +1,19 @@
 // src/components/GoalHierarchySelection/GoalHierarchySelection.js
 
 import React, { useState } from 'react';
-import { Checkbox, FormControlLabel, Typography, Button, Alert, List, ListItem } from '@mui/material';
+import { Checkbox, FormControlLabel, Typography, Button, Alert, List, ListItem, Box } from '@mui/material';
 import { useGoalConfig } from '../../context/GoalConfigContext';
+import { useStep } from '../../context/StepContext';
 
-const GoalHierarchySelection = ({onNext}) => {
+const GoalHierarchySelection = ({ onNext }) => {
     // Fixed Yearly level
     const yearly = true;
 
     // State for tracking selected breakdown levels
-    const {levels, setLevels} = useGoalConfig();
+    const { levels, setLevels } = useGoalConfig();
+
+    // hook for next step
+    const { goNext } = useStep(); // Get navigation methods
 
     // State for validation message
     const [validationMessage, setValidationMessage] = useState('');
@@ -22,7 +26,7 @@ const GoalHierarchySelection = ({onNext}) => {
         }));
         setValidationMessage('');
         console.log('Selected breakdown levels:', levels);
-       
+
     };
 
     // Handle form submission or "Next" button click
@@ -35,7 +39,7 @@ const GoalHierarchySelection = ({onNext}) => {
             setValidationMessage('');
             // Proceed to next step, save configuration, etc.
             console.log('Selected breakdown levels:', levels);
-            onNext();
+            goNext();
         }
     };
     return (
@@ -55,7 +59,7 @@ const GoalHierarchySelection = ({onNext}) => {
                 {Object.keys(levels).map((level) => (
                     <ListItem key={level}
                     >
-                        <div  style={{ marginBottom: '1rem' }}>
+                        <div style={{ marginBottom: '1rem' }}>
                             <FormControlLabel
                                 control={
                                     <Checkbox
@@ -78,10 +82,18 @@ const GoalHierarchySelection = ({onNext}) => {
             {/* Validation Message */}
             {validationMessage && <Alert severity="warning">{validationMessage}</Alert>}
 
-            {/* Submit Button */}
-            <Button variant="contained" color="primary" onClick={handleSubmit} style={{ marginTop: '1rem' }}>
-                Save & Next
-            </Button>
+            <Box sx={{ display: 'flex', justifyContent: 'space-evenly', mt: 2 }}>
+                {/* Back Button (disabled since it's the first step) */}
+                <Button variant="contained" color="secondary" disabled>
+                    Back
+                </Button>
+
+                {/* Submit Button */}
+                <Button variant="contained" color="primary" onClick={handleSubmit}>
+                    Save & Next
+                </Button>
+            </Box>
+
         </div>
     );
 };

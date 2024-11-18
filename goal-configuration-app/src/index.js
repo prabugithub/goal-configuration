@@ -7,15 +7,17 @@ import reportWebVitals from './reportWebVitals';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './theme';
 import { GoalConfigProvider } from './context/GoalConfigContext';
+import { StepProvider } from './context/StepContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
-      <GoalConfigProvider>
-        <App />
-      </GoalConfigProvider>
-
+      <StepProvider>
+        <GoalConfigProvider>
+          <App />
+        </GoalConfigProvider>
+      </StepProvider>
     </ThemeProvider>,
   </React.StrictMode>
 );
