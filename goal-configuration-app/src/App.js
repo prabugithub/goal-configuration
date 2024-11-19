@@ -5,6 +5,7 @@ import GoalHierarchySelection from './components/GoalHierarchySelection/GoalHier
 import { Container, CssBaseline } from '@mui/material';
 import NextStep from './components/NextStep/NextStep';
 import { useStep } from './context/StepContext';
+import ConfigureFields from './components/ConfigureFields/ConfigureFields';
 
 function App() {
   // const [currentStep, setCurrentStep] = useState(1);
@@ -18,7 +19,8 @@ function App() {
   // Array of step components
   const steps = [
     <GoalHierarchySelection key="step1" />,
-    <NextStep key="step2" />,
+    <ConfigureFields key="step2"/>,
+    <NextStep key="step3" />,
   ];
 
   return (
