@@ -8,6 +8,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import theme from './theme';
 import { GoalConfigProvider } from './context/GoalConfigContext';
 import { StepProvider } from './context/StepContext';
+import { FieldConfigProvider } from './context/FildConfigContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -15,7 +16,9 @@ root.render(
     <ThemeProvider theme={theme}>
       <StepProvider>
         <GoalConfigProvider>
-          <App />
+          <FieldConfigProvider>
+            <App />
+          </FieldConfigProvider>
         </GoalConfigProvider>
       </StepProvider>
     </ThemeProvider>,

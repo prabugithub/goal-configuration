@@ -16,105 +16,18 @@ import {
 import { Add, Delete } from '@mui/icons-material';
 import { useGoalConfig } from '../../context/GoalConfigContext';
 import { useStep } from '../../context/StepContext';
+import { useFieldConfig } from '../../context/FildConfigContext';
 
 const ConfigureFields = () => {
-  const { levels } = useGoalConfig(); // Get hierarchy configuration from context
+
+  // State for tracking selected breakdown levels
+  const { config, toggleSection, updateField, updateFieldOptions, addSection, addField  } = useGoalConfig();
   const { goNext, goBack } = useStep();
-
-  // Default sections for each level
-  const defaultSections = {
-    evaluation: ['Happy', 'Stop', 'Start', 'Action'],
-    planning: ['To-dos', 'One Thing'],
-    taskSplitUp: {
-      yearly: ['Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'],
-      quarterly: ['Month 1', 'Month 2', 'Month 3'],
-      monthly: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-      weekly: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    },
-    dailyRituals: ['Meditation', 'Reading', 'Exercise'],
-    dailyEvaluation: [
-      'What went well in the past 24 hours?',
-      'What is the one thing I can do best tomorrow?',
-      'What is one thing I can improve?',
-    ],
-  };
-
-  // State for managing sections (default and custom)
-  const [sections, setSections] = useState(
-    Object.keys(levels).reduce((acc, level) => {
-      acc[level] = { ...defaultSections, customSections: [] }; // Add customSections array
-      return acc;
-    }, {})
-  );
-
-  // State for managing fields in sections (default and custom)
-  const [customFields, setCustomFields] = useState(
-    Object.keys(levels).reduce((acc, level) => {
-      acc[level] = { customSections: {} }; // Initialize customSections separately
-      return acc;
-    }, {})
-  );
-
-  // Temporary state for adding a new custom field
-  const [newField, setNewField] = useState({
-    level: null,
-    section: null,
-    label: '',
-    type: 'text',
-    options: [],
-  });
-
-  // Start adding a new custom field
-  const startAddingField = (level, section) => {
-    setNewField({ level, section, label: '', type: 'text', options: [] });
-  };
-
-  // Save the new custom field
-  const saveField = () => {
-    const { level, section, label, type, options } = newField;
-    if (label.trim() === '') {
-      alert('Field label cannot be empty.');
-      return;
-    }
-
-    setCustomFields((prev) => ({
-      ...prev,
-      [level]: {
-        ...prev[level],
-        [section]: [
-          ...(prev[level][section] || []),
-          { label, type, options },
-        ],
-      },
-    }));
-
-    // Reset the newField state
-    setNewField({ level: null, section: null, label: '', type: 'text', options: [] });
-  };
-
-  // Add option to the new custom field
-  const addOption = () => {
-    const option = prompt('Enter option value:');
-    if (option) {
-      setNewField((prev) => ({
-        ...prev,
-        options: [...prev.options, option],
-      }));
-    }
-  };
-
-  // Delete an option from the new custom field
-  const deleteOption = (index) => {
-    setNewField((prev) => ({
-      ...prev,
-      options: prev.options.filter((_, i) => i !== index),
-    }));
-  };
 
   // Handle form submission
   const handleSubmit = () => {
-    console.log('Sections:', sections);
-    console.log('Custom Fields:', customFields);
+    console.log('Sections:', config.sections);
+  
     goNext();
   };
 
@@ -125,152 +38,120 @@ const ConfigureFields = () => {
       </Typography>
 
       {/* Loop through each level */}
-      {Object.keys(levels)
-        .filter((level) => levels[level]) // Only display selected levels
+      {Object.keys(config.levels)
+        .filter((level) => config.levels[level]) // Only display selected levels
         .map((level) => (
           <Paper key={level} elevation={3} sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6">{`${level.charAt(0).toUpperCase() + level.slice(1)} Level`}</Typography>
 
             {/* Loop through default sections */}
-            {Object.keys(defaultSections).map((section) => (
-              <Box key={section} sx={{ mt: 2 }}>
+            {(config.sections[level]).map((section) => (
+              <Box key={section.name} sx={{ mt: 2 }}>
                 <FormControlLabel
                   control={
                     <Checkbox
-                      checked={sections[level][section]}
+                      checked={section?.enabled}
                       onChange={() =>
-                        setSections((prev) => ({
-                          ...prev,
-                          [level]: {
-                            ...prev[level],
-                            [section]: !prev[level][section],
-                          },
-                        }))
+                        toggleSection(level, section.name)
                       }
                     />
                   }
-                  label={section.charAt(0).toUpperCase() + section.slice(1)}
+                  label={section?.label || section?.name.charAt(0).toUpperCase() + section?.name.slice(1)}
                 />
-                {sections[level][section] && (
+                {section && (
                   <>
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      Fields:
+                    </Typography>
                     <List>
-                      {customFields[level][section]?.map((field, index) => (
-                        <ListItem key={index}>
-                          {field.label} ({field.type})
-                        </ListItem>
-                      ))}
-                      <ListItem>
-                        {newField.level === level &&
-                        newField.section === section ? (
-                          <Box>
+                      {section?.fields?.map((field, index) => (
+                        <ListItem key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                          <Box sx={{ display: 'flex', gap: 2 }}>
                             <TextField
                               label="Field Label"
                               size="small"
-                              value={newField.label}
+                              value={field.label}
                               onChange={(e) =>
-                                setNewField((prev) => ({
-                                  ...prev,
-                                  label: e.target.value,
-                                }))
+                                updateField(level, section.name, index, 'label', e.target.value)
                               }
-                              sx={{ mr: 1 }}
+                              sx={{ flex: 1 }}
                             />
                             <Select
-                              value={newField.type}
+                              value={field.type}
                               onChange={(e) =>
-                                setNewField((prev) => ({
-                                  ...prev,
-                                  type: e.target.value,
-                                }))
+                                updateField(level, section.name, index, 'type', e.target.value)
                               }
                               size="small"
-                              sx={{ mr: 1 }}
+                              sx={{ flex: 1 }}
                             >
                               <MenuItem value="text">Text</MenuItem>
                               <MenuItem value="checkbox">Checkbox</MenuItem>
                               <MenuItem value="radio">Radio</MenuItem>
                               <MenuItem value="dropdown">Dropdown</MenuItem>
                             </Select>
-                            {['checkbox', 'radio', 'dropdown'].includes(
-                              newField.type
-                            ) && (
-                              <Box sx={{ mt: 1 }}>
-                                <Typography variant="body2">
-                                  Options:
-                                </Typography>
-                                {newField.options.map((opt, i) => (
-                                  <Box
-                                    key={i}
-                                    sx={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                    }}
-                                  >
-                                    <Typography
-                                      variant="body2"
-                                      sx={{ mr: 1 }}
-                                    >
-                                      {opt}
-                                    </Typography>
+                          </Box>
+                          {/* Render options for checkbox, radio, dropdown */}
+                          {['checkbox', 'radio', 'dropdown'].includes(field.type) && (
+                            <Box>
+                              <Typography variant="body2">Options:</Typography>
+                              <List>
+                                {field.options?.map((opt, i) => (
+                                  <ListItem key={i} sx={{ display: 'flex', gap: 2 }}>
+                                    <TextField
+                                      value={opt}
+                                      size="small"
+                                      onChange={(e) => {
+                                        const newOptions = [...field.options];
+                                        newOptions[i] = e.target.value;
+                                        updateFieldOptions(level, section.name, index, newOptions);
+                                      }}
+                                    />
                                     <IconButton
                                       size="small"
-                                      onClick={() => deleteOption(i)}
+                                      onClick={() => {
+                                        const newOptions = field.options.filter((_, idx) => idx !== i);
+                                        updateFieldOptions(level, section.name, index, newOptions);
+                                      }}
                                     >
                                       <Delete fontSize="small" />
                                     </IconButton>
-                                  </Box>
+                                  </ListItem>
                                 ))}
                                 <Button
                                   size="small"
-                                  variant="outlined"
-                                  onClick={addOption}
-                                  sx={{ mt: 1 }}
+                                  onClick={() =>
+                                    updateFieldOptions(level, section.name, index, [
+                                      ...(field.options || []),
+                                      '',
+                                    ])
+                                  }
                                 >
                                   Add Option
                                 </Button>
-                              </Box>
-                            )}
-                            <Box sx={{ mt: 2 }}>
-                              <Button
-                                size="small"
-                                variant="contained"
-                                onClick={saveField}
-                                sx={{ mr: 1 }}
-                              >
-                                Save
-                              </Button>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                onClick={() =>
-                                  setNewField({
-                                    level: null,
-                                    section: null,
-                                    label: '',
-                                    type: 'text',
-                                    options: [],
-                                  })
-                                }
-                              >
-                                Cancel
-                              </Button>
+                              </List>
                             </Box>
-                          </Box>
-                        ) : (
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={() => startAddingField(level, section)}
-                          >
-                            Add Custom Field
-                          </Button>
-                        )}
+                          )}
+                        </ListItem>
+                      ))}
+                      <ListItem>
+                        <Button
+                          variant="outlined"
+                          onClick={() => addField(level, section.name, { label: ' ', type: 'text', options: [] })}
+                        >
+                          Add More
+                        </Button>
                       </ListItem>
                     </List>
                   </>
                 )}
               </Box>
             ))}
+              <Button
+                variant="outlined"
+                onClick={() => addSection(level, `custom${config.sections[level].length + 1}`,prompt("Enter section name"))}
+              >
+              Add Section
+            </Button>
           </Paper>
         ))}
 
