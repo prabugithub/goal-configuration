@@ -113,6 +113,7 @@ const initialConfigState = {
             {
                 name: 'evaluations',
                 label: 'Evaluation',
+                enabled: true,
                 fields: [
                     { label: 'What went well in the past 24 hours?', type: 'text' },
                     { label: 'What is the one thing I can do best tomorrow?', type: 'text' },
@@ -127,16 +128,6 @@ const initialConfigState = {
                     { label: 'Meditation', type: 'checkbox', options: ['Yes', 'No'] },
                     { label: 'Reading', type: 'checkbox', options: ['Yes', 'No'] },
                     { label: 'Exercise', type: 'checkbox', options: ['Yes', 'No'] },
-                ]
-            },
-            {
-                name: 'evaluations',
-                label: 'Evaluation',
-                enabled: true,
-                fields: [
-                    { label: 'What went well in the past 24 hours?', type: 'text' },
-                    { label: 'What is the one thing I can do best tomorrow?', type: 'text' },
-                    { label: 'What is one thing I can improve?', type: 'text' },
                 ]
             },
             {

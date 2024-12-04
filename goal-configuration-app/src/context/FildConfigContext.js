@@ -64,6 +64,6 @@ export const FieldConfigProvider = ({ children }) => {
     });
 
     return (
-        <FieldConfigContext.Provider value={{ fieldsSettings, setFields }}>{children}</FieldConfigContext.Provider>
+        <FieldConfigContext.Provider value={{ fieldsSettings, setFields }} key='FieldConfigProvider'>{children}</FieldConfigContext.Provider>
     )
 }

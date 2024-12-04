@@ -13,11 +13,11 @@ import { FieldConfigProvider } from './context/FildConfigContext';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <ThemeProvider theme={theme}>
-      <StepProvider>
-        <GoalConfigProvider>
-          <FieldConfigProvider>
-            <App />
+    <ThemeProvider theme={theme} key='theme_provider'>
+      <StepProvider key='step_provider'>
+        <GoalConfigProvider key='goal_provider'>
+          <FieldConfigProvider key='field_provider'>
+            <App key='app_tag'/>
           </FieldConfigProvider>
         </GoalConfigProvider>
       </StepProvider>
