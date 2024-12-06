@@ -7,6 +7,9 @@ import {
     Checkbox,
     RadioGroup,
     Radio,
+    FormLabel,
+    FormControl,
+    FormGroup,
     FormControlLabel,
     List,
     ListItem,
@@ -84,14 +87,14 @@ const NextStep = () => {
                     .filter((level) => config.levels[level]) // Only display selected levels
                     .map((level, ind) => (
                         <CustomTabPanel value={value} index={ind} key={'custom_panel_' + ind}>
-                            <Paper key={level} elevation={3} sx={{ p: 3, mb: 3 }}>
+                            {/* <Paper key={level} elevation={3} sx={{ p: 3, mb: 3 }}> */}
 
-                                <Typography variant="h6" key={level + '_tg_' + ind}>{`${level.charAt(0).toUpperCase() + level.slice(1)} Level`}</Typography>
+                            <Typography variant="h6" key={level + '_tg_' + ind}>{`${level.charAt(0).toUpperCase() + level.slice(1)} Level`}</Typography>
 
-                                {/* Loop through default sections */}
-                                {(config.sections[level]).map((section) => (
-                                    <Box key={section.name} sx={{ mt: 2 }}>
-                                        {/* <FormControlLabel
+                            {/* Loop through default sections */}
+                            {(config.sections[level]).map((section) => (
+                                <Box key={section.name} sx={{ mt: 2 }}>
+                                    {/* <FormControlLabel
                                             control={
                                                 <Checkbox
                                                     checked={section?.enabled}
@@ -102,55 +105,69 @@ const NextStep = () => {
                                             }
                                             label={section?.label || section?.name.charAt(0).toUpperCase() + section?.name.slice(1)}
                                         /> */}
-                                        <Typography variant="h7">{`${section?.label || section?.name.charAt(0).toUpperCase() + section?.name.slice(1)} `}</Typography>
-                                        {section && (
-                                            <>
-                                                <List>
-                                                    {section?.fields?.map((field, index) => (
-                                                        <ListItem key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                            <Box sx={{ display: 'flex', gap: 2 }}>
-                                                                {field.type === 'text' && <TextField
-                                                                    label={field.label}
-                                                                    size="small"
-                                                                    sx={{ flex: 1 }}
-                                                                />}
-                                                               
-                                                                <Box key={section + field.type + index}>
-                                                                    <Typography variant="h8">{field.label}</Typography>
-                                                                    {field.type === 'checkbox' &&
-                                                                        field.options.map((option, index) => (
-                                                                            <FormControlLabel value={option} key={index} control={<Checkbox />} label={option} />
-                                                                        ))
-                                                                    }
-                                                                    {field.type === 'radio' && <RadioGroup row>
-                                                                        {field.options.map(option => (<FormControlLabel value={option} control={<Radio />} label={option} />)
-                                                                        )}
-                                                                    </RadioGroup>}
-                                                                    {field.type === 'dropdown' &&
-                                                                        <Select
-                                                                            value={field.options[0]}
-                                                                            size="small"
-                                                                            sx={{ flex: 1 }}
-                                                                        > {field.options.map(option => (
-                                                                            <MenuItem value={option}>{option}</MenuItem>
-                                                                        ))}
-                                                                        </Select>
-                                                                    }
-                                                                </Box>
+                                    <Typography variant="h7" sx={{ fontStyle: 'italic', fontWeight: 'bold' }}>{`${section?.label || section?.name.charAt(0).toUpperCase() + section?.name.slice(1)} `}</Typography>
+                                    {section && (
+                                        <>
+                                            <List>
+                                                {section?.fields?.map((field, index) => (
+                                                    <ListItem key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                        <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
+                                                            {field.type === 'text' && <TextField
+                                                                label={field.label}
+                                                                size="small"
+                                                                variant="standard"
+                                                                sx={{ flex: 1 }}
+                                                            />}
+                                                        </Box>
+                                                        {['dropdown', 'checkbox', 'radio'].includes(field.type) &&
+                                                            <Box key={section + field.type + index} sx={{ display: 'flex', gap: 2, width: '100%' }}>
+                                                                <FormControl sx={{ display: 'flex', flexFlow: 'column', marginRight: 2 }} component="fieldset" variant="standard">
+                                                                    <FormLabel component="legend">{field.label}</FormLabel>
+                                                                    <FormGroup sx={{
+                                                                        display: 'grid',
+                                                                        gridTemplateColumns: 'repeat(3, 1fr)',
+                                                                        gap: 1, // Adjust spacing between items as needed
+                                                                        m: 0
+                                                                    }}>
+                                                                        {field.type === 'checkbox' &&
+                                                                            field.options.map((option, index) => (
+                                                                                <FormControlLabel value={option} key={index} control={<Checkbox />} label={option} />
+                                                                            ))
+                                                                        }
+
+                                                                        {field.type === 'radio' && <RadioGroup row>
+                                                                            {field.options.map(option => (<FormControlLabel value={option} control={<Radio />} label={option} />)
+                                                                            )}
+                                                                        </RadioGroup>}
+                                                                        {field.type === 'dropdown' &&
+                                                                            <Select
+                                                                                value={field.options[0]}
+                                                                                size="small"
+                                                                                sx={{ flex: 1 }}
+                                                                            > {field.options.map(option => (
+                                                                                <MenuItem value={option}>{option}</MenuItem>
+                                                                            ))}
+                                                                            </Select>
+                                                                        }
+                                                                    </FormGroup>
+                                                                </FormControl>
                                                             </Box>
-                                                            {/* <RadioGroup row>
+                                                        }
+
+
+                                                        {/* <RadioGroup row>
                                                                 <FormControlLabel value="apple" control={<Radio />} label="Apple" />
                                                                 <FormControlLabel value="banana" control={<Radio />} label="Banana" />
                                                                 <FormControlLabel value="cherry" control={<Radio />} label="Cherry" />
                                                             </RadioGroup> */}
-                                                        </ListItem>
-                                                    ))}
-                                                </List>
-                                            </>
-                                        )}
-                                    </Box>
-                                ))}
-                            </Paper>
+                                                    </ListItem>
+                                                ))}
+                                            </List>
+                                        </>
+                                    )}
+                                </Box>
+                            ))}
+                            {/* </Paper> */}
                         </CustomTabPanel>
 
                     ))}
