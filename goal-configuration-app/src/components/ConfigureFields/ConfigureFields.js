@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Typography,
   TextField,
@@ -26,10 +26,21 @@ const ConfigureFields = () => {
   const { config, toggleSection, updateField, updateFieldOptions, addSection, addField } = useGoalConfig();
   const { goNext, goBack } = useStep();
 
+  const inputRefs = useRef([]);
+
   const [value, setValue] = React.useState(0);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
+  };
+
+   const handleInputChange = (level, name, index, type, e) => {
+   // const updatedFields = [...formFields];
+  //  updatedFields[index].label = value;
+    //setFormFields(updatedFields);
+    updateField(level, name, index, type, e.target.value)
+
+    setTimeout(() => inputRefs.current[name+index]?.focus(), 0); // Restore focus
   };
 
   // Handle form submission
@@ -112,8 +123,8 @@ const ConfigureFields = () => {
                                   label="Field Label"
                                   size="small"
                                   value={field.label}
-                                  onChange={(e) =>
-                                    updateField(level, section.name, index, 'label', e.target.value)
+                                  inputRef={(el) => (inputRefs.current[section.name+index] = el)}
+                                  onChange={(e) => handleInputChange(level, section.name, index, 'label', e)
                                   }
                                   sx={{ flex: 1 }}
                                 />
