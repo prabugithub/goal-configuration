@@ -15,7 +15,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { Add, Delete } from '@mui/icons-material';
+//import { Add, Delete } from '@mui/icons-material';
 import { useGoalConfig } from '../../context/GoalConfigContext';
 import { useStep } from '../../context/StepContext';
 import { useFieldConfig } from '../../context/FildConfigContext';
@@ -165,7 +165,7 @@ const ConfigureFields = () => {
                                             updateFieldOptions(level, section.name, index, newOptions);
                                           }}
                                         >
-                                          <Delete fontSize="small" />
+                                          {/* <Delete fontSize="small" /> */}
                                         </IconButton>
                                       </ListItem>
                                     ))}

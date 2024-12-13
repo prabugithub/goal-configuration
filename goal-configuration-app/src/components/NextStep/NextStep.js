@@ -21,14 +21,19 @@ import {
     Tabs,
     Tab,
 } from '@mui/material';
-import { Add, Delete } from '@mui/icons-material';
+// import { Add, Delete } from '@mui/icons-material';
 import { useGoalConfig } from '../../context/GoalConfigContext';
 import { useStep } from '../../context/StepContext';
 import { useFieldConfig } from '../../context/FildConfigContext';
+import { saveUserConfig } from '../../api/services/firebaseServices';
+import { auth } from '../../api/firebase/firebas';
+import { useAuth } from '../../context/AuthContext';
 
 const NextStep = () => {
     const { config, toggleSection, updateField, updateFieldOptions, addSection, addField } = useGoalConfig();
     const { goNext, goBack } = useStep();
+
+    const {user} = useAuth();
 
     const [value, setValue] = React.useState(0);
 
@@ -40,7 +45,9 @@ const NextStep = () => {
     const handleSubmit = () => {
         console.log('Sections:', config.sections);
 
-        goNext();
+        saveUserConfig(config, user.uid);
+
+        // goNext();
     };
 
     function CustomTabPanel(props) {
@@ -180,8 +187,8 @@ const NextStep = () => {
                 </Button>
 
                 {/* Next Button (disabled for demonstration) */}
-                <Button variant="contained" color="primary" disabled>
-                    Next
+                <Button variant="contained" color="primary" onClick={handleSubmit}>
+                    Submit
                 </Button>
             </Box>
         </div>

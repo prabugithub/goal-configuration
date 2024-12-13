@@ -34,7 +34,7 @@ const GoalHierarchySelection = ({ onNext }) => {
         if (selectedLevels.length === 0) {
             setValidationMessage('Please select at least one breakdown level (Quarterly, Monthly, Weekly, or Daily).');
         } else {
-            setValidationMessage('');
+           // setValidationMessage('');
             // Proceed to next step, save configuration, etc.
             console.log('Selected breakdown levels:', config.levels);
             goNext();

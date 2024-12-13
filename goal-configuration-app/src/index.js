@@ -9,10 +9,12 @@ import theme from './theme';
 import { GoalConfigProvider } from './context/GoalConfigContext';
 import { StepProvider } from './context/StepContext';
 import { FieldConfigProvider } from './context/FildConfigContext';
+import { AuthProvider } from './context/AuthContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
+    <AuthProvider key="authenticate">
     <ThemeProvider theme={theme} key='theme_provider'>
       <StepProvider key='step_provider'>
         <GoalConfigProvider key='goal_provider'>
@@ -21,7 +23,8 @@ root.render(
           </FieldConfigProvider>
         </GoalConfigProvider>
       </StepProvider>
-    </ThemeProvider>,
+    </ThemeProvider>
+    </AuthProvider>
   </React.StrictMode>
 );
 

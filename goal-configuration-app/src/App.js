@@ -6,6 +6,11 @@ import { Container, CssBaseline } from '@mui/material';
 import NextStep from './components/NextStep/NextStep';
 import { useStep } from './context/StepContext';
 import ConfigureFields from './components/ConfigureFields/ConfigureFields';
+import Login from './components/Login/LoginPage';
+import Signup from './components/Login/SignUp';
+import { useEffect, useState } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './api/firebase/firebas';
 
 function App() {
   // const [currentStep, setCurrentStep] = useState(1);
@@ -15,6 +20,16 @@ function App() {
   // };
 
   const { currentStep } = useStep();
+
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Array of step components
   const steps = [
@@ -26,10 +41,14 @@ function App() {
   return (
     <div className="App">
       <CssBaseline />
-      <Container maxWidth="sm">
+      {user? <Container maxWidth="sm">
         <h1>Focus2Win!</h1>
         {steps[currentStep]}
-      </Container>
+      </Container>: <>
+      <Login key={'login'}/>
+      <Signup key="signup"/>
+      </>}
+      
     </div>
   );
 }
