@@ -1,13 +1,30 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import './global.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { ThemeProvider } from '@mui/material/styles';
+import theme from './theme';
+import { GoalConfigProvider } from './context/GoalConfigContext';
+import { StepProvider } from './context/StepContext';
+import { FieldConfigProvider } from './context/FildConfigContext';
+import { AuthProvider } from './context/AuthContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <AuthProvider key="authenticate">
+    <ThemeProvider theme={theme} key='theme_provider'>
+      <StepProvider key='step_provider'>
+        <GoalConfigProvider key='goal_provider'>
+          <FieldConfigProvider key='field_provider'>
+            <App key='app_tag'/>
+          </FieldConfigProvider>
+        </GoalConfigProvider>
+      </StepProvider>
+    </ThemeProvider>
+    </AuthProvider>
   </React.StrictMode>
 );
 

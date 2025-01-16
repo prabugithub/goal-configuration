@@ -1,0 +1,26 @@
+/* src/global.css */
+
+/* Mobile Styles */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    padding: 1rem;
+}
+
+/* Tablet and Up */
+@media (min-width: 600px) {
+    .container {
+        padding: 2rem;
+    }
+}
+
+/* Desktop and Up */
+@media (min-width: 960px) {
+    .container {
+        padding: 3rem;
+    }
+}
