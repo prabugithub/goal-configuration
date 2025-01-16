@@ -7,13 +7,13 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-   const { goNext } = useStep(); // Get navigation methods
+   // const { goNext } = useStep(); // Get navigation methods
 
   const handleLogin = async () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("User logged in:", userCredential.user);
-      goNext();
+      // goNext();
     } catch (error) {
       console.error("Login error:", error.message);
     }
