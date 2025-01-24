@@ -21,6 +21,7 @@ import {
 import { useGoalConfig } from '../../context/GoalConfigContext';
 import { getGoal, saveGoal } from '../../api/services/firebaseServices';
 import { useAuth } from '../../context/AuthContext';
+import GenericLogic from '../../common/utils/generic-logic';
 
 const TrackYourGoal = () => {
     const { config } = useGoalConfig();
@@ -37,16 +38,16 @@ const TrackYourGoal = () => {
             const level = levels[tabIndex];
             const identifier = getIdentifier(level); // e.g., '2025-01-13' for daily
             const data = await getGoal(user.uid, level, identifier);
-            if (data){ 
+            if (data) {
                 setSavedData((prev) => ({ ...prev, [level]: data }));
-                if(isInitialLoad.current){
+                if (isInitialLoad.current) {
                     setFormValues(data);
-                    if(tabIndex < levels.length - 1){
-                        setTabIndex(tabIndex+1);
+                    if (tabIndex < levels.length - 1) {
+                        setTabIndex(tabIndex + 1);
                     }
                     isInitialLoad.current = true;
-                } 
-               // setTabIndex(tabIndex+1)
+                }
+                // setTabIndex(tabIndex+1)
             };
         };
 
@@ -95,7 +96,7 @@ const TrackYourGoal = () => {
         const identifier = getIdentifier(level);
         await saveGoal(formValues[level], user.uid, level, identifier);
         alert(`${level} goals saved successfully!`);
-        setTabIndex(tabIndex+1);
+        setTabIndex(tabIndex + 1);
     };
 
     function a11yProps(index) {
@@ -121,7 +122,7 @@ const TrackYourGoal = () => {
                         onChange={(e) =>
                             handleInputChange(level, sectionName, field.label, e.target.value)
                         }
-                        sx={{ flex: 1 }}
+                        sx={{ flex: 1, width: '100%' }}
                     />
                 );
 
@@ -134,7 +135,7 @@ const TrackYourGoal = () => {
                             handleInputChange(level, sectionName, field.label, e.target.value)
                         }
                         size="small"
-                        sx={{ flex: 1 }}
+                        sx={{ flex: 1, width: '100%' }}
                     >
                         {field.options.map((option, index) => (
                             <MenuItem value={option} key={`${field.label}-option-${index}`}>
@@ -146,46 +147,58 @@ const TrackYourGoal = () => {
 
             case 'checkbox':
                 return (
-                    <FormGroup key={`${level}-${sectionName}-${index}`} row>
-                        {field.options.map((option, index) => (
-                            <FormControlLabel
-                                key={`${field.label}-checkbox-${index}`}
-                                control={
-                                    <Checkbox
-                                        checked={value.includes(option)}
-                                        onChange={(e) => {
-                                            const newValue = e.target.checked
-                                                ? [...value, option]
-                                                : value.filter((v) => v !== option);
-                                            handleInputChange(level, sectionName, field.label, newValue);
-                                        }}
-                                    />
-                                }
-                                label={option}
-                            />
-                        ))}
-                    </FormGroup>
+                    <>
+                        <Typography variant="subtitle1" sx={{ width: '100%' }}>{field.label}</Typography>
+                        <FormGroup key={`${level}-${sectionName}-${index}`} row sx={{ width: '100%' }}>
+                            {field.options.map((option, index) => (
+                                <FormControlLabel
+                                    key={`${field.label}-checkbox-${index}`}
+                                    control={
+                                        <Checkbox
+                                            checked={value.includes(option)}
+                                            onChange={(e) => {
+                                                const newValue = e.target.checked
+                                                    ? [...value, option]
+                                                    : value.filter((v) => v !== option);
+                                                handleInputChange(level, sectionName, field.label, newValue);
+                                            }}
+                                        />
+                                    }
+                                    label={option}
+                                />
+                            ))}
+                        </FormGroup>
+                    </>
                 );
 
             case 'radio':
                 return (
-                    <RadioGroup
-                        key={`${level}-${sectionName}-${index}`}
-                        row
-                        value={value}
-                        onChange={(e) =>
-                            handleInputChange(level, sectionName, field.label, e.target.value)
-                        }
-                    >
-                        {field.options.map((option, index) => (
-                            <FormControlLabel
-                                key={`${field.label}-radio-${index}`}
-                                value={option}
-                                control={<Radio />}
-                                label={option}
-                            />
-                        ))}
-                    </RadioGroup>
+                    <React.Fragment>
+                        <Typography variant="subtitle1" sx={{
+                            width: '100%', // Ensure the RadioGroup takes full width
+                        }}>{field.label}</Typography>
+                        <RadioGroup
+                            key={`${level}-${sectionName}-${index}`}
+                            row
+                            value={value}
+                            onChange={(e) =>
+                                handleInputChange(level, sectionName, field.label, e.target.value)
+                            }
+                            sx={{
+                                width: '100%', // Ensure the RadioGroup takes full width
+                            }}
+                        >
+                            {field.options.map((option, index) => (
+                                <FormControlLabel
+                                    key={`${field.label}-radio-${index}`}
+                                    value={option}
+                                    control={<Radio />}
+                                    label={option}
+                                />
+                            ))}
+                        </RadioGroup>
+                    </React.Fragment>
+
                 );
 
             default:
@@ -224,7 +237,17 @@ const TrackYourGoal = () => {
                                 <pre>{JSON.stringify(savedData[level], null, 2)}</pre>
                             </Box>
                         ) : (
-                            <Box sx={{ p: 3 }}>
+                            <Box sx={{ p: 3, width: '100%' }}>
+                                <Box>
+                                    {GenericLogic.numberArray(2, 1).map((len) => (levels[tabIndex - len] && savedData[levels[tabIndex - len]] && savedData[levels[tabIndex - len]]['planning'] && savedData[levels[tabIndex - len]]['planning']['One Thing'] ?
+                                        <>
+                                            <Typography variant="h6" sx={{ textTransform: 'capitalize', display: 'flex', width: '100%' }}>{levels[tabIndex - len]} Goals:</Typography>
+                                            <Typography variant="body1" sx={{ display: 'flex', width: '100%' }}>
+                                                {GenericLogic.capitalizeFirstLetter(savedData[levels[tabIndex - len]]['planning']['One Thing'])}
+                                            </Typography>
+                                        </>
+                                        : <></>))}
+                                </Box>
                                 {config.sections[level].map((section) => (
                                     <Box key={`section-${level}-${section.name}`} sx={{ mt: 2 }}>
                                         <Typography
@@ -233,6 +256,9 @@ const TrackYourGoal = () => {
                                         >
                                             {section.label || section.name}
                                         </Typography>
+
+
+
                                         <List>
                                             {section.fields.map((field, index) => (
                                                 <ListItem
