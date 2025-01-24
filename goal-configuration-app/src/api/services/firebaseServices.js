@@ -33,14 +33,19 @@ export const getUserConfiguration = async (userId) => {
   }
 };
 
-export const saveGoal = async (goal) => {
-    const goalRef = collection(db, 'goals');
-    await addDoc(goalRef, goal);
-  };
+export const saveGoal = async (data, userId, level, identifier) => {
+  const docRef = doc(db, `users/${userId}/goals/${level}/${identifier}/data`);
+  await setDoc(docRef, data, { merge: true });
+};
 
+export const getGoal = async (userId, level, identifier) => {
+  const docRef = doc(db, `users/${userId}/goals/${level}/${identifier}/data`);
+  const docSnap = await getDoc(docRef);
+  return docSnap.exists() ? docSnap.data() : null;
+}
 
-  // Save a progress update
+// Save a progress update
 export const saveProgress = async (progress) => {
-    const progressRef = collection(db, 'progress');
-    await addDoc(progressRef, progress);
-  };
+  const progressRef = collection(db, 'progress');
+  await addDoc(progressRef, progress);
+};

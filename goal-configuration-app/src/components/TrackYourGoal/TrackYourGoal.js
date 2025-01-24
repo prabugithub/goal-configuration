@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Typography,
     TextField,
@@ -19,7 +19,7 @@ import {
     Tab,
 } from '@mui/material';
 import { useGoalConfig } from '../../context/GoalConfigContext';
-import { saveUserConfig } from '../../api/services/firebaseServices';
+import { getGoal, saveGoal } from '../../api/services/firebaseServices';
 import { useAuth } from '../../context/AuthContext';
 
 const TrackYourGoal = () => {
@@ -28,9 +28,53 @@ const TrackYourGoal = () => {
 
     const [formValues, setFormValues] = useState({});
     const [tabIndex, setTabIndex] = useState(0);
+    const [savedData, setSavedData] = useState({});
+    const isInitialLoad = useRef(true);
+    const levels = ['yearly', 'quarterly', 'monthly', 'weekly', 'daily'].filter(level => config.levels[level]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const level = levels[tabIndex];
+            const identifier = getIdentifier(level); // e.g., '2025-01-13' for daily
+            const data = await getGoal(user.uid, level, identifier);
+            if (data){ 
+                setSavedData((prev) => ({ ...prev, [level]: data }));
+                if(isInitialLoad.current){
+                    setFormValues(data);
+                    if(tabIndex < levels.length - 1){
+                        setTabIndex(tabIndex+1);
+                    }
+                    isInitialLoad.current = true;
+                } 
+               // setTabIndex(tabIndex+1)
+            };
+        };
+
+        fetchData();
+    }, [tabIndex]);
 
     const handleTabChange = (event, newIndex) => {
+        isInitialLoad.current = false;
         setTabIndex(newIndex);
+    };
+
+    const getIdentifier = (level) => {
+        const today = new Date();
+        switch (level) {
+            case 'daily':
+                return today.toISOString().split('T')[0];
+            case 'weekly':
+                const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+                return weekStart.toISOString().split('T')[0];
+            case 'monthly':
+                return `${today.getFullYear()}-${today.getMonth() + 1}`;
+            case 'quarterly':
+                return `${today.getFullYear()}-Q${Math.ceil((today.getMonth() + 1) / 3)}`;
+            case 'yearly':
+                return `${today.getFullYear()}`;
+            default:
+                return '';
+        }
     };
 
     const handleInputChange = (level, sectionName, fieldName, value) => {
@@ -46,9 +90,12 @@ const TrackYourGoal = () => {
         }));
     };
 
-    const handleSubmit = () => {
-        console.log('Form Values:', formValues);
-        saveUserConfig(formValues, user.uid);
+    const handleSubmit = async () => {
+        const level = levels[tabIndex];
+        const identifier = getIdentifier(level);
+        await saveGoal(formValues[level], user.uid, level, identifier);
+        alert(`${level} goals saved successfully!`);
+        setTabIndex(tabIndex+1);
     };
 
     function a11yProps(index) {
@@ -154,7 +201,7 @@ const TrackYourGoal = () => {
 
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs value={tabIndex} onChange={handleTabChange} aria-label="Goal levels" key="levels_tab">
-                    {Object.keys(config.levels)
+                    {levels
                         .filter((level) => config.levels[level])
                         .map((level, index) => (
                             <Tab label={level} {...a11yProps(index)} key={'tab_' + index} />
@@ -162,7 +209,7 @@ const TrackYourGoal = () => {
                 </Tabs>
             </Box>
 
-            {Object.keys(config.levels)
+            {levels
                 .filter((level) => config.levels[level])
                 .map((level, index) => (
                     <div
@@ -171,7 +218,12 @@ const TrackYourGoal = () => {
                         hidden={tabIndex !== index}
                         id={`tabpanel-${index}`}
                     >
-                        {tabIndex === index && (
+                        {tabIndex === index && savedData[level] ? (
+                            <Box>
+                                <Typography variant="h6">Saved {level} Goals</Typography>
+                                <pre>{JSON.stringify(savedData[level], null, 2)}</pre>
+                            </Box>
+                        ) : (
                             <Box sx={{ p: 3 }}>
                                 {config.sections[level].map((section) => (
                                     <Box key={`section-${level}-${section.name}`} sx={{ mt: 2 }}>
@@ -181,7 +233,6 @@ const TrackYourGoal = () => {
                                         >
                                             {section.label || section.name}
                                         </Typography>
-
                                         <List>
                                             {section.fields.map((field, index) => (
                                                 <ListItem
@@ -199,11 +250,12 @@ const TrackYourGoal = () => {
                     </div>
                 ))}
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-evenly', mt: 2 }}>
-                <Button variant="contained" color="primary" onClick={handleSubmit}>
-                    Submit
-                </Button>
-            </Box>
+            {savedData[levels[tabIndex]] ? <></> : (
+                <Box sx={{ display: 'flex', justifyContent: 'space-evenly', mt: 2 }}>
+                    <Button variant="contained" color="primary" onClick={handleSubmit}>
+                        Submit
+                    </Button>
+                </Box>)}
         </div>
     );
 };
