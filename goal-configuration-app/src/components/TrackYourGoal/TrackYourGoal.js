@@ -31,13 +31,14 @@ const TrackYourGoal = () => {
     const [formValues, setFormValues] = useState({});
     const [tabIndex, setTabIndex] = useState(0);
     const [savedData, setSavedData] = useState({});
+    const [selectedDate, setSelectedDate] = useState(new Date());
     const isInitialLoad = useRef(true);
     const levels = ['yearly', 'quarterly', 'monthly', 'weekly', 'daily'].filter(level => config.levels[level]);
 
     useEffect(() => {
         const fetchData = async () => {
             const level = levels[tabIndex];
-            const identifier = getIdentifier(level); // e.g., '2025-01-13' for daily
+            const identifier = getIdentifier(level, selectedDate); // e.g., '2025-01-13' for daily
             const data = await getGoal(user.uid, level, identifier);
             if (data) {
                 setSavedData((prev) => ({ ...prev, [level]: data }));
@@ -49,19 +50,29 @@ const TrackYourGoal = () => {
                     isInitialLoad.current = true;
                 }
                 // setTabIndex(tabIndex+1)
+            } else {
+                alert(`No data found! You might not saved any data for this ${selectedDate.getDate()}/${selectedDate.getMonth()}/${selectedDate.getFullYear()} date.`);
             };
         };
 
         fetchData();
-    }, [tabIndex]);
+    }, [tabIndex, selectedDate]);
 
     const handleTabChange = (event, newIndex) => {
         isInitialLoad.current = false;
         setTabIndex(newIndex);
     };
 
-    const getIdentifier = (level) => {
-        const today = new Date();
+    const isSelectedDateToday = () => { 
+        return new Date(selectedDate).toISOString().split('T')[0] === new Date().toISOString().split('T')[0];
+    };
+
+    const resetDate = () => { 
+        setSelectedDate(new Date());
+    }
+
+    const getIdentifier = (level, date = new Date()) => {
+        const today = new Date(date);
         switch (level) {
             case 'daily':
                 return today.toISOString().split('T')[0];
@@ -106,6 +117,22 @@ const TrackYourGoal = () => {
             'aria-controls': `simple-tabpanel-${index}`,
         };
     }
+
+    const handlePrevNextClick = (direction) => {
+        let newDate = new Date(selectedDate);
+        if (levels[tabIndex] === 'daily') {
+            newDate.setDate(newDate.getDate() + (direction === 'prev' ? -1 : 1)); // Move one day back or forward
+        } else if (levels[tabIndex] === 'weekly') {
+            newDate.setDate(newDate.getDate() + (direction === 'prev' ? -7 : 7)); // Move one week back or forward
+        } else if (levels[tabIndex] === 'monthly') {
+            newDate.setMonth(newDate.getMonth() + (direction === 'prev' ? -1 : 1)); // Move one month back or forward
+        } else if (levels[tabIndex] === 'quarterly') {
+            newDate.setMonth(newDate.getMonth() + (direction === 'prev' ? -3 : 3)); // Move one quarter back or forward
+        } else if (levels[tabIndex] === 'yearly') {
+            newDate.setFullYear(newDate.getFullYear() + (direction === 'prev' ? -1 : 1)); // Move one year back or forward
+        }
+        setSelectedDate(newDate);
+    };
 
     const renderField = (field, level, sectionName, index) => {
         const value =
@@ -213,7 +240,7 @@ const TrackYourGoal = () => {
                 Selected Goal Levels
             </Typography>
 
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', overflowX: 'auto' }}>
                 <Tabs value={tabIndex} onChange={handleTabChange} aria-label="Goal levels" key="levels_tab">
                     {levels
                         .filter((level) => config.levels[level])
@@ -221,6 +248,15 @@ const TrackYourGoal = () => {
                             <Tab label={level} {...a11yProps(index)} key={'tab_' + index} />
                         ))}
                 </Tabs>
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                <div><Button onClick={() => resetDate()} variant="contained" disabled={isSelectedDateToday()}>Reset Date</Button></div>
+
+                <div>
+                    <Button onClick={() => handlePrevNextClick('prev')} variant="contained" sx={{ marginRight: "10px"}}>Prev</Button>
+                    <Button onClick={() => handlePrevNextClick('next')} variant="contained" disabled={isSelectedDateToday()}>Next</Button>
+                </div>
             </Box>
 
             {levels
