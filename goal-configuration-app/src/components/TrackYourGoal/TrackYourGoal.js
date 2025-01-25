@@ -22,6 +22,7 @@ import { useGoalConfig } from '../../context/GoalConfigContext';
 import { getGoal, saveGoal } from '../../api/services/firebaseServices';
 import { useAuth } from '../../context/AuthContext';
 import GenericLogic from '../../common/utils/generic-logic';
+import ShowSavedGoalEvaluation from '../ShowSavedGoalEvaluation/ShowSavedGoalEvaluation';
 
 const TrackYourGoal = () => {
     const { config } = useGoalConfig();
@@ -233,8 +234,8 @@ const TrackYourGoal = () => {
                     >
                         {tabIndex === index && savedData[level] ? (
                             <Box>
-                                <Typography variant="h6">Saved {level} Goals</Typography>
-                                <pre>{JSON.stringify(savedData[level], null, 2)}</pre>
+                                {/* <Typography variant="h6">Saved {level} Goals</Typography> */}
+                                <ShowSavedGoalEvaluation savedData={savedData[level]} config={config.sections[level]}></ShowSavedGoalEvaluation>
                             </Box>
                         ) : (
                             <Box sx={{ p: 3, width: '100%' }}>
