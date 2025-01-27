@@ -2,8 +2,9 @@ import React from "react";
 import { Accordion, AccordionSummary, AccordionDetails, Typography, Card, CardContent, List, ListItem, ListItemText, Box } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import GenericLogic from "../../common/utils/generic-logic";
+import CONSTANTS from "../../common/constants";
 
-const ShowSavedGoalEvaluation = ({ savedData, config }) => {
+const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
     const renderValue = (value) => {
         if (Array.isArray(value)) {
             // If the value is an array, render it as a list
@@ -58,11 +59,11 @@ const ShowSavedGoalEvaluation = ({ savedData, config }) => {
             {config.map((section) => (
                 <>
                     <Typography variant="h6" style={{ textTransform: "capitalize", width: '100%', marginBottom: "15px" }}>
-                        {section?.label}
+                        {section?.name === 'evaluation' ? `Last ${CONSTANTS.LEVEL[level?.toUpperCase()]}  ${section?.label}` : `${section?.label || section?.name}`}
                     </Typography>
                     {section?.fields?.map((field) => (
                         <Typography variant="body1" color="textSecondary" sx={{ textAlign: "left", marginBottom: "15px" }}>
-                            <strong>{field.label}</strong> :  {renderValue(savedData[section.name][field.label])}
+                            <strong>{field.label}</strong> :  {savedData[section.name] && savedData[section.name][field.label] ? renderValue(savedData[section.name][field.label]): 'No saved value.'}
                         </Typography>
                     ))}
                 </>

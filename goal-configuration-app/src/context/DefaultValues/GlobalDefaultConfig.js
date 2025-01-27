@@ -37,31 +37,35 @@ const surprices = {
 const initialConfigState = {
     levels: {
         yearly: true,
-        quarterly: false,
-        monthly: false,
-        weekly: false,
-        daily: false,
+        quarterly: true,
+        monthly: true,
+        weekly: true,
+        daily: true,
     },
     sections: {
         yearly: [
+            evaluation,
+            planning,
             {
-                name: 'evaluation', label: 'Evaluation', enabled: true, fields: [
-                    { label: 'Happy', type: 'text' },
-                    { label: 'Stop', type: 'text' },
-                ]
+                name: 'taskSplitUp',
+                label: 'Split Task:',
+                enabled: true,
+                fields: [
+                    { label: 'Quater 1', type: 'text' },
+                    { label: 'Quater 2', type: 'text' },
+                    { label: 'Quater 3', type: 'text' },
+                    { label: 'Quater 4', type: 'text' },
+                ],
+
             },
-            {
-                name: 'planning', label: 'Planning', enabled: true, fields: [
-                    { label: 'Yearly Plan', type: 'text' },
-                ]
-            },
+            surprices
         ],
         quarterly: [
             evaluation,
             planning,
             {
                 name: 'taskSplitUp',
-                lable: 'Split Task:',
+                label: 'Split Task:',
                 enabled: true,
                 fields: [
                     { label: 'Month 1', type: 'text' },
@@ -77,7 +81,7 @@ const initialConfigState = {
             planning,
             {
                 name: 'taskSplitUp',
-                lable: 'Split Task:',
+                label: 'Split Task:',
                 enabled: true,
                 fields: [
                     { label: 'Week 1', type: 'text' },
@@ -94,7 +98,7 @@ const initialConfigState = {
             planning,
             {
                 name: 'taskSplitUp',
-                lable: 'Split Task:',
+                label: 'Split Task:',
                 enabled: true,
                 fields: [
                     { label: 'Mon', type: 'text' },
@@ -128,6 +132,7 @@ const initialConfigState = {
                     { label: 'Meditation', type: 'checkbox', options: ['Yes', 'No'] },
                     { label: 'Reading', type: 'checkbox', options: ['Yes', 'No'] },
                     { label: 'Exercise', type: 'checkbox', options: ['Yes', 'No'] },
+                    { label: 'Diet', type: 'checkbox', options: ['Yes', 'No'] },
                 ]
             },
             {
@@ -135,7 +140,7 @@ const initialConfigState = {
                 label: 'Ratings',
                 enabled: true,
                 fields: [
-                    { label: 'Out of 10', type: 'text' },
+                    { label: '10 Out of:', type: 'text' },
                 ]
             },
         ]

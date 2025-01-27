@@ -14,13 +14,14 @@ import { auth } from './api/firebase/firebas';
 import { getUserConfiguration } from './api/services/firebaseServices';
 import TrackYourGoal from './components/TrackYourGoal/TrackYourGoal';
 import { useGoalConfig } from './context/GoalConfigContext';
+import { initialConfigState } from './context/DefaultValues/GlobalDefaultConfig';
 
 function App() {
   const { currentStep } = useStep();
   const [user, setUser] = useState(null);
   const [showLogin, setShowLogin] = useState(true); // State to toggle between Login and Sign Up forms
-  const [configuration, setHasConfiguration] = useState(false);
-  const {config, setConfig} = useGoalConfig();
+  const [hasConfiguration, setHasConfiguration] = useState(false);
+  const { config, setConfig } = useGoalConfig();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,7 +32,13 @@ function App() {
         try {
           // Check if the user has a configuration
           const conf = await getUserConfiguration(currentUser.uid);
-          setConfig(conf); // Set true if configuration exists
+          setConfig(conf);
+          // Set true if configuration exists
+          if (conf) {
+            setHasConfiguration(true);
+          } else {
+            setConfig(initialConfigState)
+          }
         } catch (error) {
           console.error("Error checking user configuration:", error);
         }
@@ -70,7 +77,7 @@ function App() {
       <CssBaseline />
       {user ? (
         <Container maxWidth="sm">
-          {config ? <TrackYourGoal></TrackYourGoal> :
+          {hasConfiguration ? <TrackYourGoal></TrackYourGoal> :
             <>
               <h1>Focus2Win!</h1>
               {steps[currentStep]}

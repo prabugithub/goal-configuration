@@ -8,7 +8,7 @@ import { useStep } from '../../context/StepContext';
 const GoalHierarchySelection = ({ onNext }) => {
 
     // State for tracking selected breakdown levels
-    const { config, toggleLevels } = useGoalConfig();
+    const { config, toggleLevels, setConfig } = useGoalConfig();
 
     // hook for next step
     const { goNext } = useStep(); // Get navigation methods
@@ -26,6 +26,7 @@ const GoalHierarchySelection = ({ onNext }) => {
     //     console.log('Selected breakdown levels:', levels);
 
     // };
+    
 
     // Handle form submission or "Next" button click
     const handleSubmit = () => {

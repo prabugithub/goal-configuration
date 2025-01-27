@@ -52,7 +52,6 @@ const TrackYourGoal = () => {
                     }
                     isInitialLoad.current = true;
                 }
-                // setTabIndex(tabIndex+1)
             } else {
                 setSavedData((prev) => { 
                     delete prev[level];
@@ -121,7 +120,8 @@ const TrackYourGoal = () => {
         const identifier = getIdentifier(level, selectedDate);
         await saveGoal(formValues[level], user.uid, level, identifier);
         alert(`${level} goals saved successfully!`);
-        setTabIndex(tabIndex + 1);
+        if (levels.length > tabIndex + 1)
+            setTabIndex(tabIndex + 1);
     };
 
     function a11yProps(index) {
@@ -144,7 +144,11 @@ const TrackYourGoal = () => {
         } else if (levels[tabIndex] === 'yearly') {
             newDate.setFullYear(newDate.getFullYear() + (direction === 'prev' ? -1 : 1)); // Move one year back or forward
         }
-        setSelectedDate(newDate);
+        if (isSelectedDateIsFuture(newDate)) {
+            alert('You can not select future date.');
+        } else {
+            setSelectedDate(newDate);
+        }
     };
 
     const renderField = (field, level, sectionName, index) => {
@@ -250,7 +254,7 @@ const TrackYourGoal = () => {
     return (
         <div>
             <Typography variant="h5" gutterBottom>
-                Selected Goal Levels
+                Your Onething!
             </Typography>
 
             <Box sx={{ borderBottom: 1, borderColor: 'divider', overflowX: 'auto' }}>
@@ -284,7 +288,7 @@ const TrackYourGoal = () => {
                         {tabIndex === index && savedData[level] ? (
                             <Box>
                                 {/* <Typography variant="h6">Saved {level} Goals</Typography> */}
-                                <ShowSavedGoalEvaluation savedData={savedData[level]} config={config.sections[level]}></ShowSavedGoalEvaluation>
+                                <ShowSavedGoalEvaluation savedData={savedData[level]} config={config.sections[level]} level={level}></ShowSavedGoalEvaluation>
                             </Box>
                         ) : (
                             <Box sx={{ p: 3, width: '100%' }}>

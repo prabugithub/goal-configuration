@@ -30,7 +30,7 @@ import { auth } from '../../api/firebase/firebas';
 import { useAuth } from '../../context/AuthContext';
 
 const NextStep = () => {
-    const { config, toggleSection, updateField, updateFieldOptions, addSection, addField } = useGoalConfig();
+    const { config, setConfig, toggleSection, updateField, updateFieldOptions, addSection, addField } = useGoalConfig();
     const { goNext, goBack } = useStep();
 
     const {user} = useAuth();
@@ -42,12 +42,12 @@ const NextStep = () => {
     };
 
     // Handle form submission
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         console.log('Sections:', config.sections);
 
-        saveUserConfig(config, user.uid);
-
-        // goNext();
+        await saveUserConfig(config, user.uid);
+        alert('Configuration saved successfully!');
+        window.location.reload();
     };
 
     function CustomTabPanel(props) {
