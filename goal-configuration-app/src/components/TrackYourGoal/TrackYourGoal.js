@@ -23,6 +23,7 @@ import { getGoal, saveGoal } from '../../api/services/firebaseServices';
 import { useAuth } from '../../context/AuthContext';
 import GenericLogic from '../../common/utils/generic-logic';
 import ShowSavedGoalEvaluation from '../ShowSavedGoalEvaluation/ShowSavedGoalEvaluation';
+import  CONSTANTS  from '../../common/constants';
 
 const TrackYourGoal = () => {
     const { config } = useGoalConfig();
@@ -34,6 +35,8 @@ const TrackYourGoal = () => {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const isInitialLoad = useRef(true);
     const levels = ['yearly', 'quarterly', 'monthly', 'weekly', 'daily'].filter(level => config.levels[level]);
+
+    const getFormatedDate = (date) => date.getDate() + "/" + (date.getMonth()+1) + "/" + date.getFullYear();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -51,7 +54,10 @@ const TrackYourGoal = () => {
                 }
                 // setTabIndex(tabIndex+1)
             } else {
-                alert(`No data found! You might not saved any data for this ${selectedDate.getDate()}/${selectedDate.getMonth()}/${selectedDate.getFullYear()} date.`);
+                setSavedData((prev) => { 
+                    delete prev[level];
+                    return { ...prev }});
+                alert(`No data found! You might not saved any data for this ${getFormatedDate(selectedDate)} date.`);
             };
         };
 
@@ -60,7 +66,14 @@ const TrackYourGoal = () => {
 
     const handleTabChange = (event, newIndex) => {
         isInitialLoad.current = false;
+        // if(levels[newIndex] !== 'daily') {
+        //     setSelectedDate(getIdentifier(levels[newIndex]));
+        // }
         setTabIndex(newIndex);
+    };
+
+    const isSelectedDateIsFuture = () => { 
+        return new Date(selectedDate).toISOString().split('T')[0] > new Date().toISOString().split('T')[0];
     };
 
     const isSelectedDateToday = () => { 
@@ -72,7 +85,7 @@ const TrackYourGoal = () => {
     }
 
     const getIdentifier = (level, date = new Date()) => {
-        const today = new Date(date);
+        const today =  new Date(date);
         switch (level) {
             case 'daily':
                 return today.toISOString().split('T')[0];
@@ -105,7 +118,7 @@ const TrackYourGoal = () => {
 
     const handleSubmit = async () => {
         const level = levels[tabIndex];
-        const identifier = getIdentifier(level);
+        const identifier = getIdentifier(level, selectedDate);
         await saveGoal(formValues[level], user.uid, level, identifier);
         alert(`${level} goals saved successfully!`);
         setTabIndex(tabIndex + 1);
@@ -251,10 +264,10 @@ const TrackYourGoal = () => {
             </Box>
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                <div><Button onClick={() => resetDate()} variant="contained" disabled={isSelectedDateToday()}>Reset Date</Button></div>
+                <div><Button onClick={() => resetDate()} variant="contained" disabled={isSelectedDateToday()} sx={{ marginRight: "10px" }}>Reset to Today</Button><Typography variant='subtitle1'><strong>{CONSTANTS.LEVEL[levels[tabIndex]?.toLocaleUpperCase()]}</strong> {getIdentifier(levels[tabIndex], selectedDate)}</Typography></div>
 
                 <div>
-                    <Button onClick={() => handlePrevNextClick('prev')} variant="contained" sx={{ marginRight: "10px"}}>Prev</Button>
+                    <Button onClick={() => handlePrevNextClick('prev')} variant="contained" sx={{ marginRight: "10px" }}>Prev</Button>
                     <Button onClick={() => handlePrevNextClick('next')} variant="contained" disabled={isSelectedDateToday()}>Next</Button>
                 </div>
             </Box>

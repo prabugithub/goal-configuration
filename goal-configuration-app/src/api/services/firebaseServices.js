@@ -1,4 +1,4 @@
-import { doc, setDoc, collection, addDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, addDoc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebas';
 
 // Save user configuration to Firestore
@@ -48,4 +48,38 @@ export const getGoal = async (userId, level, identifier) => {
 export const saveProgress = async (progress) => {
   const progressRef = collection(db, 'progress');
   await addDoc(progressRef, progress);
+};
+
+// Delete a goal from Firestore
+export const deleteGoal = async (userId, level, identifier) => {
+  if (!userId || !level || !identifier) {
+    console.error("Missing required parameters for deleteGoal");
+    return;
+  }
+
+  try {
+    const docRef = doc(db, `users/${userId}/goals/${level}/${identifier}/data`);
+    await deleteDoc(docRef);
+    console.log(`Goal deleted successfully for ${level} - ${identifier}`);
+  } catch (error) {
+    console.error("Error deleting goal:", error);
+    throw error;
+  }
+};
+
+// Update a goal in Firestore
+export const updateGoal = async (data, userId, level, identifier) => {
+  if (!userId || !level || !identifier) {
+    console.error("Missing required parameters for updateGoal");
+    return;
+  }
+
+  try {
+    const docRef = doc(db, `users/${userId}/goals/${level}/${identifier}/data`);
+    await updateDoc(docRef, data);
+    console.log(`Goal updated successfully for ${level} - ${identifier}`);
+  } catch (error) {
+    console.error("Error updating goal:", error);
+    throw error;
+  }
 };
