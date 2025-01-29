@@ -63,7 +63,7 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
                     </Typography>
                     {section?.fields?.map((field) => (
                         <Typography variant="body1" color="textSecondary" sx={{ textAlign: "left", marginBottom: "15px" }}>
-                            <strong>{field.label}</strong> :  {savedData[section.name] && savedData[section.name][field.name] || savedData[section.name][field.label] ? renderValue(savedData[section.name][field.name] || savedData[section.name][field.label]) : 'No saved value.'}
+                            <strong>{field.label}</strong> :  {savedData[section.name] && (savedData[section.name][field.name] || savedData[section.name][field.label]) ? renderValue(savedData[section.name][field.name] || savedData[section.name][field.label]) : 'No saved value.'}
                         </Typography>
                     ))}
                 </>

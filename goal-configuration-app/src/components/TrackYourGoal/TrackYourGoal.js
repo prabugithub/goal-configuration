@@ -17,13 +17,14 @@ import {
     MenuItem,
     Tabs,
     Tab,
+    CircularProgress
 } from '@mui/material';
 import { useGoalConfig } from '../../context/GoalConfigContext';
 import { getGoal, saveGoal } from '../../api/services/firebaseServices';
 import { useAuth } from '../../context/AuthContext';
 import GenericLogic from '../../common/utils/generic-logic';
 import ShowSavedGoalEvaluation from '../ShowSavedGoalEvaluation/ShowSavedGoalEvaluation';
-import  CONSTANTS  from '../../common/constants';
+import CONSTANTS from '../../common/constants';
 
 const TrackYourGoal = () => {
     const { config } = useGoalConfig();
@@ -33,31 +34,41 @@ const TrackYourGoal = () => {
     const [tabIndex, setTabIndex] = useState(0);
     const [savedData, setSavedData] = useState({});
     const [selectedDate, setSelectedDate] = useState(new Date());
+    const [loading, setLoading] = useState(false);
+
     const isInitialLoad = useRef(true);
     const levels = ['yearly', 'quarterly', 'monthly', 'weekly', 'daily'].filter(level => config.levels[level]);
 
-    const getFormatedDate = (date) => date.getDate() + "/" + (date.getMonth()+1) + "/" + date.getFullYear();
+    const getFormatedDate = (date) => date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear();
 
     useEffect(() => {
         const fetchData = async () => {
-            const level = levels[tabIndex];
-            const identifier = getIdentifier(level, selectedDate); // e.g., '2025-01-13' for daily
-            const data = await getGoal(user.uid, level, identifier);
-            if (data) {
-                setSavedData((prev) => ({ ...prev, [level]: data }));
-                if (isInitialLoad.current) {
-                    setFormValues(data);
-                    if (tabIndex < levels.length - 1) {
-                        setTabIndex(tabIndex + 1);
+            setLoading(true);
+            try {
+                const level = levels[tabIndex];
+                const identifier = getIdentifier(level, selectedDate); // e.g., '2025-01-13' for daily
+                const data = await getGoal(user.uid, level, identifier);
+                if (data) {
+                    setSavedData((prev) => ({ ...prev, [level]: data }));
+                    if (isInitialLoad.current) {
+                        setFormValues(data);
+                        if (tabIndex < levels.length - 1) {
+                            setTabIndex(tabIndex + 1);
+                        }
+                        isInitialLoad.current = true;
                     }
-                    isInitialLoad.current = true;
-                }
-            } else {
-                setSavedData((prev) => { 
-                    delete prev[level];
-                    return { ...prev }});
-                alert(`No data found! You might not saved any data for this ${getFormatedDate(selectedDate)} date.`);
-            };
+                } else {
+                    setSavedData((prev) => {
+                        delete prev[level];
+                        return { ...prev }
+                    });
+                    alert(`No data found! You might not saved any data for this ${getFormatedDate(selectedDate)} date.`);
+                };
+            } catch (error) {
+                console.error("Error fetching goal data:", error);
+            } finally {
+                setLoading(false); // Stop loading
+            }
         };
 
         fetchData();
@@ -71,20 +82,20 @@ const TrackYourGoal = () => {
         setTabIndex(newIndex);
     };
 
-    const isSelectedDateIsFuture = () => { 
+    const isSelectedDateIsFuture = () => {
         return new Date(selectedDate).toISOString().split('T')[0] > new Date().toISOString().split('T')[0];
     };
 
-    const isSelectedDateToday = () => { 
+    const isSelectedDateToday = () => {
         return new Date(selectedDate).toISOString().split('T')[0] === new Date().toISOString().split('T')[0];
     };
 
-    const resetDate = () => { 
+    const resetDate = () => {
         setSelectedDate(new Date());
     }
 
     const getIdentifier = (level, date = new Date()) => {
-        const today =  new Date(date);
+        const today = new Date(date);
         switch (level) {
             case 'daily':
                 return today.toISOString().split('T')[0];
@@ -266,76 +277,84 @@ const TrackYourGoal = () => {
                         ))}
                 </Tabs>
             </Box>
-
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                <div><Button onClick={() => resetDate()} variant="contained" disabled={isSelectedDateToday()} sx={{ marginRight: "10px" }}>Reset to Today</Button><Typography variant='subtitle1'><strong>{CONSTANTS.LEVEL[levels[tabIndex]?.toLocaleUpperCase()]}</strong> {getIdentifier(levels[tabIndex], selectedDate)}</Typography></div>
-
+            {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                    <CircularProgress />
+                </Box>
+            ) : (
                 <div>
-                    <Button onClick={() => handlePrevNextClick('prev')} variant="contained" sx={{ marginRight: "10px" }}>Prev</Button>
-                    <Button onClick={() => handlePrevNextClick('next')} variant="contained" disabled={isSelectedDateToday()}>Next</Button>
-                </div>
-            </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                        <div><Button onClick={() => resetDate()} variant="contained" disabled={isSelectedDateToday()} sx={{ marginRight: "10px" }}>Reset to Today</Button><Typography variant='subtitle1'><strong>{CONSTANTS.LEVEL[levels[tabIndex]?.toLocaleUpperCase()]}</strong> {getIdentifier(levels[tabIndex], selectedDate)}</Typography></div>
 
-            {levels
-                .filter((level) => config.levels[level])
-                .map((level, index) => (
-                    <div
-                        key={`tabpanel-${level}-${index}`}
-                        role="tabpanel"
-                        hidden={tabIndex !== index}
-                        id={`tabpanel-${index}`}
-                    >
-                        {tabIndex === index && savedData[level] ? (
-                            <Box>
-                                {/* <Typography variant="h6">Saved {level} Goals</Typography> */}
-                                <ShowSavedGoalEvaluation savedData={savedData[level]} config={config.sections[level]} level={level}></ShowSavedGoalEvaluation>
-                            </Box>
-                        ) : (
-                            <Box sx={{ p: 3, width: '100%' }}>
-                                <Box>
-                                    {GenericLogic.numberArray(2, 1).map((len) => (levels[tabIndex - len] && savedData[levels[tabIndex - len]] && savedData[levels[tabIndex - len]]['planning'] && savedData[levels[tabIndex - len]]['planning']['One Thing'] ?
-                                        <>
-                                            <Typography variant="h6" sx={{ textTransform: 'capitalize', display: 'flex', width: '100%' }}>{levels[tabIndex - len]} Goals:</Typography>
-                                            <Typography variant="body1" sx={{ display: 'flex', width: '100%' }}>
-                                                {GenericLogic.capitalizeFirstLetter(savedData[levels[tabIndex - len]]['planning']['One Thing'])}
-                                            </Typography>
-                                        </>
-                                        : <></>))}
-                                </Box>
-                                {config.sections[level].map((section) => (
-                                    <Box key={`section-${level}-${section.name}`} sx={{ mt: 2 }}>
-                                        <Typography
-                                            variant="h6"
-                                            sx={{ fontStyle: 'italic', fontWeight: 'bold' }}
-                                        >
-                                            {section.label || section.name}
-                                        </Typography>
+                        <div>
+                            <Button onClick={() => handlePrevNextClick('prev')} variant="contained" sx={{ marginRight: "10px" }}>Prev</Button>
+                            <Button onClick={() => handlePrevNextClick('next')} variant="contained" disabled={isSelectedDateToday()}>Next</Button>
+                        </div>
+                    </Box>
 
-
-
-                                        <List>
-                                            {section.fields.map((field, index) => (
-                                                <ListItem
-                                                    key={`field-${level}-${section.name}-${index}`}
-                                                    sx={{ display: 'flex', flexDirection: 'column' }}
-                                                >
-                                                    {renderField(field, level, section.name, index)}
-                                                </ListItem>
-                                            ))}
-                                        </List>
+                    {levels
+                        .filter((level) => config.levels[level])
+                        .map((level, index) => (
+                            <div
+                                key={`tabpanel-${level}-${index}`}
+                                role="tabpanel"
+                                hidden={tabIndex !== index}
+                                id={`tabpanel-${index}`}
+                            >
+                                {tabIndex === index && savedData[level] ? (
+                                    <Box>
+                                        {/* <Typography variant="h6">Saved {level} Goals</Typography> */}
+                                        <ShowSavedGoalEvaluation savedData={savedData[level]} config={config.sections[level]} level={level}></ShowSavedGoalEvaluation>
                                     </Box>
-                                ))}
-                            </Box>
-                        )}
-                    </div>
-                ))}
+                                ) : (
+                                    <Box sx={{ p: 3, width: '100%' }}>
+                                        <Box>
+                                            {GenericLogic.numberArray(2, 1).map((len) => (levels[tabIndex - len] && savedData[levels[tabIndex - len]] && savedData[levels[tabIndex - len]]['planning'] && savedData[levels[tabIndex - len]]['planning']['One Thing'] ?
+                                                <>
+                                                    <Typography variant="h6" sx={{ textTransform: 'capitalize', display: 'flex', width: '100%' }}>{levels[tabIndex - len]} Goals:</Typography>
+                                                    <Typography variant="body1" sx={{ display: 'flex', width: '100%' }}>
+                                                        {GenericLogic.capitalizeFirstLetter(savedData[levels[tabIndex - len]]['planning']['One Thing'])}
+                                                    </Typography>
+                                                </>
+                                                : <></>))}
+                                        </Box>
+                                        {config.sections[level].map((section) => (
+                                            <Box key={`section-${level}-${section.name}`} sx={{ mt: 2 }}>
+                                                <Typography
+                                                    variant="h6"
+                                                    sx={{ fontStyle: 'italic', fontWeight: 'bold' }}
+                                                >
+                                                    {section.label || section.name}
+                                                </Typography>
 
-            {savedData[levels[tabIndex]] ? <></> : (
-                <Box sx={{ display: 'flex', justifyContent: 'space-evenly', mt: 2 }}>
-                    <Button variant="contained" color="primary" onClick={handleSubmit}>
-                        Submit
-                    </Button>
-                </Box>)}
+
+
+                                                <List>
+                                                    {section.fields.map((field, index) => (
+                                                        <ListItem
+                                                            key={`field-${level}-${section.name}-${index}`}
+                                                            sx={{ display: 'flex', flexDirection: 'column' }}
+                                                        >
+                                                            {renderField(field, level, section.name, index)}
+                                                        </ListItem>
+                                                    ))}
+                                                </List>
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                )}
+                            </div>
+                        ))}
+
+                    {savedData[levels[tabIndex]] ? <></> : (
+                        <Box sx={{ display: 'flex', justifyContent: 'space-evenly', mt: 2 }}>
+                            <Button variant="contained" color="primary" onClick={handleSubmit}>
+                                Submit
+                            </Button>
+                        </Box>)}
+
+                </div>)} {/* Empty div to avoid error in the return statement */}
+
         </div>
     );
 };
