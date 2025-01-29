@@ -153,7 +153,7 @@ const TrackYourGoal = () => {
 
     const renderField = (field, level, sectionName, index) => {
         const value =
-            formValues[level]?.[sectionName]?.[field.label] || (field.type === 'checkbox' ? [] : '');
+            formValues[level]?.[sectionName]?.[field.name || field.label] || (field.type === 'checkbox' ? [] : '');
 
         switch (field.type) {
             case 'text':
@@ -165,7 +165,7 @@ const TrackYourGoal = () => {
                         variant="standard"
                         value={value}
                         onChange={(e) =>
-                            handleInputChange(level, sectionName, field.label, e.target.value)
+                            handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
                         }
                         sx={{ flex: 1, width: '100%' }}
                     />
@@ -177,13 +177,13 @@ const TrackYourGoal = () => {
                         key={`${level}-${sectionName}-${index}`}
                         value={value}
                         onChange={(e) =>
-                            handleInputChange(level, sectionName, field.label, e.target.value)
+                            handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
                         }
                         size="small"
                         sx={{ flex: 1, width: '100%' }}
                     >
                         {field.options.map((option, index) => (
-                            <MenuItem value={option} key={`${field.label}-option-${index}`}>
+                            <MenuItem value={option} key={`${(field.name || field.label)}-option-${index}`}>
                                 {option}
                             </MenuItem>
                         ))}
@@ -197,7 +197,7 @@ const TrackYourGoal = () => {
                         <FormGroup key={`${level}-${sectionName}-${index}`} row sx={{ width: '100%' }}>
                             {field.options.map((option, index) => (
                                 <FormControlLabel
-                                    key={`${field.label}-checkbox-${index}`}
+                                    key={`${(field.name || field.label)}-checkbox-${index}`}
                                     control={
                                         <Checkbox
                                             checked={value.includes(option)}
@@ -205,7 +205,7 @@ const TrackYourGoal = () => {
                                                 const newValue = e.target.checked
                                                     ? [...value, option]
                                                     : value.filter((v) => v !== option);
-                                                handleInputChange(level, sectionName, field.label, newValue);
+                                                handleInputChange(level, sectionName, (field.name || field.label), newValue);
                                             }}
                                         />
                                     }
@@ -227,7 +227,7 @@ const TrackYourGoal = () => {
                             row
                             value={value}
                             onChange={(e) =>
-                                handleInputChange(level, sectionName, field.label, e.target.value)
+                                handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
                             }
                             sx={{
                                 width: '100%', // Ensure the RadioGroup takes full width
@@ -235,7 +235,7 @@ const TrackYourGoal = () => {
                         >
                             {field.options.map((option, index) => (
                                 <FormControlLabel
-                                    key={`${field.label}-radio-${index}`}
+                                    key={`${(field.name || field.label)}-radio-${index}`}
                                     value={option}
                                     control={<Radio />}
                                     label={option}
