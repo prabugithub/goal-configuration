@@ -269,7 +269,9 @@ const TrackYourGoal = () => {
             </Typography>
 
             <Box sx={{ borderBottom: 1, borderColor: 'divider', overflowX: 'auto' }}>
-                <Tabs value={tabIndex} onChange={handleTabChange} aria-label="Goal levels" key="levels_tab">
+                <Tabs value={tabIndex} onChange={handleTabChange} aria-label="Goal levels" key="levels_tab" variant="scrollable"
+                    scrollButtons="auto"
+                    allowScrollButtonsMobile>
                     {levels
                         .filter((level) => config.levels[level])
                         .map((level, index) => (
