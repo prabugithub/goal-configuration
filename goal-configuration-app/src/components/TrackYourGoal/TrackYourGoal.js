@@ -20,7 +20,7 @@ import {
     CircularProgress
 } from '@mui/material';
 import { useGoalConfig } from '../../context/GoalConfigContext';
-import { getGoal, saveGoal } from '../../api/services/firebaseServices';
+import { deleteGoal, getGoal, saveGoal } from '../../api/services/firebaseServices';
 import { useAuth } from '../../context/AuthContext';
 import GenericLogic from '../../common/utils/generic-logic';
 import ShowSavedGoalEvaluation from '../ShowSavedGoalEvaluation/ShowSavedGoalEvaluation';
@@ -90,6 +90,10 @@ const TrackYourGoal = () => {
         return new Date(selectedDate).toISOString().split('T')[0] === new Date().toISOString().split('T')[0];
     };
 
+    const showDeleteButton = () => {
+        return isSelectedDateToday() && new Date(selectedDate).toISOString().split('T')[0] === getIdentifier(levels[tabIndex], selectedDate);
+    };
+
     const resetDate = () => {
         setSelectedDate(new Date());
     }
@@ -126,13 +130,21 @@ const TrackYourGoal = () => {
         }));
     };
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (action) => {
         const level = levels[tabIndex];
         const identifier = getIdentifier(level, selectedDate);
-        await saveGoal(formValues[level], user.uid, level, identifier);
-        alert(`${level} goals saved successfully!`);
-        if (levels.length > tabIndex + 1)
-            setTabIndex(tabIndex + 1);
+        switch (action) {
+            case 'delete':
+                await deleteGoal(user.uid, level, identifier);
+                alert(`${level} goals ${action} successfully!`);
+                break;
+            default:
+                await saveGoal(formValues[level], user.uid, level, identifier);
+                if (levels.length > tabIndex + 1)
+                    setTabIndex(tabIndex + 1);
+                alert(`${level} goals ${action} successfully!`);
+                break;
+        }
     };
 
     function a11yProps(index) {
@@ -348,8 +360,13 @@ const TrackYourGoal = () => {
                             </div>
                         ))}
 
-                    {savedData[levels[tabIndex]] ? <></> : (
-                        <Box sx={{ display: 'flex', justifyContent: 'space-evenly', mt: 2 }}>
+                    {savedData[levels[tabIndex]] ? showDeleteButton() ? <>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-evenly', mt: 2 }} key={'delete_button'}>
+                            <Button variant="contained" color="secondary" onClick={() => handleSubmit('delete')}>
+                                Delete
+                            </Button></Box>
+                    </> : <></> : (
+                        <Box sx={{ display: 'flex', justifyContent: 'space-evenly', mt: 2 }} key={'submit_button'}>
                             <Button variant="contained" color="primary" onClick={handleSubmit}>
                                 Submit
                             </Button>
