@@ -2,7 +2,8 @@
 
 import './App.css';
 import GoalHierarchySelection from './components/GoalHierarchySelection/GoalHierarchySelection';
-import { Container, CssBaseline } from '@mui/material';
+import { Button, Container, CssBaseline, IconButton, Typography } from '@mui/material';
+import LogoutIcon from '@mui/icons-material/Logout'; // Import Logout icon
 import NextStep from './components/NextStep/NextStep';
 import { useStep } from './context/StepContext';
 import ConfigureFields from './components/ConfigureFields/ConfigureFields';
@@ -19,7 +20,6 @@ import { initialConfigState } from './context/DefaultValues/GlobalDefaultConfig'
 function App() {
   const { currentStep } = useStep();
   const [user, setUser] = useState(null);
-  const [showLogin, setShowLogin] = useState(true); // State to toggle between Login and Sign Up forms
   const [hasConfiguration, setHasConfiguration] = useState(false);
   const { config, setConfig } = useGoalConfig();
   const [loading, setLoading] = useState(true);
@@ -53,13 +53,24 @@ function App() {
         .catch((error) => console.error("Error during logout on close:", error));
     };
 
-    // window.addEventListener("beforeunload", handleLogoutOnClose);
+    window.addEventListener("beforeunload", handleLogoutOnClose);
 
     return () => {
       unsubscribe();
-      // window.removeEventListener("beforeunload", handleLogoutOnClose);
+      window.removeEventListener("beforeunload", handleLogoutOnClose);
     };
   }, []);
+
+   // Logout function
+   const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      console.log("User logged out successfully");
+      setUser(null);
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   // Array of step components
   const steps = [
@@ -76,35 +87,20 @@ function App() {
     <div className="App">
       <CssBaseline />
       {user ? (
-        <Container maxWidth="sm">
-          {hasConfiguration ? <TrackYourGoal></TrackYourGoal> :
-            <>
-              <h1>Focus2Win!</h1>
-              {steps[currentStep]}
-            </>
-
-          }
-        </Container>
+         <Container maxWidth="sm">
+         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+           <Typography variant="h5" gutterBottom>
+             {hasConfiguration ? "Your Onething!" : "Focus2Win!"}
+           </Typography>
+           <IconButton color="primary" onClick={handleLogout} title="Logout">
+           <LogoutIcon />
+           </IconButton>
+         </div>
+         {hasConfiguration ? <TrackYourGoal /> : steps[currentStep]}
+       </Container>
       ) : (
         <div>
-          {showLogin ? (
-            <Login key="login" />
-          ) : (
-            <Signup key="signup" />
-          )}
-          <button
-            onClick={() => setShowLogin(!showLogin)}
-            style={{
-              marginTop: "10px",
-              padding: "10px 20px",
-              backgroundColor: "#1976d2",
-              color: "#fff",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            {showLogin ? "Switch to Sign Up" : "Switch to Login"}
-          </button>
+          <Login key="login" />
         </div>
       )}
     </div>

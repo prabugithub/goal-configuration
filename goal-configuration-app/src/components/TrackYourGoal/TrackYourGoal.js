@@ -62,7 +62,10 @@ const TrackYourGoal = () => {
                         delete prev[level];
                         return { ...prev }
                     });
-                    alert(`No data found! You might not saved any data for this ${getFormatedDate(selectedDate)} date.`);
+                    if(!isSelectedDateToday()) {
+                        alert(`No data found! You might not saved any data for this ${getFormatedDate(selectedDate)} date. You may reset to today for quick reset!.`);
+                    }
+                    
                 };
             } catch (error) {
                 console.error("Error fetching goal data:", error);
@@ -76,14 +79,11 @@ const TrackYourGoal = () => {
 
     const handleTabChange = (event, newIndex) => {
         isInitialLoad.current = false;
-        // if(levels[newIndex] !== 'daily') {
-        //     setSelectedDate(getIdentifier(levels[newIndex]));
-        // }
         setTabIndex(newIndex);
     };
 
-    const isSelectedDateIsFuture = () => {
-        return new Date(selectedDate).toISOString().split('T')[0] > new Date().toISOString().split('T')[0];
+    const isSelectedDateIsFuture = (newDate) => {
+        return new Date(newDate).toISOString().split('T')[0] > new Date().toISOString().split('T')[0];
     };
 
     const isSelectedDateToday = () => {
@@ -167,8 +167,8 @@ const TrackYourGoal = () => {
         } else if (levels[tabIndex] === 'yearly') {
             newDate.setFullYear(newDate.getFullYear() + (direction === 'prev' ? -1 : 1)); // Move one year back or forward
         }
-        if (isSelectedDateIsFuture(newDate)) {
-            alert('You can not select future date.');
+        if (isSelectedDateIsFuture(newDate) && direction === 'next') {
+            alert(`Not allowing future ${levels[tabIndex]} plan.`);
         } else {
             setSelectedDate(newDate);
         }
@@ -276,10 +276,6 @@ const TrackYourGoal = () => {
 
     return (
         <div>
-            <Typography variant="h5" gutterBottom>
-                Your Onething!
-            </Typography>
-
             <Box sx={{ borderBottom: 1, borderColor: 'divider', overflowX: 'auto' }}>
                 <Tabs value={tabIndex} onChange={handleTabChange} aria-label="Goal levels" key="levels_tab" variant="scrollable"
                     scrollButtons="auto"
@@ -325,9 +321,8 @@ const TrackYourGoal = () => {
                                         <Box>
                                             {GenericLogic.numberArray(2, 1).map((len) => (levels[tabIndex - len] && savedData[levels[tabIndex - len]] && savedData[levels[tabIndex - len]]['planning'] && savedData[levels[tabIndex - len]]['planning']['One Thing'] ?
                                                 <>
-                                                    <Typography variant="h6" sx={{ textTransform: 'capitalize', display: 'flex', width: '100%' }}>{levels[tabIndex - len]} Goals:</Typography>
-                                                    <Typography variant="body1" sx={{ display: 'flex', width: '100%' }}>
-                                                        {GenericLogic.capitalizeFirstLetter(savedData[levels[tabIndex - len]]['planning']['One Thing'])}
+                                                    <Typography variant="body1" sx={{ fontSize: "15px", textAlign: "left", marginBottom: "15px" }}>
+                                                        <strong>{GenericLogic.capitalizeFirstLetter(levels[tabIndex - len])} Goals: </strong>{GenericLogic.capitalizeFirstLetter(savedData[levels[tabIndex - len]]['planning']['One Thing'])}
                                                     </Typography>
                                                 </>
                                                 : <></>))}
