@@ -31,6 +31,24 @@
   color: #61dafb;
 }
 
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: white; /* Adjust as per your theme */
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.container {
+  margin-top: 60px; /* To avoid content being hidden behind the fixed header */
+}
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);

@@ -113,8 +113,8 @@ function App() {
     <div className="App">
       <CssBaseline />
       {user ? (
-         <Container maxWidth="sm">
-         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+         <Container maxWidth="sm" className="container">
+         <header className="app-header">
           {/* Left side: Delete Configuration Icon */}
             <IconButton color="secondary" onClick={handleConfigDelete} title="Delete Configuration">
               <SettingsIcon  />
@@ -126,7 +126,7 @@ function App() {
            <IconButton color="primary" onClick={handleLogout} title="Logout">
            <LogoutIcon />
            </IconButton>
-         </div>
+           </header>
          {hasConfiguration ? <TrackYourGoal /> : steps[currentStep]}
        </Container>
       ) : (
