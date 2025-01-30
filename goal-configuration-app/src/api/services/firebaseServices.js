@@ -83,3 +83,14 @@ export const updateGoal = async (data, userId, level, identifier) => {
     throw error;
   }
 };
+
+export const deleteUserConfiguration = async (uid) => {
+  try {
+    const userConfigDocRef = doc(db, "users", uid, "configurations", "goalConfig"); // Correct path
+    await deleteDoc(userConfigDocRef); // Delete the document from Firestore
+    console.log("User configuration deleted successfully.");
+  } catch (error) {
+    console.error("Error deleting configuration:", error);
+    throw error; // Rethrow error to handle it in App.js
+  }
+};

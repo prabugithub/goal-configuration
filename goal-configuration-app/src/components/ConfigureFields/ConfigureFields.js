@@ -78,11 +78,13 @@ const ConfigureFields = () => {
       </Typography>
       <Box>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={value} onChange={handleChange} aria-label="Yearly selection">
+          <Tabs value={value} onChange={handleChange} aria-label="Yearly selection" variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile>
             {Object.keys(config.levels)
               .filter((level) => config.levels[level]) // Only display selected levels
               .map((level, ind) => (
-                <Tab label={level} {...a11yProps(ind)}  key={'tab_' + ind}/>
+                <Tab label={level} {...a11yProps(ind)} key={'tab_' + ind} />
               ))}
           </Tabs>
         </Box>

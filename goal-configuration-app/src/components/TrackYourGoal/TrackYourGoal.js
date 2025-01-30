@@ -62,10 +62,10 @@ const TrackYourGoal = () => {
                         delete prev[level];
                         return { ...prev }
                     });
-                    if(!isSelectedDateToday()) {
+                    if (!isSelectedDateToday()) {
                         alert(`No data found! You might not saved any data for this ${getFormatedDate(selectedDate)} date. You may reset to today for quick reset!.`);
                     }
-                    
+
                 };
             } catch (error) {
                 console.error("Error fetching goal data:", error);
@@ -276,6 +276,10 @@ const TrackYourGoal = () => {
 
     return (
         <div>
+            <Typography variant="caption" sx={{ fontStyle: "italic", fontSize: "9px" }} gutterBottom>
+                Plan and track your goals effectively in different timeframes—yearly, quarterly, monthly, weekly, and daily.
+                Stay organized and monitor your progress to achieve your long-term objectives.
+            </Typography>
             <Box sx={{ borderBottom: 1, borderColor: 'divider', overflowX: 'auto' }}>
                 <Tabs value={tabIndex} onChange={handleTabChange} aria-label="Goal levels" key="levels_tab" variant="scrollable"
                     scrollButtons="auto"

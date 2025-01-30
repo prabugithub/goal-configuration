@@ -81,7 +81,9 @@ const NextStep = () => {
             </Typography>
             <Box>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <Tabs value={value} onChange={handleChange} aria-label="Yearly selection" key="levels_tab" allowScrollButtonsMobile variant="scrollable">
+                    <Tabs value={value} onChange={handleChange} aria-label="Yearly selection" key="levels_tab" variant="scrollable"
+                    scrollButtons="auto"
+                    allowScrollButtonsMobile>
                         {Object.keys(config.levels)
                             .filter((level) => config.levels[level]) // Only display selected levels
                             .map((level, ind) => (

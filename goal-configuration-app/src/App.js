@@ -4,6 +4,7 @@ import './App.css';
 import GoalHierarchySelection from './components/GoalHierarchySelection/GoalHierarchySelection';
 import { Button, Container, CssBaseline, IconButton, Typography } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout'; // Import Logout icon
+import SettingsIcon from '@mui/icons-material/Settings'; // Import Delete icon
 import NextStep from './components/NextStep/NextStep';
 import { useStep } from './context/StepContext';
 import ConfigureFields from './components/ConfigureFields/ConfigureFields';
@@ -12,7 +13,7 @@ import Signup from './components/Login/SignUp';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './api/firebase/firebas';
-import { getUserConfiguration } from './api/services/firebaseServices';
+import { deleteUserConfiguration, getUserConfiguration } from './api/services/firebaseServices';
 import TrackYourGoal from './components/TrackYourGoal/TrackYourGoal';
 import { useGoalConfig } from './context/GoalConfigContext';
 import { initialConfigState } from './context/DefaultValues/GlobalDefaultConfig';
@@ -44,7 +45,8 @@ function App() {
           console.error("Error checking user configuration:", error);
         }
       }
-      setLoading(false); // Stop loading once auth and config check is complete
+      setLoading(false);
+       // Stop loading once auth and config check is complete
     });
 
     // Log out on app close or refresh
@@ -64,12 +66,34 @@ function App() {
 
    // Logout function
    const handleLogout = async () => {
+    const isConfirmed = window.confirm("Are you sure you want to log out?");
+    if (!isConfirmed) {
+      return;
+    }
     try {
       await signOut(auth);
       console.log("User logged out successfully");
       setUser(null);
     } catch (error) {
       console.error("Logout error:", error);
+    }
+  };
+
+  const handleConfigDelete = async () => {
+    const isConfirmed = window.confirm("This will delete your goal configuration, Are you sure you want to delete your configuration? Still saved evaluation data would be maintained.");
+    if (!isConfirmed) {
+      return;
+    }
+
+    if (user) {
+      try {
+        await deleteUserConfiguration(user.uid); // Delete the configuration from Firestore
+        setConfig(initialConfigState); // Reset local state
+        setHasConfiguration(false); // Mark configuration as deleted
+        console.log("User configuration deleted successfully.");
+      } catch (error) {
+        console.error("Error deleting configuration:", error);
+      }
     }
   };
 
@@ -91,6 +115,11 @@ function App() {
       {user ? (
          <Container maxWidth="sm">
          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {/* Left side: Delete Configuration Icon */}
+            <IconButton color="secondary" onClick={handleConfigDelete} title="Delete Configuration">
+              <SettingsIcon  />
+            </IconButton>
+            {/* Right side: Logout Icon */}
            <Typography variant="h5" color="primary" gutterBottom>
              {hasConfiguration ? "Your Onething!" : "Focus2Win!"}
            </Typography>
