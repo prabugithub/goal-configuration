@@ -327,7 +327,7 @@ const TrackYourGoal = () => {
                                                 </>
                                                 : <></>))}
                                         </Box>
-                                        {config.sections[level].map((section) => (
+                                        {config.sections[level].map((section) => section.enabled && (
                                             <Box key={`section-${level}-${section.name}`} sx={{ mt: 2 }}>
                                                 <Typography
                                                     variant="h6"

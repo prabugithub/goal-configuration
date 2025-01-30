@@ -44,7 +44,7 @@ const initialConfigState = {
     },
     sections: {
         yearly: [
-            evaluation,
+            {...evaluation, enabled: false},
             planning,
             {
                 name: 'taskSplitUp',

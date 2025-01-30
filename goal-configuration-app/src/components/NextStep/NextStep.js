@@ -46,7 +46,6 @@ const NextStep = () => {
         console.log('Sections:', config.sections);
 
         await saveUserConfig(config, user.uid);
-        alert('Configuration saved successfully!');
         window.location.reload();
     };
 
@@ -76,12 +75,13 @@ const NextStep = () => {
 
     return (
         <div>
-            <Typography variant="h5" gutterBottom>
-                Selected Goal Levels
+            <Typography variant="caption" sx={{fontStyle:"italic"}} gutterBottom>
+                Note: Preview of your Settings! 
+               Save it for goal plan!
             </Typography>
             <Box>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <Tabs value={value} onChange={handleChange} aria-label="Yearly selection" key="levels_tab">
+                    <Tabs value={value} onChange={handleChange} aria-label="Yearly selection" key="levels_tab" allowScrollButtonsMobile variant="scrollable">
                         {Object.keys(config.levels)
                             .filter((level) => config.levels[level]) // Only display selected levels
                             .map((level, ind) => (
@@ -99,7 +99,7 @@ const NextStep = () => {
                             <Typography variant="h6" key={level + '_tg_' + ind}>{`${level.charAt(0).toUpperCase() + level.slice(1)} Level`}</Typography>
 
                             {/* Loop through default sections */}
-                            {(config.sections[level]).map((section) => (
+                            {(config.sections[level]).map((section) => section.enabled && (
                                 <Box key={section.name} sx={{ mt: 2 }}>
                                     {/* <FormControlLabel
                                             control={

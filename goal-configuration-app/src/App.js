@@ -16,6 +16,7 @@ import { getUserConfiguration } from './api/services/firebaseServices';
 import TrackYourGoal from './components/TrackYourGoal/TrackYourGoal';
 import { useGoalConfig } from './context/GoalConfigContext';
 import { initialConfigState } from './context/DefaultValues/GlobalDefaultConfig';
+import AppGuide from './components/AppGuide/AppGuide';
 
 function App() {
   const { currentStep } = useStep();
@@ -74,6 +75,7 @@ function App() {
 
   // Array of step components
   const steps = [
+    <AppGuide key="step0" />,
     <GoalHierarchySelection key="step1" />,
     <ConfigureFields key="step2" />,
     <NextStep key="step3" />,
@@ -89,7 +91,7 @@ function App() {
       {user ? (
          <Container maxWidth="sm">
          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-           <Typography variant="h5" gutterBottom>
+           <Typography variant="h5" color="primary" gutterBottom>
              {hasConfiguration ? "Your Onething!" : "Focus2Win!"}
            </Typography>
            <IconButton color="primary" onClick={handleLogout} title="Logout">
