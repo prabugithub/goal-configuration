@@ -13,7 +13,7 @@ import Signup from './components/Login/SignUp';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './api/firebase/firebas';
-import { deleteUserConfiguration, getUserConfiguration } from './api/services/firebaseServices';
+import { deleteUserConfiguration, getUserConfiguration, saveUserConfig } from './api/services/firebaseServices';
 import TrackYourGoal from './components/TrackYourGoal/TrackYourGoal';
 import { useGoalConfig } from './context/GoalConfigContext';
 import { initialConfigState } from './context/DefaultValues/GlobalDefaultConfig';
@@ -22,8 +22,7 @@ import AppGuide from './components/AppGuide/AppGuide';
 function App() {
   const { currentStep } = useStep();
   const [user, setUser] = useState(null);
-  const [hasConfiguration, setHasConfiguration] = useState(false);
-  const { config, setConfig } = useGoalConfig();
+  const { config, setConfig, hasConfiguration, setHasConfiguration, doResetConfig, setDoResetConfig } = useGoalConfig();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,15 +37,23 @@ function App() {
           // Set true if configuration exists
           if (conf) {
             setHasConfiguration(true);
-          } else {
-            setConfig(initialConfigState)
           }
+          else if (!conf && !doResetConfig) {
+            setLoading(true);
+            setConfig(initialConfigState);
+            await saveUserConfig(initialConfigState, currentUser?.uid);
+            setHasConfiguration(true);
+            setLoading(false);
+          } else {
+            setHasConfiguration(false);
+          }
+
         } catch (error) {
           console.error("Error checking user configuration:", error);
         }
       }
       setLoading(false);
-       // Stop loading once auth and config check is complete
+      // Stop loading once auth and config check is complete
     });
 
     // Log out on app close or refresh
@@ -64,8 +71,8 @@ function App() {
     };
   }, []);
 
-   // Logout function
-   const handleLogout = async () => {
+  // Logout function
+  const handleLogout = async () => {
     const isConfirmed = window.confirm("Are you sure you want to log out?");
     if (!isConfirmed) {
       return;
@@ -90,6 +97,7 @@ function App() {
         await deleteUserConfiguration(user.uid); // Delete the configuration from Firestore
         setConfig(initialConfigState); // Reset local state
         setHasConfiguration(false); // Mark configuration as deleted
+        setDoResetConfig(true);
         console.log("User configuration deleted successfully.");
       } catch (error) {
         console.error("Error deleting configuration:", error);
@@ -113,22 +121,22 @@ function App() {
     <div className="App">
       <CssBaseline />
       {user ? (
-         <Container maxWidth="sm" className="container">
-         <header className="app-header">
-          {/* Left side: Delete Configuration Icon */}
+        <Container maxWidth="sm" className="container">
+          <header className="app-header">
+            {/* Left side: Delete Configuration Icon */}
             <IconButton color="secondary" onClick={handleConfigDelete} title="Delete Configuration">
-              <SettingsIcon  />
+              <SettingsIcon />
             </IconButton>
             {/* Right side: Logout Icon */}
-           <Typography variant="h5" color="primary" gutterBottom>
-             {hasConfiguration ? "Your Onething!" : "Focus2Win!"}
-           </Typography>
-           <IconButton color="primary" onClick={handleLogout} title="Logout">
-           <LogoutIcon />
-           </IconButton>
-           </header>
-         {hasConfiguration ? <TrackYourGoal /> : steps[currentStep]}
-       </Container>
+            <Typography variant="h5" color="primary" gutterBottom>
+              {hasConfiguration ? "Your Onething!" : "Focus2Win!"}
+            </Typography>
+            <IconButton color="primary" onClick={handleLogout} title="Logout">
+              <LogoutIcon />
+            </IconButton>
+          </header>
+          {hasConfiguration ? <TrackYourGoal /> : steps[currentStep]}
+        </Container>
       ) : (
         <div>
           <Login key="login" />

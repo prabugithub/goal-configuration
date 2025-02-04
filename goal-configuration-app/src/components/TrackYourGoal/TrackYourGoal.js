@@ -136,7 +136,7 @@ const TrackYourGoal = () => {
         switch (action) {
             case 'delete':
                 await deleteGoal(user.uid, level, identifier);
-                alert(`${level} goals ${action} successfully!`);
+                alert(`${level} goals saved successfully on the date: ${getFormatedDate(selectedDate)}!`);
                 break;
             default:
                 await saveGoal(formValues[level], user.uid, level, identifier);
@@ -276,10 +276,6 @@ const TrackYourGoal = () => {
 
     return (
         <div>
-            <Typography variant="caption" sx={{ fontStyle: "italic", fontSize: "9px" }} gutterBottom>
-                Plan and track your goals effectively in different timeframes—yearly, quarterly, monthly, weekly, and daily.
-                Stay organized and monitor your progress to achieve your long-term objectives.
-            </Typography>
             <Box sx={{ borderBottom: 1, borderColor: 'divider', overflowX: 'auto' }}>
                 <Tabs value={tabIndex} onChange={handleTabChange} aria-label="Goal levels" key="levels_tab" variant="scrollable"
                     scrollButtons="auto"

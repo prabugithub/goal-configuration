@@ -16,18 +16,6 @@ const GoalHierarchySelection = ({ onNext }) => {
     // State for validation message
     const [validationMessage, setValidationMessage] = useState('');
 
-    // Toggle breakdown levels on and off
-    // const handleLevelChange = (level) => {
-    //     toggleLevels((prevLevels) => ({
-    //         ...prevLevels,
-    //         [level]: !prevLevels[level]
-    //     }));
-    //     setValidationMessage('');
-    //     console.log('Selected breakdown levels:', levels);
-
-    // };
-    
-
     // Handle form submission or "Next" button click
     const handleSubmit = () => {
         const selectedLevels = Object.values(config.levels).filter((selected) => selected);
@@ -43,10 +31,6 @@ const GoalHierarchySelection = ({ onNext }) => {
     };
     return (
         <div>
-            
-            <Typography variant="caption" sx={{ fontStyle: "italic", textAlign: "left" }} gutterBottom>
-                Note: Currently you can't change the goal breakdown. Based on the user review, we will add this feature in the future.   
-            </Typography>
             <List sx={{ width: '100%', alignItems: "center", maxWidth: 360, bgcolor: 'background.paper' }}>
                 {Object.keys(config.levels).map((level) => (
                     <ListItem key={level}

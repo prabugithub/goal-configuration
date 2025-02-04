@@ -1,14 +1,14 @@
 
 const evaluationFields = [
-    {name:'happy', label: 'Happy', type: 'text' },
-    {name:'stop', label: 'Stop', type: 'text' },
-    {name:'start', label: 'Start', type: 'text' },
-    {name:'action', label: 'Action', type: 'text' },
+    {name:'happy', label: 'What went well?', type: 'text' },
+    {name:'stop', label: 'What goes not well?', type: 'text' },
+    {name:'start', label: 'What are the things want to improve process?', type: 'text' },
+    {name:'action', label: 'Plan your improvements:', type: 'text' },
 ];
 
 const planningFields = [
-    { name: 'to-do', label: 'To-dos', type: 'text' },
-    { name: 'onething', label: 'One Thing', type: 'text' },
+    { name: 'to-do', label: 'List down 3-5 goals', type: 'text' },
+    { name: 'onething', label: 'Only one most important goal from the list:', type: 'text' },
 ];
 
 const evaluation = {
@@ -21,13 +21,13 @@ const evaluation = {
 const planning = {
     name: 'planning',
     label: 'Planning',
-    enabled: true,
+    enabled: false,
     fields: planningFields,
 }
 
 const surprices = {
     name: 'surprises',
-    label: 'Un planned - expected work',
+    label: 'Expected unplanned works:',
     enabled: true,
     fields: [{
         name: 'work', label: 'work', type: 'text'
@@ -45,10 +45,10 @@ const initialConfigState = {
     sections: {
         yearly: [
             {...evaluation, enabled: false},
-            planning,
+            {...planning, enabled: true},
             {
                 name: 'taskSplitUp',
-                label: 'Split Task:',
+                label: 'Break down your one goal into quater:',
                 enabled: true,
                 fields: [
                     { name: 'q1', label: 'Quater 1', type: 'text' },
@@ -65,7 +65,7 @@ const initialConfigState = {
             planning,
             {
                 name: 'taskSplitUp',
-                label: 'Split Task:',
+                label: 'Break down Quater goal into months:',
                 enabled: true,
                 fields: [
                     { name: 'm1', label: 'Month 1', type: 'text' },
@@ -81,7 +81,7 @@ const initialConfigState = {
             planning,
             {
                 name: 'taskSplitUp',
-                label: 'Split Task:',
+                label: 'Break down Month goal to weekly:',
                 enabled: true,
                 fields: [
                     { name: 'w1', label: 'Week 1', type: 'text' },
@@ -98,7 +98,7 @@ const initialConfigState = {
             planning,
             {
                 name: 'taskSplitUp',
-                label: 'Split Task:',
+                label: 'Break down weekly goal to daily:',
                 enabled: true,
                 fields: [
                     { name: 'mon', label: 'Mon', type: 'text' },
@@ -116,7 +116,7 @@ const initialConfigState = {
         daily: [
             {
                 name: 'evaluations',
-                label: 'Evaluation',
+                label: 'How you perform on your goal(only planned task):',
                 enabled: true,
                 fields: [
                     { name: 'went-well', label: 'What went well in the past 24 hours?', type: 'text' },
@@ -127,7 +127,7 @@ const initialConfigState = {
             },
             {
                 name: 'rituals',
-                label: 'Rituals',
+                label: 'Mind and body',
                 enabled: true,
                 fields: [
                     { name: 'meditation', label: 'Meditation', type: 'checkbox', options: ['Yes', 'No'] },
@@ -138,7 +138,7 @@ const initialConfigState = {
             },
             {
                 name: 'ratings',
-                label: 'Ratings',
+                label: 'Rate your day (6 for goal and 4 for mind and body):',
                 enabled: true,
                 fields: [
                     { name: 'total', label: '10 Out of:', type: 'text' },

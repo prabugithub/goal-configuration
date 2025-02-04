@@ -73,9 +73,6 @@ const ConfigureFields = () => {
   }
   return (
     <div>
-       <Typography variant="caption" sx={{ fontStyle: "italic" }} gutterBottom>
-          Note: Recomend to click Save&next, but you can enable/disable sections and fields.
-      </Typography>
       <Box>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={value} onChange={handleChange} aria-label="Yearly selection" variant="scrollable"

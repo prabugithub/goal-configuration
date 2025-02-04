@@ -19,9 +19,9 @@ const provider = new GoogleAuthProvider();
 // Function to handle Google sign-in
 const signInWithGoogle = async () => {
   try {
-    provider.setCustomParameters({
-      prompt: "select_account"  // Forces Google to show account chooser
-    });
+    // provider.setCustomParameters({
+    //   prompt: "select_account"  // Forces Google to show account chooser
+    // });
     const result = await signInWithPopup(auth, provider);
     console.log("User Info:", result.user);
   } catch (error) {
