@@ -27,7 +27,7 @@ import ShowSavedGoalEvaluation from '../ShowSavedGoalEvaluation/ShowSavedGoalEva
 import CONSTANTS from '../../common/constants';
 
 const TrackYourGoal = () => {
-    const { config } = useGoalConfig();
+    const { config, setHasConfiguration } = useGoalConfig();
     const { user } = useAuth();
 
     const [formValues, setFormValues] = useState({});
@@ -38,6 +38,12 @@ const TrackYourGoal = () => {
 
     const isInitialLoad = useRef(true);
     const levels = ['yearly', 'quarterly', 'monthly', 'weekly', 'daily'].filter(level => config.levels[level]);
+    const taskSettings = {
+        daily: { level: 'weekly', task:'taskSplitUp', value: 1 },
+        weekly: { level: 'monthly', task:'taskSplitUp', value: 7 },
+        monthly: { level: 'quarterly', task:'taskSplitUp', value: 30 },
+        quarterly: { level: 'yearly', task:'taskSplitUp', value: 90 },
+    };
 
     const getFormatedDate = (date) => date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear();
 
@@ -116,6 +122,24 @@ const TrackYourGoal = () => {
                 return '';
         }
     };
+    
+    const getTask = (level, date = new Date()) => {
+        const today = new Date(date);
+        switch (level) {
+            case 'daily':
+                return ["mon", "tue", "wed", "thu", "fri", "sat", "sun"][today.getDay()-1];
+            case 'weekly':
+                return `w${Math.ceil(today.getDate()/7)}`;
+            case 'monthly':
+                return `m${((today.getMonth() + 1) % 3)}`;
+            case 'quarterly':
+                return `q${Math.ceil((today.getMonth() + 1) / 3)}`;
+            // case 'yearly':
+            //     return `q${Math.ceil((today.getMonth() + 1) / 3)}`;
+            default:
+                return '';
+        }
+    };
 
     const handleInputChange = (level, sectionName, fieldName, value) => {
         setFormValues((prev) => ({
@@ -136,13 +160,27 @@ const TrackYourGoal = () => {
         switch (action) {
             case 'delete':
                 await deleteGoal(user.uid, level, identifier);
+                setSavedData((prev) => {
+                    const updatedData = { ...prev };
+                    delete updatedData[level];
+                    return updatedData;
+                });
+                setFormValues((prev) => {
+                    const updatedValues = { ...prev };
+                    delete updatedValues[level];
+                    return updatedValues;
+                });
                 alert(`${level} goals saved successfully on the date: ${getFormatedDate(selectedDate)}!`);
                 break;
             default:
                 await saveGoal(formValues[level], user.uid, level, identifier);
+                setSavedData((prev) => ({
+                    ...prev,
+                    [level]: formValues[level],
+                }));
                 if (levels.length > tabIndex + 1)
                     setTabIndex(tabIndex + 1);
-                alert(`${level} goals ${action} successfully!`);
+                alert(`${level} goals successfully on ${getFormatedDate(selectedDate)}!`);
                 break;
         }
     };
@@ -276,7 +314,15 @@ const TrackYourGoal = () => {
 
     return (
         <div>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', overflowX: 'auto' }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', overflowX: 'auto', position: 'sticky', top: 60, zIndex: 100, background: 'white' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: .25 }}>
+                    <div><Button onClick={() => resetDate()} variant="contained" disabled={isSelectedDateToday()} sx={{ marginRight: "10px" }}>Reset to Today</Button></div>
+
+                    <div>
+                        <Button onClick={() => handlePrevNextClick('prev')} variant="contained" sx={{ marginRight: "10px" }}>Prev</Button>
+                        <Button onClick={() => handlePrevNextClick('next')} variant="contained" disabled={isSelectedDateToday()}>Next</Button>
+                    </div>
+                </Box>
                 <Tabs value={tabIndex} onChange={handleTabChange} aria-label="Goal levels" key="levels_tab" variant="scrollable"
                     scrollButtons="auto"
                     allowScrollButtonsMobile>
@@ -293,14 +339,7 @@ const TrackYourGoal = () => {
                 </Box>
             ) : (
                 <div>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                        <div><Button onClick={() => resetDate()} variant="contained" disabled={isSelectedDateToday()} sx={{ marginRight: "10px" }}>Reset to Today</Button><Typography variant='subtitle1'><strong>{CONSTANTS.LEVEL[levels[tabIndex]?.toLocaleUpperCase()]}</strong> {getIdentifier(levels[tabIndex], selectedDate)}</Typography></div>
-
-                        <div>
-                            <Button onClick={() => handlePrevNextClick('prev')} variant="contained" sx={{ marginRight: "10px" }}>Prev</Button>
-                            <Button onClick={() => handlePrevNextClick('next')} variant="contained" disabled={isSelectedDateToday()}>Next</Button>
-                        </div>
-                    </Box>
+                  <Typography variant='subtitle1'><strong>{CONSTANTS.LEVEL[levels[tabIndex]?.toLocaleUpperCase()]}</strong> {getIdentifier(levels[tabIndex], selectedDate)}</Typography>
 
                     {levels
                         .filter((level) => config.levels[level])
@@ -317,15 +356,17 @@ const TrackYourGoal = () => {
                                         <ShowSavedGoalEvaluation savedData={savedData[level]} config={config.sections[level]} level={level}></ShowSavedGoalEvaluation>
                                     </Box>
                                 ) : (
-                                    <Box sx={{ p: 3, width: '100%' }}>
+                                    <Box sx={{ p: 1, width: '100%' }}>
                                         <Box>
-                                            {GenericLogic.numberArray(2, 1).map((len) => (levels[tabIndex - len] && savedData[levels[tabIndex - len]] && savedData[levels[tabIndex - len]]['planning'] && savedData[levels[tabIndex - len]]['planning']['One Thing'] ?
-                                                <>
-                                                    <Typography variant="body1" sx={{ fontSize: "15px", textAlign: "left", marginBottom: "15px" }}>
-                                                        <strong>{GenericLogic.capitalizeFirstLetter(levels[tabIndex - len])} Goals: </strong>{GenericLogic.capitalizeFirstLetter(savedData[levels[tabIndex - len]]['planning']['One Thing'])}
-                                                    </Typography>
-                                                </>
-                                                : <></>))}
+                                            {
+                                                savedData[taskSettings[level]?.level]?.taskSplitUp && savedData[taskSettings[level]?.level]?.taskSplitUp?.[getTask(level, selectedDate)] ?
+                                                
+                                                <Typography variant="body1" sx={{ fontSize: "15px", textAlign: "left", marginBottom: "15px" }}>
+                                                    <strong>{GenericLogic.capitalizeFirstLetter(levels[tabIndex])} Goal: </strong>{GenericLogic.capitalizeFirstLetter(savedData[taskSettings[level]?.level]?.taskSplitUp?.[getTask(level, selectedDate)])}
+                                                </Typography>
+                                        
+                                            : <></>
+                                            }
                                         </Box>
                                         {config.sections[level].map((section) => section.enabled && (
                                             <Box key={`section-${level}-${section.name}`} sx={{ mt: 2 }}>
@@ -363,7 +404,7 @@ const TrackYourGoal = () => {
                     </> : <></> : (
                         <Box sx={{ display: 'flex', justifyContent: 'space-evenly', mt: 2 }} key={'submit_button'}>
                             <Button variant="contained" color="primary" onClick={handleSubmit}>
-                                Submit
+                                Save
                             </Button>
                         </Box>)}
 

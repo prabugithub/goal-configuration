@@ -57,17 +57,17 @@ function App() {
     });
 
     // Log out on app close or refresh
-    const handleLogoutOnClose = () => {
-      signOut(auth)
-        .then(() => console.log("User logged out on app close"))
-        .catch((error) => console.error("Error during logout on close:", error));
-    };
+    // const handleLogoutOnClose = () => {
+    //   signOut(auth)
+    //     .then(() => console.log("User logged out on app close"))
+    //     .catch((error) => console.error("Error during logout on close:", error));
+    // };
 
-    window.addEventListener("beforeunload", handleLogoutOnClose);
+  //  window.addEventListener("beforeunload", handleLogoutOnClose);
 
     return () => {
       unsubscribe();
-      window.removeEventListener("beforeunload", handleLogoutOnClose);
+      //window.removeEventListener("beforeunload", handleLogoutOnClose);
     };
   }, []);
 

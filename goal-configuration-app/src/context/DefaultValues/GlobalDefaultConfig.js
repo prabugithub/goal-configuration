@@ -11,12 +11,6 @@ const planningFields = [
     { name: 'onething', label: 'Only one most important goal from the list:', type: 'text' },
 ];
 
-const evaluation = {
-    name: 'evaluation', label: 'Evaluations',
-    enabled: true,
-    fields: evaluationFields
-};
-
 
 const planning = {
     name: 'planning',
@@ -44,11 +38,15 @@ const initialConfigState = {
     },
     sections: {
         yearly: [
-            {...evaluation, enabled: false},
             {...planning, enabled: true},
             {
+                name: 'evaluation', label: 'Last Year Review',
+                enabled: true,
+                fields: evaluationFields
+            },
+            {
                 name: 'taskSplitUp',
-                label: 'Break down your one goal into quater:',
+                label: 'Break down Year goal to quaters:',
                 enabled: true,
                 fields: [
                     { name: 'q1', label: 'Quater 1', type: 'text' },
@@ -61,11 +59,15 @@ const initialConfigState = {
             surprices
         ],
         quarterly: [
-            evaluation,
+            {
+                name: 'evaluation', label: 'Last Quater Review',
+                enabled: true,
+                fields: evaluationFields
+            },
             planning,
             {
                 name: 'taskSplitUp',
-                label: 'Break down Quater goal into months:',
+                label: 'Break down Quater goal to months:',
                 enabled: true,
                 fields: [
                     { name: 'm1', label: 'Month 1', type: 'text' },
@@ -77,11 +79,15 @@ const initialConfigState = {
             surprices,
         ],
         monthly: [
-            evaluation,
+            {
+                name: 'evaluation', label: 'Last Month Review',
+                enabled: true,
+                fields: evaluationFields
+            },
             planning,
             {
                 name: 'taskSplitUp',
-                label: 'Break down Month goal to weekly:',
+                label: 'Break down Month goal to weeks:',
                 enabled: true,
                 fields: [
                     { name: 'w1', label: 'Week 1', type: 'text' },
@@ -94,11 +100,15 @@ const initialConfigState = {
             surprices
         ],
         weekly: [
-            evaluation,
+            {
+                name: 'evaluation', label: 'Last Week Review',
+                enabled: true,
+                fields: evaluationFields
+            },
             planning,
             {
                 name: 'taskSplitUp',
-                label: 'Break down weekly goal to daily:',
+                label: 'Break down Weekly goal to days:',
                 enabled: true,
                 fields: [
                     { name: 'mon', label: 'Mon', type: 'text' },
