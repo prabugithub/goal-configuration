@@ -10,7 +10,7 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
             return value.join();
         }
         // If the value is a string or other primitive type, render it as plain text
-        return <Typography variant="caption" sx={{ fontSize: "15px", textAlign: "left" }}>{GenericLogic.capitalizeFirstLetter(value)}</Typography>;
+        return <Typography variant="caption" sx={{ fontSize: "15px", textAlign: "left", whiteSpace: "pre-line" }}>{GenericLogic.capitalizeFirstLetter(value)}</Typography>;
     };
 
     return (
