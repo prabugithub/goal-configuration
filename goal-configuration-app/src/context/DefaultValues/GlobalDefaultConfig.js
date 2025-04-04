@@ -139,10 +139,17 @@ const initialConfigState = {
                 name: 'rituals',
                 label: 'Mind and body',
                 enabled: true,
+                // fields: [
+                //     { name: 'meditation', label: 'Meditation', type: 'checkbox', options: ['Yes', 'No'] },
+                //     { name: 'reading', label: 'Reading', type: 'checkbox', options: ['Yes', 'No'] },
+                //     { name: 'excercise', label: 'Exercise', type: 'checkbox', options: ['Yes', 'No'] },
+                //     { name: 'diet', label: 'Diet', type: 'checkbox', options: ['Yes', 'No'] },
+                // ]
                 fields: [
-                    { name: 'meditation', label: 'Meditation', type: 'checkbox', options: ['Yes', 'No'] },
-                    { name: 'reading', label: 'Reading', type: 'checkbox', options: ['Yes', 'No'] },
-                    { name: 'excercise', label: 'Exercise', type: 'checkbox', options: ['Yes', 'No'] },
+                    { name: 'deepwork', label: 'Deep work', type: 'time', options: ['Yes', 'No'] },
+                    { name: 'meditation', label: 'Meditation', type: 'time', options: ['Yes', 'No'] },
+                    { name: 'reading', label: 'Reading', type: 'time', options: ['Yes', 'No'] },
+                    { name: 'excercise', label: 'Exercise', type: 'time', options: ['Yes', 'No'] },
                     { name: 'diet', label: 'Diet', type: 'checkbox', options: ['Yes', 'No'] },
                 ]
             },

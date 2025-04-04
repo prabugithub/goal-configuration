@@ -106,7 +106,7 @@ const NextStep = () => {
                                                 {section?.fields?.map((field, index) => (
                                                     <ListItem key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                                         <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
-                                                            {field.type === 'text' && <TextField
+                                                            {['time', 'text'].includes(field.type) && <TextField
                                                                 label={field.label}
                                                                 size="small"
                                                                 variant="standard"

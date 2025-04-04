@@ -181,6 +181,26 @@ const TrackYourGoal = () => {
                     </>
                 );
 
+            case 'time': // New case for time input
+                return (
+                    <>
+                        <Typography variant="subtitle1" sx={{ width: '100%' }}>{field.label}</Typography>
+                        <TextField
+                            key={`${level}-${sectionName}-${index}`}
+                            size="small"
+                            variant="standard"
+                            type="number"
+                            value={value}
+                            onChange={(e) =>
+                                handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
+                            }
+                            sx={{ flex: 1, width: '100%' }}
+                            inputProps={{ min: 0 }} // Ensure only positive values
+                            placeholder="Enter time in minutes"
+                        />
+                    </>
+                );
+
             case 'dropdown':
                 return (
                     <>
@@ -417,7 +437,7 @@ const TrackYourGoal = () => {
                             </Button>
                         </Box>
                     )}
-                    
+
                     <Typography variant='subtitle1'>
                         <strong>{CONSTANTS.LEVEL[levels[tabIndex]?.toLocaleUpperCase()]}</strong> {getIdentifier(levels[tabIndex], selectedDate)}
                     </Typography>
@@ -425,23 +445,23 @@ const TrackYourGoal = () => {
                     {/* Display saved data or edit form */}
                     {savedData[levels[tabIndex]] && !editMode ? (
                         <Box>
-                            <ShowSavedGoalEvaluation 
-                                savedData={savedData[levels[tabIndex]]} 
-                                config={config.sections[levels[tabIndex]]} 
+                            <ShowSavedGoalEvaluation
+                                savedData={savedData[levels[tabIndex]]}
+                                config={config.sections[levels[tabIndex]]}
                                 level={levels[tabIndex]}
                             />
                         </Box>
                     ) : (
                         <Box sx={{ p: 1, width: '100%' }}>
                             {/* Show parent goal if exists */}
-                            {savedData[taskSettings[levels[tabIndex]]?.level]?.taskSplitUp && 
-                             savedData[taskSettings[levels[tabIndex]]?.level]?.taskSplitUp?.[getTask(levels[tabIndex], selectedDate)] && (
-                                <Typography variant="body1" sx={{ fontSize: "15px", textAlign: "left", marginBottom: "15px" }}>
-                                    <strong>{GenericLogic.capitalizeFirstLetter(levels[tabIndex])} Goal: </strong>
-                                    {GenericLogic.capitalizeFirstLetter(savedData[taskSettings[levels[tabIndex]]?.level]?.taskSplitUp?.[getTask(levels[tabIndex], selectedDate)])}
-                                </Typography>
-                            )}
-                            
+                            {savedData[taskSettings[levels[tabIndex]]?.level]?.taskSplitUp &&
+                                savedData[taskSettings[levels[tabIndex]]?.level]?.taskSplitUp?.[getTask(levels[tabIndex], selectedDate)] && (
+                                    <Typography variant="body1" sx={{ fontSize: "15px", textAlign: "left", marginBottom: "15px" }}>
+                                        <strong>{GenericLogic.capitalizeFirstLetter(levels[tabIndex])} Goal: </strong>
+                                        {GenericLogic.capitalizeFirstLetter(savedData[taskSettings[levels[tabIndex]]?.level]?.taskSplitUp?.[getTask(levels[tabIndex], selectedDate)])}
+                                    </Typography>
+                                )}
+
                             {/* Render form fields */}
                             {config.sections[levels[tabIndex]].map((section) => section.enabled && (
                                 <Box key={`section-${levels[tabIndex]}-${section.name}`} sx={{ mt: 2 }}>
@@ -455,10 +475,10 @@ const TrackYourGoal = () => {
                                         {section.fields.map((field, index) => (
                                             <ListItem
                                                 key={`field-${levels[tabIndex]}-${section.name}-${index}`}
-                                                sx={{ 
-                                                    display: 'flex', 
-                                                    flexDirection: 'column', 
-                                                    alignItems: 'flex-start', 
+                                                sx={{
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'flex-start',
                                                     width: '100%',
                                                     py: 1
                                                 }}
@@ -469,7 +489,7 @@ const TrackYourGoal = () => {
                                     </List>
                                 </Box>
                             ))}
-                            
+
                             {/* Show save button only when not in edit mode */}
                             {!editMode && (
                                 <Button
