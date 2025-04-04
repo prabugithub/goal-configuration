@@ -181,7 +181,8 @@ const TrackYourGoal = () => {
                     </>
                 );
 
-            case 'time': // New case for time input
+            case 'time':
+            case 'number': // New case for time input
                 return (
                     <>
                         <Typography variant="subtitle1" sx={{ width: '100%' }}>{field.label}</Typography>
@@ -196,7 +197,7 @@ const TrackYourGoal = () => {
                             }
                             sx={{ flex: 1, width: '100%' }}
                             inputProps={{ min: 0 }} // Ensure only positive values
-                            placeholder="Enter time in minutes"
+                            placeholder={field.type === 'time' ? 'Enter time in minutes' : 'Enter number'}
                         />
                     </>
                 );

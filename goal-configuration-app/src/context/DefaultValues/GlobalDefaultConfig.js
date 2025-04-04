@@ -158,7 +158,7 @@ const initialConfigState = {
                 label: 'Rate your day (6 for goal and 4 for mind and body):',
                 enabled: true,
                 fields: [
-                    { name: 'total', label: '10 Out of:', type: 'text' },
+                    { name: 'total', label: '10 Out of:', type: 'number' },
                 ]
             },
         ]
