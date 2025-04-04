@@ -6,8 +6,6 @@ import {
     Checkbox,
     RadioGroup,
     Radio,
-    FormLabel,
-    FormControl,
     FormGroup,
     FormControlLabel,
     List,
@@ -17,8 +15,12 @@ import {
     MenuItem,
     Tabs,
     Tab,
-    CircularProgress
+    CircularProgress,
+    Stack
 } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 import { useGoalConfig } from '../../context/GoalConfigContext';
 import { deleteGoal, getGoal, saveGoal } from '../../api/services/firebaseServices';
 import { useAuth } from '../../context/AuthContext';
@@ -35,14 +37,16 @@ const TrackYourGoal = () => {
     const [savedData, setSavedData] = useState({});
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [loading, setLoading] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+    const [tempFormValues, setTempFormValues] = useState({});
 
     const isInitialLoad = useRef(true);
     const levels = ['yearly', 'quarterly', 'monthly', 'weekly', 'daily'].filter(level => config.levels[level]);
     const taskSettings = {
-        daily: { level: 'weekly', task:'taskSplitUp', value: 1 },
-        weekly: { level: 'monthly', task:'taskSplitUp', value: 7 },
-        monthly: { level: 'quarterly', task:'taskSplitUp', value: 30 },
-        quarterly: { level: 'yearly', task:'taskSplitUp', value: 90 },
+        daily: { level: 'weekly', task: 'taskSplitUp', value: 1 },
+        weekly: { level: 'monthly', task: 'taskSplitUp', value: 7 },
+        monthly: { level: 'quarterly', task: 'taskSplitUp', value: 30 },
+        quarterly: { level: 'yearly', task: 'taskSplitUp', value: 90 },
     };
 
     const getFormatedDate = (date) => date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear();
@@ -122,14 +126,14 @@ const TrackYourGoal = () => {
                 return '';
         }
     };
-    
+
     const getTask = (level, date = new Date()) => {
         const today = new Date(date);
         switch (level) {
             case 'daily':
-                return ["mon", "tue", "wed", "thu", "fri", "sat", "sun"][today.getDay()-1];
+                return ["mon", "tue", "wed", "thu", "fri", "sat", "sun"][today.getDay() - 1];
             case 'weekly':
-                return `w${Math.ceil(today.getDate()/7)}`;
+                return `w${Math.ceil(today.getDate() / 7)}`;
             case 'monthly':
                 return `m${((today.getMonth() + 1) % 3)}`;
             case 'quarterly':
@@ -154,6 +158,110 @@ const TrackYourGoal = () => {
         }));
     };
 
+    const renderField = (field, level, sectionName, index) => {
+        const value = formValues[level]?.[sectionName]?.[field.name || field.label] || (field.type === 'checkbox' ? [] : '');
+
+        switch (field.type) {
+            case 'text':
+                return (
+                    <>
+                        <Typography variant="subtitle1" sx={{ width: '100%' }}>{field.label}</Typography>
+                        <TextField
+                            key={`${level}-${sectionName}-${index}`}
+                            size="small"
+                            variant="standard"
+                            value={value}
+                            onChange={(e) =>
+                                handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
+                            }
+                            sx={{ flex: 1, width: '100%' }}
+                            multiline
+                            rows={4}
+                        />
+                    </>
+                );
+
+            case 'dropdown':
+                return (
+                    <>
+                        <Typography variant="subtitle1" sx={{ width: '100%' }}>{field.label}</Typography>
+                        <Select
+                            key={`${level}-${sectionName}-${index}`}
+                            value={value}
+                            onChange={(e) =>
+                                handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
+                            }
+                            size="small"
+                            sx={{ flex: 1, width: '100%' }}
+                        >
+                            {field.options.map((option, index) => (
+                                <MenuItem value={option} key={`${(field.name || field.label)}-option-${index}`}>
+                                    {option}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </>
+                );
+
+            case 'checkbox':
+                return (
+                    <>
+                        <Typography variant="subtitle1" sx={{ width: '100%' }}>{field.label}</Typography>
+                        <FormGroup key={`${level}-${sectionName}-${index}`} row sx={{ width: '100%' }}>
+                            {field.options.map((option, index) => (
+                                <FormControlLabel
+                                    key={`${(field.name || field.label)}-checkbox-${index}`}
+                                    control={
+                                        <Checkbox
+                                            checked={value.includes(option)}
+                                            onChange={(e) => {
+                                                const newValue = e.target.checked
+                                                    ? [...value, option]
+                                                    : value.filter((v) => v !== option);
+                                                handleInputChange(level, sectionName, (field.name || field.label), newValue);
+                                            }}
+                                            size="small"
+                                        />
+                                    }
+                                    label={option}
+                                    sx={{ mr: 2 }}
+                                />
+                            ))}
+                        </FormGroup>
+                    </>
+                );
+
+            case 'radio':
+                return (
+                    <>
+                        <Typography variant="subtitle1" sx={{ width: '100%' }}>{field.label}</Typography>
+                        <RadioGroup
+                            key={`${level}-${sectionName}-${index}`}
+                            row
+                            value={value}
+                            onChange={(e) =>
+                                handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
+                            }
+                            sx={{ width: '100%' }}
+                        >
+                            {field.options.map((option, index) => (
+                                <FormControlLabel
+                                    key={`${(field.name || field.label)}-radio-${index}`}
+                                    value={option}
+                                    control={<Radio size="small" />}
+                                    label={option}
+                                    sx={{ mr: 2 }}
+                                />
+                            ))}
+                        </RadioGroup>
+                    </>
+                );
+
+            default:
+                return null;
+        }
+    };
+
     const handleSubmit = async (action) => {
         const level = levels[tabIndex];
         const identifier = getIdentifier(level, selectedDate);
@@ -170,7 +278,31 @@ const TrackYourGoal = () => {
                     delete updatedValues[level];
                     return updatedValues;
                 });
-                alert(`${level} goals saved successfully on the date: ${getFormatedDate(selectedDate)}!`);
+                alert(`${level} goals deleted successfully!`);
+                break;
+            case 'edit':
+                setTempFormValues(JSON.parse(JSON.stringify(savedData[level])));
+                setFormValues((prev) => ({
+                    ...prev,
+                    [level]: savedData[level]
+                }));
+                setEditMode(true);
+                break;
+            case 'save':
+                await saveGoal(formValues[level], user.uid, level, identifier);
+                setSavedData((prev) => ({
+                    ...prev,
+                    [level]: formValues[level],
+                }));
+                setEditMode(false);
+                alert(`${level} goals updated successfully!`);
+                break;
+            case 'cancel':
+                setFormValues((prev) => ({
+                    ...prev,
+                    [level]: tempFormValues,
+                }));
+                setEditMode(false);
                 break;
             default:
                 await saveGoal(formValues[level], user.uid, level, identifier);
@@ -180,7 +312,7 @@ const TrackYourGoal = () => {
                 }));
                 if (levels.length > tabIndex + 1)
                     setTabIndex(tabIndex + 1);
-                alert(`${level} goals successfully on ${getFormatedDate(selectedDate)}!`);
+                alert(`${level} goals saved successfully on ${getFormatedDate(selectedDate)}!`);
                 break;
         }
     };
@@ -212,205 +344,148 @@ const TrackYourGoal = () => {
         }
     };
 
-    const renderField = (field, level, sectionName, index) => {
-        const value =
-            formValues[level]?.[sectionName]?.[field.name || field.label] || (field.type === 'checkbox' ? [] : '');
-
-        switch (field.type) {
-            case 'text':
-                return (
-                    <TextField
-                        key={`${level}-${sectionName}-${index}`}
-                        label={field.label}
-                        size="small"
-                        variant="standard"
-                        value={value}
-                        onChange={(e) =>
-                            handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
-                        }
-                        sx={{ flex: 1, width: '100%' }}
-                    />
-                );
-
-            case 'dropdown':
-                return (
-                    <Select
-                        key={`${level}-${sectionName}-${index}`}
-                        value={value}
-                        onChange={(e) =>
-                            handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
-                        }
-                        size="small"
-                        sx={{ flex: 1, width: '100%' }}
-                    >
-                        {field.options.map((option, index) => (
-                            <MenuItem value={option} key={`${(field.name || field.label)}-option-${index}`}>
-                                {option}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                );
-
-            case 'checkbox':
-                return (
-                    <>
-                        <Typography variant="subtitle1" sx={{ width: '100%' }}>{field.label}</Typography>
-                        <FormGroup key={`${level}-${sectionName}-${index}`} row sx={{ width: '100%' }}>
-                            {field.options.map((option, index) => (
-                                <FormControlLabel
-                                    key={`${(field.name || field.label)}-checkbox-${index}`}
-                                    control={
-                                        <Checkbox
-                                            checked={value.includes(option)}
-                                            onChange={(e) => {
-                                                const newValue = e.target.checked
-                                                    ? [...value, option]
-                                                    : value.filter((v) => v !== option);
-                                                handleInputChange(level, sectionName, (field.name || field.label), newValue);
-                                            }}
-                                        />
-                                    }
-                                    label={option}
-                                />
-                            ))}
-                        </FormGroup>
-                    </>
-                );
-
-            case 'radio':
-                return (
-                    <React.Fragment>
-                        <Typography variant="subtitle1" sx={{
-                            width: '100%', // Ensure the RadioGroup takes full width
-                        }}>{field.label}</Typography>
-                        <RadioGroup
-                            key={`${level}-${sectionName}-${index}`}
-                            row
-                            value={value}
-                            onChange={(e) =>
-                                handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
-                            }
-                            sx={{
-                                width: '100%', // Ensure the RadioGroup takes full width
-                            }}
-                        >
-                            {field.options.map((option, index) => (
-                                <FormControlLabel
-                                    key={`${(field.name || field.label)}-radio-${index}`}
-                                    value={option}
-                                    control={<Radio />}
-                                    label={option}
-                                />
-                            ))}
-                        </RadioGroup>
-                    </React.Fragment>
-
-                );
-
-            default:
-                return null;
-        }
-    };
-
     return (
-        <div>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', overflowX: 'auto', position: 'sticky', top: 60, zIndex: 100, background: 'white' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: .25 }}>
-                    <div><Button onClick={() => resetDate()} variant="contained" disabled={isSelectedDateToday()} sx={{ marginRight: "10px" }}>Reset to Today</Button></div>
-
-                    <div>
-                        <Button onClick={() => handlePrevNextClick('prev')} variant="contained" sx={{ marginRight: "10px" }}>Prev</Button>
-                        <Button onClick={() => handlePrevNextClick('next')} variant="contained" disabled={isSelectedDateToday()}>Next</Button>
-                    </div>
-                </Box>
-                <Tabs value={tabIndex} onChange={handleTabChange} aria-label="Goal levels" key="levels_tab" variant="scrollable"
-                    scrollButtons="auto"
-                    allowScrollButtonsMobile>
-                    {levels
-                        .filter((level) => config.levels[level])
-                        .map((level, index) => (
-                            <Tab label={level} {...a11yProps(index)} key={'tab_' + index} />
-                        ))}
+        <Box sx={{ width: '100%', typography: 'body1' }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+                    <Button variant="outlined" onClick={() => handlePrevNextClick('prev')} disabled={loading}>
+                        Previous
+                    </Button>
+                    <Typography variant="subtitle1">
+                        {getFormatedDate(selectedDate)}
+                        {!isSelectedDateToday() && (
+                            <Button size="small" onClick={resetDate} sx={{ ml: 1 }}>
+                                Reset to Today
+                            </Button>
+                        )}
+                    </Typography>
+                    <Button variant="outlined" onClick={() => handlePrevNextClick('next')} disabled={loading || isSelectedDateIsFuture(selectedDate)}>
+                        Next
+                    </Button>
+                </Stack>
+                <Tabs value={tabIndex} onChange={handleTabChange} aria-label="goal tracking tabs" variant='scrollable' scrollButtons="auto" allowScrollButtonsMobile>
+                    {levels.map((level, index) => (
+                        <Tab key={level} label={level} {...a11yProps(index)} />
+                    ))}
                 </Tabs>
             </Box>
+
             {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
                     <CircularProgress />
                 </Box>
             ) : (
-                <div>
-                  <Typography variant='subtitle1'><strong>{CONSTANTS.LEVEL[levels[tabIndex]?.toLocaleUpperCase()]}</strong> {getIdentifier(levels[tabIndex], selectedDate)}</Typography>
-
-                    {levels
-                        .filter((level) => config.levels[level])
-                        .map((level, index) => (
-                            <div
-                                key={`tabpanel-${level}-${index}`}
-                                role="tabpanel"
-                                hidden={tabIndex !== index}
-                                id={`tabpanel-${index}`}
+                <Box>
+                    {savedData[levels[tabIndex]] && !editMode && (
+                        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                            <Button
+                                startIcon={<EditIcon />}
+                                variant="contained"
+                                color="primary"
+                                onClick={() => handleSubmit('edit')}
                             >
-                                {tabIndex === index && savedData[level] ? (
-                                    <Box>
-                                        {/* <Typography variant="h6">Saved {level} Goals</Typography> */}
-                                        <ShowSavedGoalEvaluation savedData={savedData[level]} config={config.sections[level]} level={level}></ShowSavedGoalEvaluation>
-                                    </Box>
-                                ) : (
-                                    <Box sx={{ p: 1, width: '100%' }}>
-                                        <Box>
-                                            {
-                                                savedData[taskSettings[level]?.level]?.taskSplitUp && savedData[taskSettings[level]?.level]?.taskSplitUp?.[getTask(level, selectedDate)] ?
-                                                
-                                                <Typography variant="body1" sx={{ fontSize: "15px", textAlign: "left", marginBottom: "15px" }}>
-                                                    <strong>{GenericLogic.capitalizeFirstLetter(levels[tabIndex])} Goal: </strong>{GenericLogic.capitalizeFirstLetter(savedData[taskSettings[level]?.level]?.taskSplitUp?.[getTask(level, selectedDate)])}
-                                                </Typography>
-                                        
-                                            : <></>
-                                            }
-                                        </Box>
-                                        {config.sections[level].map((section) => section.enabled && (
-                                            <Box key={`section-${level}-${section.name}`} sx={{ mt: 2 }}>
-                                                <Typography
-                                                    variant="h6"
-                                                    sx={{ fontStyle: 'italic', fontWeight: 'bold' }}
-                                                >
-                                                    {section.label || section.name}
-                                                </Typography>
-
-
-
-                                                <List>
-                                                    {section.fields.map((field, index) => (
-                                                        <ListItem
-                                                            key={`field-${level}-${section.name}-${index}`}
-                                                            sx={{ display: 'flex', flexDirection: 'column' }}
-                                                        >
-                                                            {renderField(field, level, section.name, index)}
-                                                        </ListItem>
-                                                    ))}
-                                                </List>
-                                            </Box>
-                                        ))}
-                                    </Box>
-                                )}
-                            </div>
-                        ))}
-
-                    {savedData[levels[tabIndex]] ? showDeleteButton() ? <>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-evenly', mt: 2 }} key={'delete_button'}>
-                            <Button variant="contained" color="secondary" onClick={() => handleSubmit('delete')}>
-                                Delete
-                            </Button></Box>
-                    </> : <></> : (
-                        <Box sx={{ display: 'flex', justifyContent: 'space-evenly', mt: 2 }} key={'submit_button'}>
-                            <Button variant="contained" color="primary" onClick={handleSubmit}>
+                                Edit
+                            </Button>
+                            {showDeleteButton() && (
+                                <Button
+                                    variant="contained"
+                                    color="error"
+                                    onClick={() => handleSubmit('delete')}
+                                >
+                                    Delete
+                                </Button>
+                            )}
+                        </Box>
+                    )}
+                    {editMode && (
+                        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                            <Button
+                                startIcon={<SaveIcon />}
+                                variant="contained"
+                                color="success"
+                                onClick={() => handleSubmit('save')}
+                            >
                                 Save
                             </Button>
-                        </Box>)}
+                            <Button
+                                startIcon={<CancelIcon />}
+                                variant="contained"
+                                color="error"
+                                onClick={() => handleSubmit('cancel')}
+                            >
+                                Cancel
+                            </Button>
+                        </Box>
+                    )}
+                    
+                    <Typography variant='subtitle1'>
+                        <strong>{CONSTANTS.LEVEL[levels[tabIndex]?.toLocaleUpperCase()]}</strong> {getIdentifier(levels[tabIndex], selectedDate)}
+                    </Typography>
 
-                </div>)} {/* Empty div to avoid error in the return statement */}
-
-        </div>
+                    {/* Display saved data or edit form */}
+                    {savedData[levels[tabIndex]] && !editMode ? (
+                        <Box>
+                            <ShowSavedGoalEvaluation 
+                                savedData={savedData[levels[tabIndex]]} 
+                                config={config.sections[levels[tabIndex]]} 
+                                level={levels[tabIndex]}
+                            />
+                        </Box>
+                    ) : (
+                        <Box sx={{ p: 1, width: '100%' }}>
+                            {/* Show parent goal if exists */}
+                            {savedData[taskSettings[levels[tabIndex]]?.level]?.taskSplitUp && 
+                             savedData[taskSettings[levels[tabIndex]]?.level]?.taskSplitUp?.[getTask(levels[tabIndex], selectedDate)] && (
+                                <Typography variant="body1" sx={{ fontSize: "15px", textAlign: "left", marginBottom: "15px" }}>
+                                    <strong>{GenericLogic.capitalizeFirstLetter(levels[tabIndex])} Goal: </strong>
+                                    {GenericLogic.capitalizeFirstLetter(savedData[taskSettings[levels[tabIndex]]?.level]?.taskSplitUp?.[getTask(levels[tabIndex], selectedDate)])}
+                                </Typography>
+                            )}
+                            
+                            {/* Render form fields */}
+                            {config.sections[levels[tabIndex]].map((section) => section.enabled && (
+                                <Box key={`section-${levels[tabIndex]}-${section.name}`} sx={{ mt: 2 }}>
+                                    <Typography
+                                        variant="h6"
+                                        sx={{ fontStyle: 'italic', fontWeight: 'bold', mb: 2 }}
+                                    >
+                                        {section.label || section.name}
+                                    </Typography>
+                                    <List sx={{ width: '100%' }}>
+                                        {section.fields.map((field, index) => (
+                                            <ListItem
+                                                key={`field-${levels[tabIndex]}-${section.name}-${index}`}
+                                                sx={{ 
+                                                    display: 'flex', 
+                                                    flexDirection: 'column', 
+                                                    alignItems: 'flex-start', 
+                                                    width: '100%',
+                                                    py: 1
+                                                }}
+                                            >
+                                                {renderField(field, levels[tabIndex], section.name, index)}
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                </Box>
+                            ))}
+                            
+                            {/* Show save button only when not in edit mode */}
+                            {!editMode && (
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => handleSubmit()}
+                                    sx={{ mt: 2 }}
+                                >
+                                    Save {levels[tabIndex]} Goals
+                                </Button>
+                            )}
+                        </Box>
+                    )}
+                </Box>
+            )}
+        </Box>
     );
 };
 
