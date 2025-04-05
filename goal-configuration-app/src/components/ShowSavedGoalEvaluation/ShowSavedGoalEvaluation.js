@@ -10,11 +10,11 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
             return value.join();
         }
         // If the value is a string or other primitive type, render it as plain text
-        return <Typography variant="caption" sx={{ fontSize: "15px", textAlign: "left", whiteSpace: "pre-line" }}>{GenericLogic.capitalizeFirstLetter(value)}</Typography>;
+        return <Typography variant="caption" sx={{ fontSize: "15px", textAlign: "left", whiteSpace: "pre-line" }}>{value}</Typography>;
     };
 
     return (
-        <Box sx={{ borderBottom: 1, p:1.5, marginBottom: "20px", borderColor: 'divider', width: '100%' }}>
+        <Box sx={{ borderBottom: 1, p: 1.5, marginBottom: "20px", borderColor: 'divider', width: '100%' }}>
             {config.map((section) => (
                 <>
                     <Typography variant="h6" style={{ textTransform: "capitalize", width: '100%', marginBottom: "15px" }}>
@@ -22,7 +22,9 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
                     </Typography>
                     {section?.fields?.map((field) => (
                         <Typography variant="body1" color="textSecondary" sx={{ textAlign: "left", marginBottom: "15px" }}>
-                            <strong>{field.label}</strong> :  {savedData[section.name] && (savedData[section.name][field.name] || savedData[section.name][field.label]) ? renderValue(savedData[section.name][field.name] || savedData[section.name][field.label]) : 'No saved value.'}
+                            <strong>{field.label}</strong> :
+                            {field.type === 'text' && <br />}
+                            {savedData[section.name] && (savedData[section.name][field.name] || savedData[section.name][field.label]) ? renderValue(savedData[section.name][field.name] || savedData[section.name][field.label]) : 'No saved value.'}
                         </Typography>
                     ))}
                 </>
