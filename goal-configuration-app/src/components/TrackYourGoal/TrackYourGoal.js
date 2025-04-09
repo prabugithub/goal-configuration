@@ -112,7 +112,10 @@ const TrackYourGoal = () => {
         const today = new Date(date);
         switch (level) {
             case 'daily':
-                return today.toISOString().split('T')[0];
+                const todayStr = today;
+                todayStr.setTime(todayStr.getTime() - (todayStr.getTimezoneOffset() * 60000));
+                return todayStr.toISOString().substring(0, 19).split('T')[0];
+                // return today.toISOString().split('T')[0];
             case 'weekly':
                 const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
                 weekStart.setTime(weekStart.getTime() - (weekStart.getTimezoneOffset() * 60000));
