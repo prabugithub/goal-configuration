@@ -115,12 +115,12 @@ const TrackYourGoal = () => {
                 const todayStr = today;
                 todayStr.setTime(todayStr.getTime() - (todayStr.getTimezoneOffset() * 60000));
                 return todayStr.toISOString().substring(0, 19).split('T')[0];
-                // return today.toISOString().split('T')[0];
+            // return today.toISOString().split('T')[0];
             case 'weekly':
                 const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
                 weekStart.setTime(weekStart.getTime() - (weekStart.getTimezoneOffset() * 60000));
-                let dateAsString =  weekStart.toISOString().substring(0, 19);
-               // return dateAsString;
+                let dateAsString = weekStart.toISOString().substring(0, 19);
+                // return dateAsString;
                 return dateAsString.split('T')[0];
             case 'monthly':
                 return `${today.getFullYear()}-${today.getMonth() + 1}`;
@@ -394,6 +394,7 @@ const TrackYourGoal = () => {
                     {levels.map((level, index) => (
                         <Tab key={level} label={level} {...a11yProps(index)} />
                     ))}
+
                 </Tabs>
             </Box>
 

@@ -1,82 +1,69 @@
 // src/App.js
 
 import './App.css';
+import { useEffect, useState } from 'react';
+import { Container, CssBaseline, IconButton, Typography, Tabs, Tab, Box } from '@mui/material';
+import LogoutIcon from '@mui/icons-material/Logout';
+import SettingsIcon from '@mui/icons-material/Settings';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+
 import GoalHierarchySelection from './components/GoalHierarchySelection/GoalHierarchySelection';
-import { Button, Container, CssBaseline, IconButton, Typography } from '@mui/material';
-import LogoutIcon from '@mui/icons-material/Logout'; // Import Logout icon
-import SettingsIcon from '@mui/icons-material/Settings'; // Import Delete icon
 import NextStep from './components/NextStep/NextStep';
-import { useStep } from './context/StepContext';
 import ConfigureFields from './components/ConfigureFields/ConfigureFields';
 import Login from './components/Login/LoginPage';
 import Signup from './components/Login/SignUp';
-import { useEffect, useState } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import AppGuide from './components/AppGuide/AppGuide';
+import TrackYourGoal from './components/TrackYourGoal/TrackYourGoal';
+import ProgressDashboard from './components/ProgressDashboard/ProgressDashboard';
+
 import { auth } from './api/firebase/firebas';
 import { deleteUserConfiguration, getUserConfiguration, saveUserConfig } from './api/services/firebaseServices';
-import TrackYourGoal from './components/TrackYourGoal/TrackYourGoal';
 import { useGoalConfig } from './context/GoalConfigContext';
+import { useStep } from './context/StepContext';
 import { initialConfigState } from './context/DefaultValues/GlobalDefaultConfig';
-import AppGuide from './components/AppGuide/AppGuide';
 
 function App() {
   const { currentStep } = useStep();
   const [user, setUser] = useState(null);
-  const { config, setConfig, hasConfiguration, setHasConfiguration, doResetConfig, setDoResetConfig } = useGoalConfig();
   const [loading, setLoading] = useState(true);
+  const [tabIndex, setTabIndex] = useState(0);
+
+  const { config, setConfig, hasConfiguration, setHasConfiguration, doResetConfig, setDoResetConfig } = useGoalConfig();
 
   useEffect(() => {
-    // Monitor authentication state
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
         try {
-          // Check if the user has a configuration
           const conf = await getUserConfiguration(currentUser.uid);
           setConfig(conf);
-          // Set true if configuration exists
           if (conf) {
             setHasConfiguration(true);
-          }
-          else if (!conf && !doResetConfig) {
+          } else if (!conf && !doResetConfig) {
             setLoading(true);
             setConfig(initialConfigState);
-            await saveUserConfig(initialConfigState, currentUser?.uid);
+            await saveUserConfig(initialConfigState, currentUser.uid);
             setHasConfiguration(true);
             setLoading(false);
           } else {
             setHasConfiguration(false);
           }
-
         } catch (error) {
           console.error("Error checking user configuration:", error);
         }
       }
       setLoading(false);
-      // Stop loading once auth and config check is complete
     });
-
-    // Log out on app close or refresh
-    // const handleLogoutOnClose = () => {
-    //   signOut(auth)
-    //     .then(() => console.log("User logged out on app close"))
-    //     .catch((error) => console.error("Error during logout on close:", error));
-    // };
-
-  //  window.addEventListener("beforeunload", handleLogoutOnClose);
 
     return () => {
       unsubscribe();
-      //window.removeEventListener("beforeunload", handleLogoutOnClose);
     };
   }, []);
 
-  // Logout function
   const handleLogout = async () => {
     const isConfirmed = window.confirm("Are you sure you want to log out?");
-    if (!isConfirmed) {
-      return;
-    }
+    if (!isConfirmed) return;
+
     try {
       await signOut(auth);
       console.log("User logged out successfully");
@@ -87,16 +74,14 @@ function App() {
   };
 
   const handleConfigDelete = async () => {
-    const isConfirmed = window.confirm("This will delete your goal configuration, Are you sure you want to delete your configuration? Still saved evaluation data would be maintained.");
-    if (!isConfirmed) {
-      return;
-    }
+    const isConfirmed = window.confirm("This will delete your goal configuration. Are you sure?");
+    if (!isConfirmed) return;
 
     if (user) {
       try {
-        await deleteUserConfiguration(user.uid); // Delete the configuration from Firestore
-        setConfig(initialConfigState); // Reset local state
-        setHasConfiguration(false); // Mark configuration as deleted
+        await deleteUserConfiguration(user.uid);
+        setConfig(initialConfigState);
+        setHasConfiguration(false);
         setDoResetConfig(true);
         console.log("User configuration deleted successfully.");
       } catch (error) {
@@ -105,17 +90,14 @@ function App() {
     }
   };
 
-  // Array of step components
   const steps = [
     <AppGuide key="step0" />,
     <GoalHierarchySelection key="step1" />,
     <ConfigureFields key="step2" />,
-    <NextStep key="step3" />,
+    <NextStep key="step3" />
   ];
 
-  if (loading) {
-    return <div>Loading...</div>; // Display a loading spinner or message
-  }
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div className="App">
@@ -123,11 +105,9 @@ function App() {
       {user ? (
         <Container maxWidth="sm" className="container">
           <header className="app-header">
-            {/* Left side: Delete Configuration Icon */}
             <IconButton color="secondary" onClick={handleConfigDelete} title="Delete Configuration">
               <SettingsIcon />
             </IconButton>
-            {/* Right side: Logout Icon */}
             <Typography variant="h5" color="primary" gutterBottom>
               {hasConfiguration ? "Your Onething!" : "Focus2Win!"}
             </Typography>
@@ -135,15 +115,34 @@ function App() {
               <LogoutIcon />
             </IconButton>
           </header>
-          {hasConfiguration ? <TrackYourGoal /> : steps[currentStep]}
+
+          {/* Menu Tabs */}
+          {hasConfiguration && (
+            <>
+              <Tabs value={tabIndex} onChange={(e, newVal) => setTabIndex(newVal)} centered>
+                <Tab label="Goal Entry" />
+                <Tab label="Progress" />
+              </Tabs>
+              <TabPanel value={tabIndex} index={0}>
+                <TrackYourGoal />
+              </TabPanel>
+              <TabPanel value={tabIndex} index={1}>
+                <ProgressDashboard userId={user?.uid} view="monthly" />
+              </TabPanel>
+            </>
+          )}
+
+          {!hasConfiguration && steps[currentStep]}
         </Container>
       ) : (
-        <div>
-          <Login key="login" />
-        </div>
+        <Login key="login" />
       )}
     </div>
   );
+}
+
+function TabPanel({ children, value, index }) {
+  return value === index ? <Box sx={{ py: 2 }}>{children}</Box> : null;
 }
 
 export default App;
