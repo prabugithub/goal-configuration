@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { Card, CardContent, Typography, Grid } from "@mui/material";
+import React, { useEffect, useRef, useState } from "react";
+import html2canvas from 'html2canvas';
+import { Card, CardContent, Typography, Grid, CircularProgress, Button, Box } from "@mui/material";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer
+  BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
+  Label
 } from "recharts";
 import {
   format, parseISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays, isWithinInterval, subMonths
@@ -9,8 +11,39 @@ import {
 import { getDailyRitualData } from "../../api/services/getDailyRitualData"; // should accept userId & date
 
 const ProgressDashboard = ({ userId }) => {
+  const weeklyRef = useRef();
   const [monthlyData, setMonthlyData] = useState([]);
   const [weeklyData, setWeeklyData] = useState([]);
+  const [loading, setLoading] = useState(true); // Add loading state
+
+  const exportChartAsImage = async (ref, filename) => {
+    const canvas = await html2canvas(ref.current);
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = canvas.toDataURL();
+    link.click();
+  };
+
+  const shareChart = async (ref, filename = "chart.png") => {
+    try {
+      const canvas = await html2canvas(ref.current);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+
+      const file = new File([blob], filename, { type: "image/png" });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: "My Progress Chart",
+          text: "Check out my weekly/monthly progress!",
+          files: [file],
+        });
+      } else {
+        alert("Sharing not supported on this browser or device.");
+      }
+    } catch (error) {
+      console.error("Sharing failed:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchMonthlyData = async () => {
@@ -24,6 +57,9 @@ const ProgressDashboard = ({ userId }) => {
       const tempMonthly = {};
       const tempWeekly = [];
 
+
+
+      setLoading(true);
       // Iterate through each day of the current month
       for (let d = monthStart; d <= monthEnd; d = addDays(d, 1)) {
         const formattedDate = format(d, "yyyy-MM-dd");
@@ -58,6 +94,10 @@ const ProgressDashboard = ({ userId }) => {
           }
         } catch (error) {
           console.warn(`No data for ${formattedDate}`, error.message);
+        } finally {
+          if (tempWeekly.length > 6) {
+            setLoading(false);
+          }
         }
       }
 
@@ -68,16 +108,30 @@ const ProgressDashboard = ({ userId }) => {
     fetchMonthlyData();
   }, [userId]);
 
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Grid container spacing={4}>
       <Grid item xs={12}>
         <Card>
-          <CardContent>
+          <CardContent ref={weeklyRef}>
             <Typography variant="h6">Weekly Progress</Typography>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={weeklyData}>
                 <XAxis dataKey="date" />
-                <YAxis />
+                <YAxis> <Label
+                  value="min"
+                  angle={-90}
+                  position="insideLeft"
+                  offset={10} // optional, to adjust spacing
+                  style={{ textAnchor: "middle" }} // center the label
+                /></YAxis>
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="deepwork" fill="#8884d8" />
@@ -86,6 +140,10 @@ const ProgressDashboard = ({ userId }) => {
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
+          {/* <Button onClick={() => exportChartAsImage(weeklyRef, "weekly_chart.png")}>Export Chart as Image</Button> */}
+          <Button variant="contained" onClick={() => shareChart(weeklyRef)}>
+            Share Weekly Chart
+          </Button>
         </Card>
       </Grid>
 
