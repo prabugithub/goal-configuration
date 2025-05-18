@@ -16,7 +16,11 @@ import {
     Tabs,
     Tab,
     CircularProgress,
-    Stack
+    Stack,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
@@ -39,6 +43,8 @@ const TrackYourGoal = () => {
     const [loading, setLoading] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [tempFormValues, setTempFormValues] = useState({});
+    const [todoOpen, setTodoOpen] = useState(false);
+    const [yesterdayTodo, setYesterdayTodo] = useState("");
 
     const isInitialLoad = useRef(true);
     const levels = ['yearly', 'quarterly', 'monthly', 'weekly', 'daily'].filter(level => config.levels[level]);
@@ -85,6 +91,7 @@ const TrackYourGoal = () => {
         };
 
         fetchData();
+        // handleOpenTodoDialog();
     }, [tabIndex, selectedDate]);
 
     const handleTabChange = (event, newIndex) => {
@@ -135,9 +142,10 @@ const TrackYourGoal = () => {
 
     const getTask = (level, date = new Date()) => {
         const today = new Date(date);
+        const index = (today.getDay() - 1) === -1 ? 6 : (today.getDay() - 1);
         switch (level) {
             case 'daily':
-                return ["mon", "tue", "wed", "thu", "fri", "sat", "sun"][today.getDay() - 1];
+                return ["mon", "tue", "wed", "thu", "fri", "sat", "sun"][index];
             case 'weekly':
                 return `w${Math.ceil(today.getDate() / 7)}`;
             case 'monthly':
@@ -371,8 +379,31 @@ const TrackYourGoal = () => {
         }
     };
 
+    const handleOpenTodoDialog = async () => {
+        const level = levels[tabIndex];
+        const identifier = getIdentifier(level, selectedDate); // e.g., '2025-01-13' for daily
+        const todo = await getGoal(user.uid, level, identifier);
+        setYesterdayTodo(todo);
+        setTodoOpen(true);
+    };
+
     return (
         <Box sx={{ width: '100%', typography: 'body1' }}>
+            <Dialog open={todoOpen} onClose={() => setTodoOpen(false)} fullWidth maxWidth="sm">
+                <DialogTitle>Yesterday's To-Do List</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body1" style={{ whiteSpace: 'pre-line' }}>
+                        {yesterdayTodo}
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setTodoOpen(false)} color="primary">Close</Button>
+                </DialogActions>
+            </Dialog>
+            {/* <Button onClick={handleOpenTodoDialog} variant="outlined" color="primary">
+                View Yesterday’s To-Do
+            </Button> */}
+
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
                 <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
                     <Button variant="outlined" onClick={() => handlePrevNextClick('prev')} disabled={loading}>

@@ -64,7 +64,7 @@ const initialConfigState = {
                 enabled: true,
                 fields: evaluationFields
             },
-            planning,
+            {...planning, enabled: true},
             {
                 name: 'taskSplitUp',
                 label: 'Break down Quater goal to months:',
@@ -84,7 +84,7 @@ const initialConfigState = {
                 enabled: true,
                 fields: evaluationFields
             },
-            planning,
+            {...planning, enabled: true},
             {
                 name: 'taskSplitUp',
                 label: 'Break down Month goal to weeks:',
@@ -105,7 +105,7 @@ const initialConfigState = {
                 enabled: true,
                 fields: evaluationFields
             },
-            planning,
+            {...planning, enabled: true},
             {
                 name: 'taskSplitUp',
                 label: 'Break down Weekly goal to days:',
