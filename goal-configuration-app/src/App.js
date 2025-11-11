@@ -2,7 +2,7 @@
 
 import './App.css';
 import { useEffect, useState } from 'react';
-import { Container, CssBaseline, IconButton, Typography, Tabs, Tab, Box } from '@mui/material';
+import { Container, CssBaseline, IconButton, Typography, Tabs, Tab, Box, useMediaQuery, useTheme, Stack } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -15,6 +15,18 @@ import Signup from './components/Login/SignUp';
 import AppGuide from './components/AppGuide/AppGuide';
 import TrackYourGoal from './components/TrackYourGoal/TrackYourGoal';
 import ProgressDashboard from './components/ProgressDashboard/ProgressDashboard';
+import Dashboard from './components/Dashboard/Dashboard';
+import AnalyticsCharts from './components/Analytics/AnalyticsCharts';
+import ProgressRings from './components/Analytics/ProgressRings';
+import GoalSearch from './components/GoalSearch/GoalSearch';
+import WhatsAppShare from './components/ShareReport/WhatsAppShare';
+import ReportGenerator from './components/ShareReport/ReportGenerator';
+import MobileBottomNav, { MobileContentPadding } from './components/MobileBottomNav/MobileBottomNav';
+import SmartGoalPrompt from './components/SmartGoalPrompt/SmartGoalPrompt';
+import ExportButton from './components/ExportButton/ExportButton';
+import { ToastProvider } from './context/ToastContext';
+import { useGoals } from './hooks/useGoals';
+import { useMetrics } from './hooks/useMetrics';
 
 import { auth } from './api/firebase/firebas';
 import { deleteUserConfiguration, getUserConfiguration, saveUserConfig } from './api/services/firebaseServices';
@@ -23,12 +35,18 @@ import { useStep } from './context/StepContext';
 import { initialConfigState } from './context/DefaultValues/GlobalDefaultConfig';
 
 function App() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { currentStep } = useStep();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tabIndex, setTabIndex] = useState(0);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [allGoals, setAllGoals] = useState({});
 
   const { config, setConfig, hasConfiguration, setHasConfiguration, doResetConfig, setDoResetConfig } = useGoalConfig();
+  const { goals } = useGoals(user?.uid);
+  const metrics = useMetrics(goals, config);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -100,44 +118,122 @@ function App() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="App">
-      <CssBaseline />
-      {user ? (
-        <Container maxWidth="sm" className="container">
-          <header className="app-header">
-            <IconButton color="secondary" onClick={handleConfigDelete} title="Delete Configuration">
-              <SettingsIcon />
-            </IconButton>
-            <Typography variant="h5" color="primary" gutterBottom>
-              {hasConfiguration ? "Your Onething!" : "Focus2Win!"}
-            </Typography>
-            <IconButton color="primary" onClick={handleLogout} title="Logout">
-              <LogoutIcon />
-            </IconButton>
-          </header>
+    <ToastProvider>
+      <div className="App">
+        <CssBaseline />
+        {user ? (
+          <Container maxWidth="sm" className="container">
+            <header className="app-header">
+              <IconButton color="secondary" onClick={handleConfigDelete} title="Delete Configuration">
+                <SettingsIcon />
+              </IconButton>
+              <Typography variant="h5" color="primary" gutterBottom>
+                {hasConfiguration ? "Your Onething!" : "Focus2Win!"}
+              </Typography>
+              <IconButton color="primary" onClick={handleLogout} title="Logout">
+                <LogoutIcon />
+              </IconButton>
+            </header>
 
-          {/* Menu Tabs */}
-          {hasConfiguration && (
-            <>
-              <Tabs value={tabIndex} onChange={(e, newVal) => setTabIndex(newVal)} centered>
-                <Tab label="Goal Entry" />
-                <Tab label="Progress" />
-              </Tabs>
-              <TabPanel value={tabIndex} index={0}>
-                <TrackYourGoal />
-              </TabPanel>
-              <TabPanel value={tabIndex} index={1}>
-                <ProgressDashboard userId={user?.uid} view="monthly" />
-              </TabPanel>
-            </>
-          )}
+            {/* Menu Tabs */}
+            {hasConfiguration && (
+              <>
+                {/* Smart Goal Prompt */}
+                <SmartGoalPrompt
+                  goals={goals}
+                  config={config}
+                  onSelectLevel={(level) => {
+                    // Handle level selection
+                    console.log('Selected level:', level);
+                  }}
+                />
 
-          {!hasConfiguration && steps[currentStep]}
-        </Container>
-      ) : (
-        <Login key="login" />
-      )}
-    </div>
+                {/* Top Navigation for Desktop, Bottom Nav for Mobile */}
+                {!isMobile && (
+                  <Tabs value={tabIndex} onChange={(e, newVal) => setTabIndex(newVal)} centered sx={{ mb: 2 }}>
+                    <Tab label="📊 Dashboard" />
+                    <Tab label="📝 Goal Entry" />
+                    <Tab label="📈 Analytics" />
+                    <Tab label="📋 Reports" />
+                  </Tabs>
+                )}
+
+                <MobileContentPadding>
+                  {/* Dashboard Tab */}
+                  {(tabIndex === 0 || !isMobile) && !showDashboard && (
+                    <TabPanel value={tabIndex} index={0}>
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold', mb: 2 }}>
+                          🎯 Quick Actions
+                        </Typography>
+                        <Stack direction={isMobile ? 'column' : 'row'} spacing={1}>
+                          <GoalSearch goals={goals} config={config} onSelectGoal={() => {}} />
+                          <WhatsAppShare goals={goals} config={config} metrics={metrics} />
+                          <ReportGenerator goals={goals} config={config} metrics={metrics} userId={user?.uid} />
+                          <ExportButton goals={goals} config={config} userId={user?.uid} />
+                        </Stack>
+                      </Box>
+
+                      {/* Main Dashboard */}
+                      <Dashboard goals={goals} config={config} />
+
+                      {/* Progress Rings */}
+                      <ProgressRings metrics={metrics} goals={goals} />
+                    </TabPanel>
+                  )}
+
+                  {/* Goal Entry Tab */}
+                  {(tabIndex === 1 || (isMobile && !showDashboard)) && (
+                    <TabPanel value={tabIndex} index={1}>
+                      <TrackYourGoal />
+                    </TabPanel>
+                  )}
+
+                  {/* Analytics Tab */}
+                  {(tabIndex === 2 || (!isMobile && !showDashboard)) && (
+                    <TabPanel value={tabIndex} index={2}>
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold', mb: 2 }}>
+                          📊 Advanced Analytics
+                        </Typography>
+                        <AnalyticsCharts metrics={metrics} goals={goals} />
+                      </Box>
+                    </TabPanel>
+                  )}
+
+                  {/* Reports Tab */}
+                  {(tabIndex === 3 || (!isMobile && !showDashboard)) && (
+                    <TabPanel value={tabIndex} index={3}>
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold', mb: 2 }}>
+                          📋 Reports & Sharing
+                        </Typography>
+                        <ProgressDashboard userId={user?.uid} view="monthly" />
+                      </Box>
+                    </TabPanel>
+                  )}
+                </MobileContentPadding>
+
+                {/* Mobile Bottom Navigation */}
+                {isMobile && (
+                  <MobileBottomNav
+                    levels={Object.keys(config.levels || {}).filter(level => config.levels[level])}
+                    selectedLevel={tabIndex}
+                    onLevelChange={setTabIndex}
+                    showDashboard={showDashboard}
+                    onDashboardToggle={setShowDashboard}
+                  />
+                )}
+              </>
+            )}
+
+            {!hasConfiguration && steps[currentStep]}
+          </Container>
+        ) : (
+          <Login key="login" />
+        )}
+      </div>
+    </ToastProvider>
   );
 }
 
