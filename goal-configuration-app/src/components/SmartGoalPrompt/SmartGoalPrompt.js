@@ -48,6 +48,10 @@ export const SmartGoalPrompt = ({ goals = {}, config = {}, onSelectLevel, curren
     setDismissed(false);
   };
 
+  // Disabled: SmartGoalPrompt is hidden
+  return null;
+
+  /* Commented out to hide the prompt card
   if (dismissed || !suggestion) {
     return null;
   }
@@ -121,6 +125,7 @@ export const SmartGoalPrompt = ({ goals = {}, config = {}, onSelectLevel, curren
       </Collapse>
     </Card>
   );
+  */
 };
 
 /**

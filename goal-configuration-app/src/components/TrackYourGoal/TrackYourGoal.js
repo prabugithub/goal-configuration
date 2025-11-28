@@ -13,8 +13,6 @@ import {
     Box,
     Select,
     MenuItem,
-    Tabs,
-    Tab,
     CircularProgress,
     Stack,
     Dialog,
@@ -25,11 +23,18 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import TextFieldsIcon from '@mui/icons-material/TextFields';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
+import NumbersIcon from '@mui/icons-material/Numbers';
 import { useGoalConfig } from '../../context/GoalConfigContext';
 import { deleteGoal, getGoal, saveGoal } from '../../api/services/firebaseServices';
 import { useAuth } from '../../context/AuthContext';
 import GenericLogic from '../../common/utils/generic-logic';
 import ShowSavedGoalEvaluation from '../ShowSavedGoalEvaluation/ShowSavedGoalEvaluation';
+import BreadcrumbNavigation from '../BreadcrumbNavigation/BreadcrumbNavigation';
 import CONSTANTS from '../../common/constants';
 
 const TrackYourGoal = () => {
@@ -172,6 +177,26 @@ const TrackYourGoal = () => {
         }));
     };
 
+    // Helper function to get icon for field type
+    const getFieldIcon = (fieldType) => {
+        switch (fieldType) {
+            case 'time':
+                return <AccessTimeIcon sx={{ fontSize: 18, mr: 0.5 }} />;
+            case 'number':
+                return <NumbersIcon sx={{ fontSize: 18, mr: 0.5 }} />;
+            case 'text':
+                return <TextFieldsIcon sx={{ fontSize: 18, mr: 0.5 }} />;
+            case 'dropdown':
+                return <ArrowDropDownIcon sx={{ fontSize: 18, mr: 0.5 }} />;
+            case 'checkbox':
+                return <CheckBoxIcon sx={{ fontSize: 18, mr: 0.5 }} />;
+            case 'radio':
+                return <RadioButtonCheckedIcon sx={{ fontSize: 18, mr: 0.5 }} />;
+            default:
+                return null;
+        }
+    };
+
     const renderField = (field, level, sectionName, index) => {
         const value = formValues[level]?.[sectionName]?.[field.name || field.label] || (field.type === 'checkbox' ? [] : '');
 
@@ -179,7 +204,12 @@ const TrackYourGoal = () => {
             case 'text':
                 return (
                     <>
-                        <Typography variant="subtitle1" sx={{ width: '100%' }}>{field.label}</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 0.5 }}>
+                            {getFieldIcon(field.type)}
+                            <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                                {field.label}
+                            </Typography>
+                        </Box>
                         <TextField
                             key={`${level}-${sectionName}-${index}`}
                             size="small"
@@ -199,7 +229,12 @@ const TrackYourGoal = () => {
             case 'number': // New case for time input
                 return (
                     <>
-                        <Typography variant="subtitle1" sx={{ width: '100%' }}>{field.label}</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 0.5 }}>
+                            {getFieldIcon(field.type)}
+                            <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                                {field.label}
+                            </Typography>
+                        </Box>
                         <TextField
                             key={`${level}-${sectionName}-${index}`}
                             size="small"
@@ -211,7 +246,7 @@ const TrackYourGoal = () => {
                             }
                             sx={{ flex: 1, width: '100%' }}
                             inputProps={{ min: 0 }} // Ensure only positive values
-                            placeholder={field.type === 'time' ? 'Enter time in minutes' : 'Enter number'}
+                            placeholder={field.type === 'time' ? '⌛ Enter time in minutes' : 'Enter number'}
                         />
                     </>
                 );
@@ -219,7 +254,12 @@ const TrackYourGoal = () => {
             case 'dropdown':
                 return (
                     <>
-                        <Typography variant="subtitle1" sx={{ width: '100%' }}>{field.label}</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 0.5 }}>
+                            {getFieldIcon(field.type)}
+                            <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                                {field.label}
+                            </Typography>
+                        </Box>
                         <Select
                             key={`${level}-${sectionName}-${index}`}
                             value={value}
@@ -241,7 +281,12 @@ const TrackYourGoal = () => {
             case 'checkbox':
                 return (
                     <>
-                        <Typography variant="subtitle1" sx={{ width: '100%' }}>{field.label}</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 0.5 }}>
+                            {getFieldIcon(field.type)}
+                            <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                                {field.label}
+                            </Typography>
+                        </Box>
                         <FormGroup key={`${level}-${sectionName}-${index}`} row sx={{ width: '100%' }}>
                             {field.options.map((option, index) => (
                                 <FormControlLabel
@@ -269,7 +314,12 @@ const TrackYourGoal = () => {
             case 'radio':
                 return (
                     <>
-                        <Typography variant="subtitle1" sx={{ width: '100%' }}>{field.label}</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 0.5 }}>
+                            {getFieldIcon(field.type)}
+                            <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                                {field.label}
+                            </Typography>
+                        </Box>
                         <RadioGroup
                             key={`${level}-${sectionName}-${index}`}
                             row
@@ -352,13 +402,6 @@ const TrackYourGoal = () => {
         }
     };
 
-    function a11yProps(index) {
-        return {
-            id: `simple-tab-${index}`,
-            'aria-controls': `simple-tabpanel-${index}`,
-        };
-    }
-
     const handlePrevNextClick = (direction) => {
         let newDate = new Date(selectedDate);
         if (levels[tabIndex] === 'daily') {
@@ -404,30 +447,29 @@ const TrackYourGoal = () => {
                 View Yesterday’s To-Do
             </Button> */}
 
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-                    <Button variant="outlined" onClick={() => handlePrevNextClick('prev')} disabled={loading}>
-                        Previous
-                    </Button>
-                    <Typography variant="subtitle1">
-                        {getFormatedDate(selectedDate)}
-                        {!isSelectedDateToday() && (
-                            <Button size="small" onClick={resetDate} sx={{ ml: 1 }}>
-                                Reset to Today
-                            </Button>
-                        )}
-                    </Typography>
-                    <Button variant="outlined" onClick={() => handlePrevNextClick('next')} disabled={loading || isSelectedDateIsFuture(selectedDate)}>
-                        Next
-                    </Button>
-                </Stack>
-                <Tabs value={tabIndex} onChange={handleTabChange} aria-label="goal tracking tabs" variant='scrollable' scrollButtons="auto" allowScrollButtonsMobile>
-                    {levels.map((level, index) => (
-                        <Tab key={level} label={level} {...a11yProps(index)} />
-                    ))}
+            {/* Breadcrumb Navigation */}
+            <BreadcrumbNavigation
+                selectedDate={selectedDate}
+                currentLevel={levels[tabIndex]}
+                onLevelChange={handleTabChange}
+                levels={levels}
+                savedData={savedData}
+            />
 
-                </Tabs>
-            </Box>
+            {/* Date Navigation Controls */}
+            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" sx={{ mb: 2, px: 2 }}>
+                <Button variant="outlined" size="small" onClick={() => handlePrevNextClick('prev')} disabled={loading}>
+                    Previous
+                </Button>
+                {!isSelectedDateToday() && (
+                    <Button variant="contained" size="small" onClick={resetDate} color="secondary">
+                        Reset to Today
+                    </Button>
+                )}
+                <Button variant="outlined" size="small" onClick={() => handlePrevNextClick('next')} disabled={loading || isSelectedDateIsFuture(selectedDate)}>
+                    Next
+                </Button>
+            </Stack>
 
             {loading ? (
                 <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">

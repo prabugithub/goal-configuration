@@ -40,7 +40,7 @@ function App() {
   const { currentStep } = useStep();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [tabIndex, setTabIndex] = useState(0);
+  const [tabIndex, setTabIndex] = useState(1);
   const [showDashboard, setShowDashboard] = useState(false);
   const [allGoals, setAllGoals] = useState({});
 
