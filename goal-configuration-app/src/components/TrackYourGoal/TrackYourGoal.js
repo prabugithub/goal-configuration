@@ -519,10 +519,6 @@ const TrackYourGoal = () => {
                         </Box>
                     )}
 
-                    <Typography variant='subtitle1'>
-                        <strong>{CONSTANTS.LEVEL[levels[tabIndex]?.toLocaleUpperCase()]}</strong> {getIdentifier(levels[tabIndex], selectedDate)}
-                    </Typography>
-
                     {/* Display saved data or edit form */}
                     {savedData[levels[tabIndex]] && !editMode ? (
                         <Box>
