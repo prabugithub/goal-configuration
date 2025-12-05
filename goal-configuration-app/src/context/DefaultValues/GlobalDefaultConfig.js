@@ -136,12 +136,6 @@ const initialConfigState = {
                         min: 0,
                         max: 100,
                         step: 10
-                    },
-                    {
-                        name: 'tasks-done',
-                        label: 'Tasks completed today',
-                        type: 'progress',
-                        total: 5
                     }
                 ]
             },
