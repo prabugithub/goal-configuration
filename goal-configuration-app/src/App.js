@@ -122,7 +122,7 @@ function App() {
       <div className="App">
         <CssBaseline />
         {user ? (
-          <Container maxWidth="sm" className="">
+          <Container maxWidth="sm" className="container">
             <header className="app-header">
               <IconButton color="secondary" onClick={handleConfigDelete} title="Delete Configuration">
                 <SettingsIcon />

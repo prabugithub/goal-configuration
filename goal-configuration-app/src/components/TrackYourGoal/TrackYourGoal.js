@@ -35,6 +35,9 @@ import { useAuth } from '../../context/AuthContext';
 import GenericLogic from '../../common/utils/generic-logic';
 import ShowSavedGoalEvaluation from '../ShowSavedGoalEvaluation/ShowSavedGoalEvaluation';
 import BreadcrumbNavigation from '../BreadcrumbNavigation/BreadcrumbNavigation';
+import MissingMonthlyPlanDialog from '../MissingMonthlyPlanDialog/MissingMonthlyPlanDialog';
+import { useMonthlyPlanningCheck } from '../../hooks/useMonthlyPlanningCheck';
+import { getMonthlyPlanningDate } from '../../common/utils/planningDateUtils';
 import CONSTANTS from '../../common/constants';
 
 const TrackYourGoal = () => {
@@ -59,6 +62,12 @@ const TrackYourGoal = () => {
         monthly: { level: 'quarterly', task: 'taskSplitUp', value: 30 },
         quarterly: { level: 'yearly', task: 'taskSplitUp', value: 90 },
     };
+
+    // Monthly planning check hook (must be after levels is defined)
+    const monthlyCheck = useMonthlyPlanningCheck(
+        levels[tabIndex] === 'weekly' ? selectedDate : null,
+        savedData
+    );
 
     const getFormatedDate = (date) => date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear();
 
@@ -430,8 +439,30 @@ const TrackYourGoal = () => {
         setTodoOpen(true);
     };
 
+    const handleNavigateToMissingMonthlyPlan = () => {
+        // Find the index of the monthly level
+        const monthlyIndex = levels.indexOf('monthly');
+        if (monthlyIndex >= 0) {
+            // Set selected date to the monthly planning date for that month
+            const planningDate = getMonthlyPlanningDate(selectedDate);
+            setSelectedDate(planningDate);
+            // Switch to monthly tab
+            setTabIndex(monthlyIndex);
+            // Reset the dismissal so the dialog shows if needed again
+            monthlyCheck.reset();
+        }
+    };
+
     return (
         <Box sx={{ width: '100%', typography: 'body1' }}>
+            {/* Missing Monthly Planning Dialog */}
+            <MissingMonthlyPlanDialog
+                open={monthlyCheck.hasMissing}
+                monthInfo={monthlyCheck.monthInfo}
+                onNavigateToMonth={handleNavigateToMissingMonthlyPlan}
+                onDismiss={monthlyCheck.dismiss}
+            />
+
             <Dialog open={todoOpen} onClose={() => setTodoOpen(false)} fullWidth maxWidth="sm">
                 <DialogTitle>Yesterday's To-Do List</DialogTitle>
                 <DialogContent>
@@ -444,7 +475,7 @@ const TrackYourGoal = () => {
                 </DialogActions>
             </Dialog>
             {/* <Button onClick={handleOpenTodoDialog} variant="outlined" color="primary">
-                View Yesterday’s To-Do
+                View Yesterday's To-Do
             </Button> */}
 
             {/* Breadcrumb Navigation */}
