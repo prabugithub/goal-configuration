@@ -6,7 +6,9 @@ import {
     Stack,
     LinearProgress,
     Rating,
-    Chip
+    Chip,
+    Switch,
+    FormControlLabel
 } from "@mui/material";
 import {
     Timer as TimerIcon,
@@ -114,10 +116,54 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
             );
         }
 
-        // Checkbox field - show as Yes/No chip
+        // Checkbox field - check if Yes/No or multi-option
         if (field.type === 'checkbox') {
-            const isChecked = Array.isArray(value) ? value.includes('Yes') : value === 'Yes';
+            const isYesNoField = field.options &&
+                field.options.length === 2 &&
+                field.options.some(opt => opt.toLowerCase() === 'yes') &&
+                field.options.some(opt => opt.toLowerCase() === 'no');
 
+            if (isYesNoField) {
+                // Display as Switch (read-only) for Yes/No fields
+                const isYes = Array.isArray(value)
+                    ? value.some(v => v.toLowerCase() === 'yes')
+                    : (typeof value === 'string' ? value.toLowerCase() === 'yes' : false);
+
+                return (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            p: 1.5,
+                            bgcolor: 'grey.50',
+                            borderRadius: 1,
+                        }}
+                    >
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    checked={isYes}
+                                    disabled
+                                    color="primary"
+                                />
+                            }
+                            label={isYes ? 'Yes' : 'No'}
+                            labelPlacement="start"
+                            sx={{
+                                m: 0,
+                                '& .MuiTypography-root': {
+                                    fontWeight: 600,
+                                    color: isYes ? 'success.main' : 'text.secondary',
+                                    mr: 1
+                                }
+                            }}
+                        />
+                    </Box>
+                );
+            }
+
+            // For multi-option checkboxes, show as chips
+            const isChecked = Array.isArray(value) ? value.includes('Yes') : value === 'Yes';
             return (
                 <Chip
                     icon={isChecked ? <CheckCircleIcon /> : <CancelIcon />}

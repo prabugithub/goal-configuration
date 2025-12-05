@@ -22,7 +22,8 @@ import {
     Paper,
     InputAdornment,
     Slider,
-    Rating
+    Rating,
+    Switch
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
@@ -388,6 +389,67 @@ const TrackYourGoal = () => {
                 );
 
             case 'checkbox':
+                // Check if this is a Yes/No field (switch component)
+                const isYesNoField = field.options &&
+                    field.options.length === 2 &&
+                    field.options.some(opt => opt.toLowerCase() === 'yes') &&
+                    field.options.some(opt => opt.toLowerCase() === 'no');
+
+                if (isYesNoField) {
+                    // Use Switch for Yes/No fields
+                    const isYes = Array.isArray(value)
+                        ? value.some(v => v.toLowerCase() === 'yes')
+                        : (typeof value === 'string' ? value.toLowerCase() === 'yes' : false);
+
+                    return (
+                        <Box
+                            key={`${level}-${sectionName}-${index}`}
+                            sx={{
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                p: 1.5,
+                                bgcolor: 'grey.50',
+                                borderRadius: 1,
+                                '&:hover': {
+                                    bgcolor: 'grey.100',
+                                }
+                            }}
+                        >
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {getFieldIcon(field.type)}
+                                <Typography variant="body2" sx={{ fontWeight: 500, ml: 0.5 }}>
+                                    {field.label}
+                                </Typography>
+                            </Box>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={isYes}
+                                        onChange={(e) => {
+                                            const newValue = e.target.checked ? 'Yes' : 'No';
+                                            handleInputChange(level, sectionName, (field.name || field.label), [newValue]);
+                                        }}
+                                        color="primary"
+                                    />
+                                }
+                                label={isYes ? 'Yes' : 'No'}
+                                labelPlacement="start"
+                                sx={{
+                                    m: 0,
+                                    '& .MuiTypography-root': {
+                                        fontWeight: 600,
+                                        color: isYes ? 'success.main' : 'text.secondary',
+                                        mr: 1
+                                    }
+                                }}
+                            />
+                        </Box>
+                    );
+                }
+
+                // Use regular checkboxes for multi-option fields
                 return (
                     <Box sx={{ width: '100%' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
