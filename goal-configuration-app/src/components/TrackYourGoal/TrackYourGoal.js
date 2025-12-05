@@ -21,7 +21,8 @@ import {
     DialogActions,
     Paper,
     InputAdornment,
-    Slider
+    Slider,
+    Rating
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
@@ -259,8 +260,58 @@ const TrackYourGoal = () => {
                 );
 
 
-            case 'time':
+            // Rating field - use star rating component
             case 'number':
+                if (field.name.includes('rating') || field.label.toLowerCase().includes('rating')) {
+                    const ratingValue = Number(value) || 0;
+                    const maxRating = 10;
+
+                    return (
+                        <Box
+                            key={`${level}-${sectionName}-${index}`}
+                            sx={{ width: '100%' }}
+                        >
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                                <Typography variant="body2" fontWeight={500}>
+                                    {field.label}
+                                </Typography>
+                                <Typography variant="h6" color="primary.main" fontWeight="bold">
+                                    {ratingValue}/{maxRating}
+                                </Typography>
+                            </Box>
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                p: 1.5,
+                                bgcolor: 'grey.50',
+                                borderRadius: 1,
+                                '&:hover': {
+                                    bgcolor: 'grey.100',
+                                }
+                            }}>
+                                <Rating
+                                    value={ratingValue}
+                                    max={maxRating}
+                                    size="large"
+                                    precision={1}
+                                    onChange={(event, newValue) => {
+                                        handleInputChange(level, sectionName, (field.name || field.label), newValue || 0);
+                                    }}
+                                    sx={{
+                                        color: 'warning.main',
+                                        '& .MuiRating-iconEmpty': {
+                                            color: 'grey.300'
+                                        }
+                                    }}
+                                />
+                            </Box>
+                        </Box>
+                    );
+                }
+            // Fall through to regular number input if not a rating field
+
+            case 'time':
                 return (
                     <TextField
                         key={`${level}-${sectionName}-${index}`}
