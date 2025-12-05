@@ -18,7 +18,10 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions
+    DialogActions,
+    Paper,
+    InputAdornment,
+    Slider
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
@@ -29,6 +32,9 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 import NumbersIcon from '@mui/icons-material/Numbers';
+import PercentIcon from '@mui/icons-material/Percent';
+import TrackChangesIcon from '@mui/icons-material/TrackChanges';
+import TimerIcon from '@mui/icons-material/Timer';
 import { useGoalConfig } from '../../context/GoalConfigContext';
 import { deleteGoal, getGoal, saveGoal } from '../../api/services/firebaseServices';
 import { useAuth } from '../../context/AuthContext';
@@ -201,6 +207,12 @@ const TrackYourGoal = () => {
                 return <CheckBoxIcon sx={{ fontSize: 18, mr: 0.5 }} />;
             case 'radio':
                 return <RadioButtonCheckedIcon sx={{ fontSize: 18, mr: 0.5 }} />;
+            case 'percentage':
+                return <PercentIcon sx={{ fontSize: 18, mr: 0.5 }} />;
+            case 'progress':
+                return <TrackChangesIcon sx={{ fontSize: 18, mr: 0.5 }} />;
+            case 'duration':
+                return <TimerIcon sx={{ fontSize: 18, mr: 0.5 }} />;
             default:
                 return null;
         }
@@ -212,60 +224,84 @@ const TrackYourGoal = () => {
         switch (field.type) {
             case 'text':
                 return (
-                    <>
-                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 0.5 }}>
-                            {getFieldIcon(field.type)}
-                            <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
-                                {field.label}
-                            </Typography>
-                        </Box>
-                        <TextField
-                            key={`${level}-${sectionName}-${index}`}
-                            size="small"
-                            variant="standard"
-                            value={value}
-                            onChange={(e) =>
-                                handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
+                    <TextField
+                        key={`${level}-${sectionName}-${index}`}
+                        label={field.label}
+                        size="small"
+                        variant="outlined"
+                        value={value}
+                        onChange={(e) =>
+                            handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
+                        }
+                        sx={{
+                            width: '100%',
+                            '& .MuiOutlinedInput-root': {
+                                bgcolor: 'grey.50',
+                                '&:hover': {
+                                    bgcolor: 'grey.100',
+                                },
+                                '&.Mui-focused': {
+                                    bgcolor: 'background.paper',
+                                }
                             }
-                            sx={{ flex: 1, width: '100%' }}
-                            multiline
-                            rows={4}
-                        />
-                    </>
+                        }}
+                        multiline
+                        rows={4}
+                        placeholder={`Enter ${field.label.toLowerCase()}...`}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    {getFieldIcon(field.type)}
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
                 );
 
+
             case 'time':
-            case 'number': // New case for time input
+            case 'number':
                 return (
-                    <>
-                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 0.5 }}>
-                            {getFieldIcon(field.type)}
-                            <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
-                                {field.label}
-                            </Typography>
-                        </Box>
-                        <TextField
-                            key={`${level}-${sectionName}-${index}`}
-                            size="small"
-                            variant="standard"
-                            type="number"
-                            value={value}
-                            onChange={(e) =>
-                                handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
+                    <TextField
+                        key={`${level}-${sectionName}-${index}`}
+                        label={field.label}
+                        size="small"
+                        variant="outlined"
+                        type="number"
+                        value={value}
+                        onChange={(e) =>
+                            handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
+                        }
+                        sx={{
+                            width: '100%',
+                            '& .MuiOutlinedInput-root': {
+                                bgcolor: 'grey.50',
+                                '&:hover': {
+                                    bgcolor: 'grey.100',
+                                },
+                                '&.Mui-focused': {
+                                    bgcolor: 'background.paper',
+                                }
                             }
-                            sx={{ flex: 1, width: '100%' }}
-                            inputProps={{ min: 0 }} // Ensure only positive values
-                            placeholder={field.type === 'time' ? '⌛ Enter time in minutes' : 'Enter number'}
-                        />
-                    </>
+                        }}
+                        inputProps={{ min: 0 }}
+                        placeholder={field.type === 'time' ? 'Enter time in minutes' : 'Enter number'}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    {getFieldIcon(field.type)}
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
                 );
 
             case 'dropdown':
                 return (
-                    <>
-                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 0.5 }}>
+                    <Box sx={{ width: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                             {getFieldIcon(field.type)}
-                            <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 500, ml: 0.5 }}>
                                 {field.label}
                             </Typography>
                         </Box>
@@ -276,27 +312,40 @@ const TrackYourGoal = () => {
                                 handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
                             }
                             size="small"
-                            sx={{ flex: 1, width: '100%' }}
+                            displayEmpty
+                            sx={{
+                                width: '100%',
+                                bgcolor: 'grey.50',
+                                '&:hover': {
+                                    bgcolor: 'grey.100',
+                                },
+                                '&.Mui-focused': {
+                                    bgcolor: 'background.paper',
+                                }
+                            }}
                         >
+                            <MenuItem value="" disabled>
+                                <em>Select {field.label.toLowerCase()}</em>
+                            </MenuItem>
                             {field.options.map((option, index) => (
                                 <MenuItem value={option} key={`${(field.name || field.label)}-option-${index}`}>
                                     {option}
                                 </MenuItem>
                             ))}
                         </Select>
-                    </>
+                    </Box>
                 );
 
             case 'checkbox':
                 return (
-                    <>
-                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 0.5 }}>
+                    <Box sx={{ width: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                             {getFieldIcon(field.type)}
-                            <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 500, ml: 0.5 }}>
                                 {field.label}
                             </Typography>
                         </Box>
-                        <FormGroup key={`${level}-${sectionName}-${index}`} row sx={{ width: '100%' }}>
+                        <FormGroup key={`${level}-${sectionName}-${index}`} row sx={{ width: '100%', pl: 1 }}>
                             {field.options.map((option, index) => (
                                 <FormControlLabel
                                     key={`${(field.name || field.label)}-checkbox-${index}`}
@@ -317,15 +366,15 @@ const TrackYourGoal = () => {
                                 />
                             ))}
                         </FormGroup>
-                    </>
+                    </Box>
                 );
 
             case 'radio':
                 return (
-                    <>
-                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 0.5 }}>
+                    <Box sx={{ width: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                             {getFieldIcon(field.type)}
-                            <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 500, ml: 0.5 }}>
                                 {field.label}
                             </Typography>
                         </Box>
@@ -336,7 +385,7 @@ const TrackYourGoal = () => {
                             onChange={(e) =>
                                 handleInputChange(level, sectionName, (field.name || field.label), e.target.value)
                             }
-                            sx={{ width: '100%' }}
+                            sx={{ width: '100%', pl: 1 }}
                         >
                             {field.options.map((option, index) => (
                                 <FormControlLabel
@@ -348,7 +397,171 @@ const TrackYourGoal = () => {
                                 />
                             ))}
                         </RadioGroup>
-                    </>
+                    </Box>
+                );
+
+
+            case 'percentage':
+                return (
+                    <Box sx={{ width: '100%', px: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {getFieldIcon(field.type)}
+                                <Typography variant="body2" sx={{ fontWeight: 500, ml: 0.5 }}>
+                                    {field.label}
+                                </Typography>
+                            </Box>
+                            <Typography variant="h6" color="primary.main" sx={{ fontWeight: 'bold' }}>
+                                {value || 0}%
+                            </Typography>
+                        </Box>
+                        <Slider
+                            key={`${level}-${sectionName}-${index}`}
+                            value={Number(value) || 0}
+                            onChange={(e, newValue) =>
+                                handleInputChange(level, sectionName, (field.name || field.label), newValue)
+                            }
+                            min={field.min || 0}
+                            max={field.max || 100}
+                            step={field.step || 5}
+                            marks={[
+                                { value: 0, label: '0%' },
+                                { value: 50, label: '50%' },
+                                { value: 100, label: '100%' }
+                            ]}
+                            valueLabelDisplay="auto"
+                            valueLabelFormat={(v) => `${v}%`}
+                            sx={{
+                                '& .MuiSlider-markLabel': {
+                                    fontSize: '0.75rem'
+                                }
+                            }}
+                        />
+                    </Box>
+                );
+
+            case 'progress':
+                const total = field.total || 5;
+                const completed = Number(value) || 0;
+                const percentage = (completed / total) * 100;
+
+                return (
+                    <Box sx={{ width: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {getFieldIcon(field.type)}
+                                <Typography variant="body2" sx={{ fontWeight: 500, ml: 0.5 }}>
+                                    {field.label}
+                                </Typography>
+                            </Box>
+                            <Typography variant="h6" color="primary.main" sx={{ fontWeight: 'bold' }}>
+                                {completed} / {total}
+                            </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <TextField
+                                key={`${level}-${sectionName}-${index}`}
+                                type="number"
+                                value={completed}
+                                onChange={(e) => {
+                                    const newValue = Math.min(Math.max(0, Number(e.target.value)), total);
+                                    handleInputChange(level, sectionName, (field.name || field.label), newValue);
+                                }}
+                                size="small"
+                                variant="outlined"
+                                inputProps={{ min: 0, max: total }}
+                                sx={{
+                                    width: '100px',
+                                    '& .MuiOutlinedInput-root': {
+                                        bgcolor: 'grey.50'
+                                    }
+                                }}
+                            />
+                            <Box sx={{ flex: 1 }}>
+                                <Box sx={{
+                                    height: 8,
+                                    bgcolor: 'grey.200',
+                                    borderRadius: 1,
+                                    overflow: 'hidden'
+                                }}>
+                                    <Box sx={{
+                                        height: '100%',
+                                        width: `${percentage}%`,
+                                        bgcolor: 'success.main',
+                                        transition: 'width 0.3s ease'
+                                    }} />
+                                </Box>
+                                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                                    {percentage.toFixed(0)}% complete
+                                </Typography>
+                            </Box>
+                        </Box>
+                    </Box>
+                );
+
+            case 'duration':
+                const totalMinutes = Number(value) || 0;
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+
+                return (
+                    <Box sx={{ width: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            {getFieldIcon(field.type)}
+                            <Typography variant="body2" sx={{ fontWeight: 500, ml: 0.5 }}>
+                                {field.label}
+                            </Typography>
+                        </Box>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            <TextField
+                                label="Hours"
+                                type="number"
+                                value={hours}
+                                onChange={(e) => {
+                                    const newHours = Math.max(0, Number(e.target.value));
+                                    const newTotal = (newHours * 60) + minutes;
+                                    handleInputChange(level, sectionName, (field.name || field.label), newTotal);
+                                }}
+                                size="small"
+                                variant="outlined"
+                                inputProps={{ min: 0, max: 24 }}
+                                sx={{
+                                    width: '100px',
+                                    '& .MuiOutlinedInput-root': {
+                                        bgcolor: 'grey.50'
+                                    }
+                                }}
+                                InputProps={{
+                                    endAdornment: <InputAdornment position="end">h</InputAdornment>
+                                }}
+                            />
+                            <TextField
+                                label="Minutes"
+                                type="number"
+                                value={minutes}
+                                onChange={(e) => {
+                                    const newMinutes = Math.min(Math.max(0, Number(e.target.value)), 59);
+                                    const newTotal = (hours * 60) + newMinutes;
+                                    handleInputChange(level, sectionName, (field.name || field.label), newTotal);
+                                }}
+                                size="small"
+                                variant="outlined"
+                                inputProps={{ min: 0, max: 59 }}
+                                sx={{
+                                    width: '100px',
+                                    '& .MuiOutlinedInput-root': {
+                                        bgcolor: 'grey.50'
+                                    }
+                                }}
+                                InputProps={{
+                                    endAdornment: <InputAdornment position="end">m</InputAdornment>
+                                }}
+                            />
+                            <Typography variant="body2" color="text.secondary">
+                                = {totalMinutes} minutes
+                            </Typography>
+                        </Stack>
+                    </Box>
                 );
 
             default:
@@ -572,30 +785,44 @@ const TrackYourGoal = () => {
 
                             {/* Render form fields */}
                             {config.sections[levels[tabIndex]].map((section) => section.enabled && (
-                                <Box key={`section-${levels[tabIndex]}-${section.name}`} sx={{ mt: 2 }}>
-                                    <Typography
-                                        variant="h6"
-                                        sx={{ fontStyle: 'italic', fontWeight: 'bold', mb: 2 }}
+                                <Paper
+                                    key={`section-${levels[tabIndex]}-${section.name}`}
+                                    elevation={2}
+                                    sx={{
+                                        p: 2.5,
+                                        mb: 2.5,
+                                        borderRadius: 2,
+                                        borderLeft: '4px solid',
+                                        borderColor: 'primary.main',
+                                        bgcolor: 'background.paper'
+                                    }}
+                                >
+                                    {/* Section Header with colored background */}
+                                    <Box
+                                        sx={{
+                                            bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                            p: 1.5,
+                                            mb: 2,
+                                            borderRadius: 1
+                                        }}
                                     >
-                                        {section.label || section.name}
-                                    </Typography>
-                                    <List sx={{ width: '100%' }}>
+                                        <Typography
+                                            variant="h6"
+                                            sx={{ fontWeight: 'bold', color: 'primary.main', fontSize: '1.1rem' }}
+                                        >
+                                            {section.label || section.name}
+                                        </Typography>
+                                    </Box>
+
+                                    {/* Fields in Stack */}
+                                    <Stack spacing={2}>
                                         {section.fields.map((field, index) => (
-                                            <ListItem
-                                                key={`field-${levels[tabIndex]}-${section.name}-${index}`}
-                                                sx={{
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    alignItems: 'flex-start',
-                                                    width: '100%',
-                                                    py: 1
-                                                }}
-                                            >
+                                            <Box key={`field-${levels[tabIndex]}-${section.name}-${index}`} sx={{ width: '100%' }}>
                                                 {renderField(field, levels[tabIndex], section.name, index)}
-                                            </ListItem>
+                                            </Box>
                                         ))}
-                                    </List>
-                                </Box>
+                                    </Stack>
+                                </Paper>
                             ))}
 
                             {/* Show save button only when not in edit mode */}

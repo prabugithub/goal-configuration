@@ -1,9 +1,9 @@
 
 const evaluationFields = [
-    {name:'happy', label: 'What went well?', type: 'text' },
-    {name:'stop', label: 'What goes not well?', type: 'text' },
-    {name:'start', label: 'What are the things want to improve process?', type: 'text' },
-    {name:'action', label: 'Plan your improvements:', type: 'text' },
+    { name: 'happy', label: 'What went well?', type: 'text' },
+    { name: 'stop', label: 'What goes not well?', type: 'text' },
+    { name: 'start', label: 'What are the things want to improve process?', type: 'text' },
+    { name: 'action', label: 'Plan your improvements:', type: 'text' },
 ];
 
 const planningFields = [
@@ -38,7 +38,7 @@ const initialConfigState = {
     },
     sections: {
         yearly: [
-            {...planning, enabled: true},
+            { ...planning, enabled: true },
             {
                 name: 'evaluation', label: 'Last Year Review',
                 enabled: true,
@@ -64,7 +64,7 @@ const initialConfigState = {
                 enabled: true,
                 fields: evaluationFields
             },
-            {...planning, enabled: true},
+            { ...planning, enabled: true },
             {
                 name: 'taskSplitUp',
                 label: 'Break down Quater goal to months:',
@@ -84,7 +84,7 @@ const initialConfigState = {
                 enabled: true,
                 fields: evaluationFields
             },
-            {...planning, enabled: true},
+            { ...planning, enabled: true },
             {
                 name: 'taskSplitUp',
                 label: 'Break down Month goal to weeks:',
@@ -105,7 +105,7 @@ const initialConfigState = {
                 enabled: true,
                 fields: evaluationFields
             },
-            {...planning, enabled: true},
+            { ...planning, enabled: true },
             {
                 name: 'taskSplitUp',
                 label: 'Break down Weekly goal to days:',
@@ -125,8 +125,29 @@ const initialConfigState = {
         ],
         daily: [
             {
+                name: 'performance',
+                label: 'Goal Performance',
+                enabled: true,
+                fields: [
+                    {
+                        name: 'completion',
+                        label: 'Goal completion percentage',
+                        type: 'percentage',
+                        min: 0,
+                        max: 100,
+                        step: 10
+                    },
+                    {
+                        name: 'tasks-done',
+                        label: 'Tasks completed today',
+                        type: 'progress',
+                        total: 5
+                    }
+                ]
+            },
+            {
                 name: 'evaluations',
-                label: 'How you perform on your goal(only planned task):',
+                label: 'Daily Reflection',
                 enabled: true,
                 fields: [
                     { name: 'went-well', label: 'What went well in the past 24 hours?', type: 'text' },
@@ -137,28 +158,22 @@ const initialConfigState = {
             },
             {
                 name: 'rituals',
-                label: 'Mind and body',
+                label: 'Mind and Body',
                 enabled: true,
-                // fields: [
-                //     { name: 'meditation', label: 'Meditation', type: 'checkbox', options: ['Yes', 'No'] },
-                //     { name: 'reading', label: 'Reading', type: 'checkbox', options: ['Yes', 'No'] },
-                //     { name: 'excercise', label: 'Exercise', type: 'checkbox', options: ['Yes', 'No'] },
-                //     { name: 'diet', label: 'Diet', type: 'checkbox', options: ['Yes', 'No'] },
-                // ]
                 fields: [
-                    { name: 'deepwork', label: 'Deep work', type: 'time', options: ['Yes', 'No'] },
-                    { name: 'meditation', label: 'Meditation', type: 'time', options: ['Yes', 'No'] },
-                    { name: 'reading', label: 'Reading', type: 'time', options: ['Yes', 'No'] },
-                    { name: 'excercise', label: 'Exercise', type: 'time', options: ['Yes', 'No'] },
-                    { name: 'diet', label: 'Diet', type: 'checkbox', options: ['Yes', 'No'] },
+                    { name: 'deepwork', label: 'Deep work', type: 'duration' },
+                    { name: 'meditation', label: 'Meditation', type: 'duration' },
+                    { name: 'reading', label: 'Reading', type: 'duration' },
+                    { name: 'excercise', label: 'Exercise', type: 'duration' },
+                    { name: 'diet', label: 'Followed diet plan?', type: 'checkbox', options: ['Yes', 'No'] },
                 ]
             },
             {
                 name: 'ratings',
-                label: 'Rate your day (6 for goal and 4 for mind and body):',
+                label: 'Daily Rating',
                 enabled: true,
                 fields: [
-                    { name: 'total', label: '10 Out of:', type: 'number' },
+                    { name: 'total', label: 'Overall day rating (out of 10)', type: 'number' },
                 ]
             },
         ]
