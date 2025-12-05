@@ -64,6 +64,7 @@ const TrackYourGoal = () => {
     const [yesterdayTodo, setYesterdayTodo] = useState("");
 
     const isInitialLoad = useRef(true);
+    const loadedTabs = useRef(new Set()); // Track which tabs have been loaded
     const levels = ['yearly', 'quarterly', 'monthly', 'weekly', 'daily'].filter(level => config.levels[level]);
     const taskSettings = {
         daily: { level: 'weekly', task: 'taskSplitUp', value: 1 },
@@ -82,10 +83,17 @@ const TrackYourGoal = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            setLoading(true);
+            const level = levels[tabIndex];
+            const identifier = getIdentifier(level, selectedDate);
+            const tabKey = `${level}-${identifier}`;
+
+            // Only show loading if this tab hasn't been loaded before
+            const isTabLoaded = loadedTabs.current.has(tabKey);
+            if (!isTabLoaded) {
+                setLoading(true);
+            }
+
             try {
-                const level = levels[tabIndex];
-                const identifier = getIdentifier(level, selectedDate); // e.g., '2025-01-13' for daily
                 const data = await getGoal(user.uid, level, identifier);
                 if (data) {
                     setSavedData((prev) => ({ ...prev, [level]: data }));
@@ -106,6 +114,9 @@ const TrackYourGoal = () => {
                     }
 
                 };
+
+                // Mark this tab as loaded
+                loadedTabs.current.add(tabKey);
             } catch (error) {
                 console.error("Error fetching goal data:", error);
             } finally {
@@ -135,6 +146,8 @@ const TrackYourGoal = () => {
     };
 
     const resetDate = () => {
+        // Clear loaded tabs cache when resetting date
+        loadedTabs.current.clear();
         setSelectedDate(new Date());
     }
 
@@ -755,6 +768,8 @@ const TrackYourGoal = () => {
         if (isSelectedDateIsFuture(newDate) && direction === 'next') {
             alert(`Not allowing future ${levels[tabIndex]} plan.`);
         } else {
+            // Clear loaded tabs cache when date changes
+            loadedTabs.current.clear();
             setSelectedDate(newDate);
         }
     };
