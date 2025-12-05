@@ -1,15 +1,174 @@
 import React from "react";
-import { Typography, Box, Paper, Stack } from "@mui/material";
+import {
+    Typography,
+    Box,
+    Paper,
+    Stack,
+    LinearProgress,
+    Rating,
+    Chip
+} from "@mui/material";
+import {
+    Timer as TimerIcon,
+    CheckCircle as CheckCircleIcon,
+    Cancel as CancelIcon
+} from "@mui/icons-material";
 import GenericLogic from "../../common/utils/generic-logic";
 import CONSTANTS from "../../common/constants";
 
 const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
-    const renderValue = (value) => {
-        if (Array.isArray(value)) {
-            return value.join(", ");
+    const renderFieldValue = (field, value) => {
+        if (!value && value !== 0) {
+            return (
+                <Typography
+                    variant="body2"
+                    sx={{
+                        fontStyle: 'italic',
+                        color: 'text.disabled'
+                    }}
+                >
+                    No saved value
+                </Typography>
+            );
         }
-        // If the value is a string or other primitive type, render it as plain text
-        return value;
+
+        // Percentage field - show as progress bar
+        if (field.type === 'percentage') {
+            const percentage = Number(value) || 0;
+            const color = percentage >= 70 ? 'success.main' :
+                percentage >= 40 ? 'warning.main' : 'error.main';
+
+            return (
+                <Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Typography variant="h5" color="primary.main" fontWeight="bold">
+                            {percentage}%
+                        </Typography>
+                    </Box>
+                    <LinearProgress
+                        variant="determinate"
+                        value={percentage}
+                        sx={{
+                            height: 10,
+                            borderRadius: 1,
+                            bgcolor: 'grey.200',
+                            '& .MuiLinearProgress-bar': {
+                                bgcolor: color,
+                                borderRadius: 1
+                            }
+                        }}
+                    />
+                </Box>
+            );
+        }
+
+        // Rating field - show as stars
+        if (field.type === 'number' && (field.name.includes('rating') || field.label.toLowerCase().includes('rating'))) {
+            const rating = Number(value) || 0;
+            const maxRating = 10;
+
+            return (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Rating
+                        value={rating}
+                        max={maxRating}
+                        readOnly
+                        size="large"
+                        precision={1}
+                        sx={{
+                            color: 'warning.main',
+                            '& .MuiRating-iconEmpty': {
+                                color: 'grey.300'
+                            }
+                        }}
+                    />
+                    <Typography variant="h6" color="text.secondary" fontWeight="600">
+                        {rating}/{maxRating}
+                    </Typography>
+                </Box>
+            );
+        }
+
+        // Duration field - show as time badge
+        if (field.type === 'duration' || field.type === 'time') {
+            const totalMinutes = Number(value) || 0;
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            const timeString = hours > 0
+                ? `${hours}h ${minutes}m`
+                : `${minutes}m`;
+
+            return (
+                <Chip
+                    icon={<TimerIcon />}
+                    label={timeString}
+                    color="primary"
+                    variant="outlined"
+                    size="medium"
+                    sx={{
+                        fontWeight: 600,
+                        fontSize: '0.95rem',
+                        py: 2.5
+                    }}
+                />
+            );
+        }
+
+        // Checkbox field - show as Yes/No chip
+        if (field.type === 'checkbox') {
+            const isChecked = Array.isArray(value) ? value.includes('Yes') : value === 'Yes';
+
+            return (
+                <Chip
+                    icon={isChecked ? <CheckCircleIcon /> : <CancelIcon />}
+                    label={isChecked ? 'Yes' : 'No'}
+                    color={isChecked ? 'success' : 'error'}
+                    variant="outlined"
+                    size="medium"
+                    sx={{ fontWeight: 600 }}
+                />
+            );
+        }
+
+        // Text field - show in bordered paper
+        if (field.type === 'text') {
+            return (
+                <Paper
+                    variant="outlined"
+                    sx={{
+                        p: 1.5,
+                        bgcolor: 'background.default',
+                        borderLeft: '3px solid',
+                        borderColor: 'primary.light'
+                    }}
+                >
+                    <Typography
+                        variant="body2"
+                        sx={{
+                            whiteSpace: 'pre-wrap',
+                            color: 'text.primary'
+                        }}
+                    >
+                        {value}
+                    </Typography>
+                </Paper>
+            );
+        }
+
+        // Default - render as is
+        if (Array.isArray(value)) {
+            return (
+                <Typography variant="body2" color="text.secondary">
+                    {value.join(", ")}
+                </Typography>
+            );
+        }
+
+        return (
+            <Typography variant="body2" color="text.secondary">
+                {value}
+            </Typography>
+        );
     };
 
     return (
@@ -50,50 +209,23 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
                     <Stack spacing={2}>
                         {section?.fields?.map((field, fieldIndex) => {
                             const value = savedData[section.name] && (savedData[section.name][field.name] || savedData[section.name][field.label]);
-                            const hasValue = value && value !== '';
 
                             return (
                                 <Box
                                     key={`saved-field-${sectionIndex}-${fieldIndex}`}
-                                    sx={{
-                                        p: 1.5,
-                                        bgcolor: 'grey.50',
-                                        borderRadius: 1,
-                                        borderLeft: '3px solid',
-                                        borderColor: hasValue ? 'success.light' : 'grey.300'
-                                    }}
+                                    sx={{ width: '100%' }}
                                 >
                                     <Typography
                                         variant="subtitle2"
                                         sx={{
                                             fontWeight: 600,
                                             color: 'text.primary',
-                                            mb: 0.5
+                                            mb: 1
                                         }}
                                     >
                                         {field.label}
                                     </Typography>
-                                    {hasValue ? (
-                                        <Typography
-                                            variant="body2"
-                                            sx={{
-                                                whiteSpace: 'pre-line',
-                                                color: 'text.secondary'
-                                            }}
-                                        >
-                                            {renderValue(value)}
-                                        </Typography>
-                                    ) : (
-                                        <Typography
-                                            variant="body2"
-                                            sx={{
-                                                fontStyle: 'italic',
-                                                color: 'text.disabled'
-                                            }}
-                                        >
-                                            No saved value
-                                        </Typography>
-                                    )}
+                                    {renderFieldValue(field, value)}
                                 </Box>
                             );
                         })}
