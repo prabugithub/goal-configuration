@@ -136,7 +136,8 @@ const initialConfigState = {
                         min: 0,
                         max: 100,
                         step: 10
-                    }
+                    },
+                    { name: 'deepwork', label: 'Deep work', type: 'duration' },
                 ]
             },
             {
@@ -152,10 +153,9 @@ const initialConfigState = {
             },
             {
                 name: 'rituals',
-                label: 'Mind and Body',
+                label: 'Rituals',
                 enabled: true,
                 fields: [
-                    { name: 'deepwork', label: 'Deep work', type: 'duration' },
                     { name: 'meditation', label: 'Meditation', type: 'duration' },
                     { name: 'reading', label: 'Reading', type: 'duration' },
                     { name: 'excercise', label: 'Exercise', type: 'duration' },
@@ -167,7 +167,7 @@ const initialConfigState = {
                 label: 'Daily Rating',
                 enabled: true,
                 fields: [
-                    { name: 'total', label: 'Overall day rating (out of 10)', type: 'number' },
+                    { name: 'total', label: 'Overall day rating (out of 10)', type: 'rating' },
                 ]
             },
         ]

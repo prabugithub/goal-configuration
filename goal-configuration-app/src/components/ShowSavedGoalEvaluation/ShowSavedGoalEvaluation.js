@@ -65,7 +65,7 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
         }
 
         // Rating field - show as stars
-        if (field.type === 'number' && (field.name.includes('rating') || field.label.toLowerCase().includes('rating'))) {
+        if (field.type === 'rating') {
             const rating = Number(value) || 0;
             const maxRating = 10;
 
@@ -88,6 +88,15 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
                         {rating}/{maxRating}
                     </Typography>
                 </Box>
+            );
+        }
+
+        // Number field - show as plain number
+        if (field.type === 'number') {
+            return (
+                <Typography variant="h6" color="primary.main" fontWeight="bold">
+                    {value}
+                </Typography>
             );
         }
 

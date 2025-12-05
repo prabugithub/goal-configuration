@@ -27,6 +27,7 @@ import {
   CardContent,
   Chip,
   LinearProgress,
+  Rating,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SaveIcon from '@mui/icons-material/Save';
@@ -313,6 +314,46 @@ const FormField = ({ field, value, onChange, disabled, isMobile }) => {
             variant="outlined"
             size="small"
           />
+        </Box>
+      );
+
+    case 'rating':
+      const ratingValue = Number(value) || 0;
+      const maxRating = 10;
+
+      return (
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+            <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+              {field.label}
+            </Typography>
+            <Typography variant="body2" color="primary.main" fontWeight="bold">
+              {ratingValue}/{maxRating}
+            </Typography>
+          </Box>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 1.5,
+            bgcolor: 'grey.50',
+            borderRadius: 1,
+          }}>
+            <Rating
+              value={ratingValue}
+              max={maxRating}
+              size="large"
+              precision={1}
+              onChange={(event, newValue) => onChange(newValue || 0)}
+              disabled={disabled}
+              sx={{
+                color: 'warning.main',
+                '& .MuiRating-iconEmpty': {
+                  color: 'grey.300'
+                }
+              }}
+            />
+          </Box>
         </Box>
       );
 
