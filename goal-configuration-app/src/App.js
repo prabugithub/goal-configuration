@@ -1,107 +1,244 @@
 // src/App.js
 
 import './App.css';
+import { useEffect, useState } from 'react';
+import { Container, CssBaseline, IconButton, Typography, Tabs, Tab, Box, useMediaQuery, useTheme, Stack } from '@mui/material';
+import LogoutIcon from '@mui/icons-material/Logout';
+import SettingsIcon from '@mui/icons-material/Settings';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+
 import GoalHierarchySelection from './components/GoalHierarchySelection/GoalHierarchySelection';
-import { Container, CssBaseline } from '@mui/material';
 import NextStep from './components/NextStep/NextStep';
-import { useStep } from './context/StepContext';
 import ConfigureFields from './components/ConfigureFields/ConfigureFields';
 import Login from './components/Login/LoginPage';
 import Signup from './components/Login/SignUp';
-import { useEffect, useState } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from './api/firebase/firebas';
-import { getUserConfiguration } from './api/services/firebaseServices';
+import AppGuide from './components/AppGuide/AppGuide';
 import TrackYourGoal from './components/TrackYourGoal/TrackYourGoal';
+import ProgressDashboard from './components/ProgressDashboard/ProgressDashboard';
+import Dashboard from './components/Dashboard/Dashboard';
+import AnalyticsCharts from './components/Analytics/AnalyticsCharts';
+import ProgressRings from './components/Analytics/ProgressRings';
+import GoalSearch from './components/GoalSearch/GoalSearch';
+import WhatsAppShare from './components/ShareReport/WhatsAppShare';
+import ReportGenerator from './components/ShareReport/ReportGenerator';
+import MobileBottomNav, { MobileContentPadding } from './components/MobileBottomNav/MobileBottomNav';
+import SmartGoalPrompt from './components/SmartGoalPrompt/SmartGoalPrompt';
+import ExportButton from './components/ExportButton/ExportButton';
+import { ToastProvider } from './context/ToastContext';
+import { useGoals } from './hooks/useGoals';
+import { useMetrics } from './hooks/useMetrics';
+
+import { auth } from './api/firebase/firebas';
+import { deleteUserConfiguration, getUserConfiguration, saveUserConfig } from './api/services/firebaseServices';
 import { useGoalConfig } from './context/GoalConfigContext';
+import { useStep } from './context/StepContext';
+import { initialConfigState } from './context/DefaultValues/GlobalDefaultConfig';
 
 function App() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { currentStep } = useStep();
   const [user, setUser] = useState(null);
-  const [showLogin, setShowLogin] = useState(true); // State to toggle between Login and Sign Up forms
-  const [configuration, setHasConfiguration] = useState(false);
-  const {config, setConfig} = useGoalConfig();
   const [loading, setLoading] = useState(true);
+  const [tabIndex, setTabIndex] = useState(1);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [allGoals, setAllGoals] = useState({});
+
+  const { config, setConfig, hasConfiguration, setHasConfiguration, doResetConfig, setDoResetConfig } = useGoalConfig();
+  const { goals } = useGoals(user?.uid);
+  const metrics = useMetrics(goals, config);
 
   useEffect(() => {
-    // Monitor authentication state
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
         try {
-          // Check if the user has a configuration
           const conf = await getUserConfiguration(currentUser.uid);
-          setConfig(conf); // Set true if configuration exists
+          setConfig(conf);
+          if (conf) {
+            setHasConfiguration(true);
+          } else if (!conf && !doResetConfig) {
+            setLoading(true);
+            setConfig(initialConfigState);
+            await saveUserConfig(initialConfigState, currentUser.uid);
+            setHasConfiguration(true);
+            setLoading(false);
+          } else {
+            setHasConfiguration(false);
+          }
         } catch (error) {
           console.error("Error checking user configuration:", error);
         }
       }
-      setLoading(false); // Stop loading once auth and config check is complete
+      setLoading(false);
     });
-
-    // Log out on app close or refresh
-    const handleLogoutOnClose = () => {
-      signOut(auth)
-        .then(() => console.log("User logged out on app close"))
-        .catch((error) => console.error("Error during logout on close:", error));
-    };
-
-    // window.addEventListener("beforeunload", handleLogoutOnClose);
 
     return () => {
       unsubscribe();
-      // window.removeEventListener("beforeunload", handleLogoutOnClose);
     };
   }, []);
 
-  // Array of step components
+  const handleLogout = async () => {
+    const isConfirmed = window.confirm("Are you sure you want to log out?");
+    if (!isConfirmed) return;
+
+    try {
+      await signOut(auth);
+      console.log("User logged out successfully");
+      setUser(null);
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  const handleConfigDelete = async () => {
+    const isConfirmed = window.confirm("This will delete your goal configuration. Are you sure?");
+    if (!isConfirmed) return;
+
+    if (user) {
+      try {
+        await deleteUserConfiguration(user.uid);
+        setConfig(initialConfigState);
+        setHasConfiguration(false);
+        setDoResetConfig(true);
+        console.log("User configuration deleted successfully.");
+      } catch (error) {
+        console.error("Error deleting configuration:", error);
+      }
+    }
+  };
+
   const steps = [
+    <AppGuide key="step0" />,
     <GoalHierarchySelection key="step1" />,
     <ConfigureFields key="step2" />,
-    <NextStep key="step3" />,
+    <NextStep key="step3" />
   ];
 
-  if (loading) {
-    return <div>Loading...</div>; // Display a loading spinner or message
-  }
+  if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="App">
-      <CssBaseline />
-      {user ? (
-        <Container maxWidth="sm">
-          {config ? <TrackYourGoal></TrackYourGoal> :
-            <>
-              <h1>Focus2Win!</h1>
-              {steps[currentStep]}
-            </>
+    <ToastProvider>
+      <div className="App">
+        <CssBaseline />
+        {user ? (
+          <Container maxWidth="sm" className="">
+            <header className="app-header">
+              <IconButton color="secondary" onClick={handleConfigDelete} title="Delete Configuration">
+                <SettingsIcon />
+              </IconButton>
+              <Typography variant="h5" color="primary" gutterBottom>
+                {hasConfiguration ? "Your Onething!" : "Focus2Win!"}
+              </Typography>
+              <IconButton color="primary" onClick={handleLogout} title="Logout">
+                <LogoutIcon />
+              </IconButton>
+            </header>
 
-          }
-        </Container>
-      ) : (
-        <div>
-          {showLogin ? (
-            <Login key="login" />
-          ) : (
-            <Signup key="signup" />
-          )}
-          <button
-            onClick={() => setShowLogin(!showLogin)}
-            style={{
-              marginTop: "10px",
-              padding: "10px 20px",
-              backgroundColor: "#1976d2",
-              color: "#fff",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            {showLogin ? "Switch to Sign Up" : "Switch to Login"}
-          </button>
-        </div>
-      )}
-    </div>
+            {/* Menu Tabs */}
+            {hasConfiguration && (
+              <>
+                {/* Smart Goal Prompt */}
+                <SmartGoalPrompt
+                  goals={goals}
+                  config={config}
+                  onSelectLevel={(level) => {
+                    // Handle level selection
+                    console.log('Selected level:', level);
+                  }}
+                />
+
+                {/* Top Navigation for Desktop, Bottom Nav for Mobile */}
+                {!isMobile && (
+                  <Tabs value={tabIndex} onChange={(e, newVal) => setTabIndex(newVal)} centered sx={{ mb: 2 }}>
+                    <Tab label="📊 Dashboard" />
+                    <Tab label="📝 Goal Entry" />
+                    <Tab label="📈 Analytics" />
+                    <Tab label="📋 Reports" />
+                  </Tabs>
+                )}
+
+                <MobileContentPadding>
+                  {/* Dashboard Tab */}
+                  {(tabIndex === 0 || !isMobile) && !showDashboard && (
+                    <TabPanel value={tabIndex} index={0}>
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold', mb: 2 }}>
+                          🎯 Quick Actions
+                        </Typography>
+                        <Stack direction={isMobile ? 'column' : 'row'} spacing={1}>
+                          <GoalSearch goals={goals} config={config} onSelectGoal={() => {}} />
+                          <WhatsAppShare goals={goals} config={config} metrics={metrics} />
+                          <ReportGenerator goals={goals} config={config} metrics={metrics} userId={user?.uid} />
+                          <ExportButton goals={goals} config={config} userId={user?.uid} />
+                        </Stack>
+                      </Box>
+
+                      {/* Main Dashboard */}
+                      <Dashboard goals={goals} config={config} />
+
+                      {/* Progress Rings */}
+                      <ProgressRings metrics={metrics} goals={goals} />
+                    </TabPanel>
+                  )}
+
+                  {/* Goal Entry Tab */}
+                  {(tabIndex === 1 || (isMobile && !showDashboard)) && (
+                    <TabPanel value={tabIndex} index={1}>
+                      <TrackYourGoal />
+                    </TabPanel>
+                  )}
+
+                  {/* Analytics Tab */}
+                  {(tabIndex === 2 || (!isMobile && !showDashboard)) && (
+                    <TabPanel value={tabIndex} index={2}>
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold', mb: 2 }}>
+                          📊 Advanced Analytics
+                        </Typography>
+                        <AnalyticsCharts metrics={metrics} goals={goals} />
+                      </Box>
+                    </TabPanel>
+                  )}
+
+                  {/* Reports Tab */}
+                  {(tabIndex === 3 || (!isMobile && !showDashboard)) && (
+                    <TabPanel value={tabIndex} index={3}>
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold', mb: 2 }}>
+                          📋 Reports & Sharing
+                        </Typography>
+                        <ProgressDashboard userId={user?.uid} view="monthly" />
+                      </Box>
+                    </TabPanel>
+                  )}
+                </MobileContentPadding>
+
+                {/* Mobile Bottom Navigation */}
+                {isMobile && (
+                  <MobileBottomNav
+                    levels={Object.keys(config.levels || {}).filter(level => config.levels[level])}
+                    selectedLevel={tabIndex}
+                    onLevelChange={setTabIndex}
+                    showDashboard={showDashboard}
+                    onDashboardToggle={setShowDashboard}
+                  />
+                )}
+              </>
+            )}
+
+            {!hasConfiguration && steps[currentStep]}
+          </Container>
+        ) : (
+          <Login key="login" />
+        )}
+      </div>
+    </ToastProvider>
   );
+}
+
+function TabPanel({ children, value, index }) {
+  return value === index ? <Box sx={{ py: 2 }}>{children}</Box> : null;
 }
 
 export default App;

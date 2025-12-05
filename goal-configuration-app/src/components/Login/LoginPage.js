@@ -1,41 +1,55 @@
 import React, { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../api/firebase/firebas";
-import { useStep } from "../../context/StepContext";
+import { signInWithGoogle } from "../../api/firebase/firebas";
+import { Container, Typography, Button, Box, CircularProgress, Alert } from "@mui/material";
+import GoogleIcon from "@mui/icons-material/Google";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-   // const { goNext } = useStep(); // Get navigation methods
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleLogin = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log("User logged in:", userCredential.user);
-      // goNext();
-    } catch (error) {
-      console.error("Login error:", error.message);
+      await signInWithGoogle();
+    } catch (err) {
+      console.error("Login Error:", err);
+      setError("Failed to sign in. Please try again.");
     }
+    setLoading(false);
   };
 
   return (
-    <div>
-      <h2>Login</h2>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button onClick={handleLogin}>Login</button>
-    </div>
+    <Container maxWidth="xs">
+      <Box 
+        display="flex" 
+        flexDirection="column" 
+        alignItems="center" 
+        justifyContent="center"
+        height="100vh"
+      >
+        <Typography variant="h4" fontWeight="bold" color="primary" textAlign="center" gutterBottom>
+          Focus2Win
+        </Typography>
+        <Typography variant="body1" color="textSecondary" textAlign="center" mb={3}>
+          Achieve your goals with structured tracking and planning.
+        </Typography>
+
+        {error && <Alert severity="error" sx={{ mb: 2, width: "100%" }}>{error}</Alert>}
+
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<GoogleIcon />}
+          onClick={handleLogin}
+          disabled={loading}
+          fullWidth
+          sx={{ borderRadius: 2, py: 1.5, fontSize: "1rem" }}
+        >
+          {loading ? <CircularProgress size={24} /> : "Sign in with Google"}
+        </Button>
+      </Box>
+    </Container>
   );
 };
 

@@ -8,24 +8,13 @@ import { useStep } from '../../context/StepContext';
 const GoalHierarchySelection = ({ onNext }) => {
 
     // State for tracking selected breakdown levels
-    const { config, toggleLevels } = useGoalConfig();
+    const { config, toggleLevels, setConfig } = useGoalConfig();
 
     // hook for next step
-    const { goNext } = useStep(); // Get navigation methods
+    const { goNext, goBack } = useStep(); // Get navigation methods
 
     // State for validation message
     const [validationMessage, setValidationMessage] = useState('');
-
-    // Toggle breakdown levels on and off
-    // const handleLevelChange = (level) => {
-    //     toggleLevels((prevLevels) => ({
-    //         ...prevLevels,
-    //         [level]: !prevLevels[level]
-    //     }));
-    //     setValidationMessage('');
-    //     console.log('Selected breakdown levels:', levels);
-
-    // };
 
     // Handle form submission or "Next" button click
     const handleSubmit = () => {
@@ -42,8 +31,6 @@ const GoalHierarchySelection = ({ onNext }) => {
     };
     return (
         <div>
-            <Typography variant="h5">Goal Breakdown settings</Typography>
-
             <List sx={{ width: '100%', alignItems: "center", maxWidth: 360, bgcolor: 'background.paper' }}>
                 {Object.keys(config.levels).map((level) => (
                     <ListItem key={level}
@@ -54,6 +41,7 @@ const GoalHierarchySelection = ({ onNext }) => {
                                     <Checkbox
                                         checked={config.levels[level]}
                                         onChange={() => toggleLevels(level)}
+                                        disabled
                                     />
                                 }
                                 label={`${level.charAt(0).toUpperCase() + level.slice(1)} Breakdown`}
@@ -73,7 +61,7 @@ const GoalHierarchySelection = ({ onNext }) => {
 
             <Box sx={{ display: 'flex', justifyContent: 'space-evenly', mt: 2 }}>
                 {/* Back Button (disabled since it's the first step) */}
-                <Button variant="contained" color="secondary" disabled>
+                <Button variant="contained" color="secondary" onClick={goBack}>
                     Back
                 </Button>
 

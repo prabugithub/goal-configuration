@@ -18,6 +18,11 @@ export const useGoalConfig = () => useContext(GoalConfigContext);
 export const GoalConfigProvider = ({ children }) => {
     const [config, setConfig] = useState(initialConfigState);
 
+    const [hasConfiguration, setHasConfiguration] = useState(false);
+
+    const [doResetConfig, setDoResetConfig] = useState(false);
+    
+
     // toggle the hierarchy selection of the evaluation duration
     const toggleLevels = (level) => {
         setConfig((conf) => ({
@@ -114,7 +119,7 @@ export const GoalConfigProvider = ({ children }) => {
     };
 
     return (
-        <GoalConfigContext.Provider value={{ config, setConfig, toggleLevels, toggleSection, updateField, addSection, addField, updateFieldOptions }}>
+        <GoalConfigContext.Provider value={{ config, setConfig, hasConfiguration, doResetConfig, setDoResetConfig, setHasConfiguration, toggleLevels, toggleSection, updateField, addSection, addField, updateFieldOptions }}>
             {children}
         </GoalConfigContext.Provider>
     );

@@ -73,17 +73,15 @@ const ConfigureFields = () => {
   }
   return (
     <div>
-      <Typography variant="h5" gutterBottom>
-        Configure Sections and Fields
-      </Typography>
-
       <Box>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={value} onChange={handleChange} aria-label="Yearly selection">
+          <Tabs value={value} onChange={handleChange} aria-label="Yearly selection" variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile>
             {Object.keys(config.levels)
               .filter((level) => config.levels[level]) // Only display selected levels
               .map((level, ind) => (
-                <Tab label={level} {...a11yProps(ind)}  key={'tab_' + ind}/>
+                <Tab label={level} {...a11yProps(ind)} key={'tab_' + ind} />
               ))}
           </Tabs>
         </Box>
@@ -92,7 +90,6 @@ const ConfigureFields = () => {
           .filter((level) => config.levels[level]) // Only display selected levels
           .map((level, ind) => (
             <CustomTabPanel value={value} index={ind} key={'customPanel_'+ind}>
-              <Paper key={level} elevation={3} sx={{ p: 3, mb: 3 }}>
 
                 <Typography variant="h6">{`${level.charAt(0).toUpperCase() + level.slice(1)} Level`}</Typography>
 
@@ -204,7 +201,6 @@ const ConfigureFields = () => {
                 >
                   Add Section
                 </Button>
-              </Paper>
             </CustomTabPanel>
 
           ))}

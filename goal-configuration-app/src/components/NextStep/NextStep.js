@@ -30,7 +30,7 @@ import { auth } from '../../api/firebase/firebas';
 import { useAuth } from '../../context/AuthContext';
 
 const NextStep = () => {
-    const { config, toggleSection, updateField, updateFieldOptions, addSection, addField } = useGoalConfig();
+    const { config, setHasConfiguration } = useGoalConfig();
     const { goNext, goBack } = useStep();
 
     const {user} = useAuth();
@@ -42,12 +42,11 @@ const NextStep = () => {
     };
 
     // Handle form submission
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         console.log('Sections:', config.sections);
 
-        saveUserConfig(config, user.uid);
-
-        // goNext();
+        await saveUserConfig(config, user.uid);
+        setHasConfiguration(true);
     };
 
     function CustomTabPanel(props) {
@@ -76,12 +75,11 @@ const NextStep = () => {
 
     return (
         <div>
-            <Typography variant="h5" gutterBottom>
-                Selected Goal Levels
-            </Typography>
             <Box>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <Tabs value={value} onChange={handleChange} aria-label="Yearly selection" key="levels_tab">
+                    <Tabs value={value} onChange={handleChange} aria-label="Yearly selection" key="levels_tab" variant="scrollable"
+                    scrollButtons="auto"
+                    allowScrollButtonsMobile>
                         {Object.keys(config.levels)
                             .filter((level) => config.levels[level]) // Only display selected levels
                             .map((level, ind) => (
@@ -99,19 +97,8 @@ const NextStep = () => {
                             <Typography variant="h6" key={level + '_tg_' + ind}>{`${level.charAt(0).toUpperCase() + level.slice(1)} Level`}</Typography>
 
                             {/* Loop through default sections */}
-                            {(config.sections[level]).map((section) => (
+                            {(config.sections[level]).map((section) => section.enabled && (
                                 <Box key={section.name} sx={{ mt: 2 }}>
-                                    {/* <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    checked={section?.enabled}
-                                                    onChange={() =>
-                                                        toggleSection(level, section.name)
-                                                    }
-                                                />
-                                            }
-                                            label={section?.label || section?.name.charAt(0).toUpperCase() + section?.name.slice(1)}
-                                        /> */}
                                     <Typography variant="h7" sx={{ fontStyle: 'italic', fontWeight: 'bold' }}>{`${section?.label || section?.name.charAt(0).toUpperCase() + section?.name.slice(1)} `}</Typography>
                                     {section && (
                                         <>
@@ -119,7 +106,7 @@ const NextStep = () => {
                                                 {section?.fields?.map((field, index) => (
                                                     <ListItem key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                                         <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
-                                                            {field.type === 'text' && <TextField
+                                                            {['time', 'text'].includes(field.type) && <TextField
                                                                 label={field.label}
                                                                 size="small"
                                                                 variant="standard"
@@ -160,13 +147,6 @@ const NextStep = () => {
                                                                 </FormControl>
                                                             </Box>
                                                         }
-
-
-                                                        {/* <RadioGroup row>
-                                                                <FormControlLabel value="apple" control={<Radio />} label="Apple" />
-                                                                <FormControlLabel value="banana" control={<Radio />} label="Banana" />
-                                                                <FormControlLabel value="cherry" control={<Radio />} label="Cherry" />
-                                                            </RadioGroup> */}
                                                     </ListItem>
                                                 ))}
                                             </List>
@@ -188,7 +168,7 @@ const NextStep = () => {
 
                 {/* Next Button (disabled for demonstration) */}
                 <Button variant="contained" color="primary" onClick={handleSubmit}>
-                    Submit
+                    Save Settings
                 </Button>
             </Box>
         </div>

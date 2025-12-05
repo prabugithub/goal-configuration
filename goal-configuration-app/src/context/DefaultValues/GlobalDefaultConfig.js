@@ -1,109 +1,123 @@
 
 const evaluationFields = [
-    { label: 'Happy', type: 'text' },
-    { label: 'Stop', type: 'text' },
-    { label: 'Start', type: 'text' },
-    { label: 'Action', type: 'text' },
+    {name:'happy', label: 'What went well?', type: 'text' },
+    {name:'stop', label: 'What goes not well?', type: 'text' },
+    {name:'start', label: 'What are the things want to improve process?', type: 'text' },
+    {name:'action', label: 'Plan your improvements:', type: 'text' },
 ];
 
 const planningFields = [
-    { label: 'To-dos', type: 'text' },
-    { label: 'One Thing', type: 'text' },
+    { name: 'to-do', label: 'List down 3-5 goals', type: 'text' },
+    { name: 'onething', label: 'Only one most important goal from the list:', type: 'text' },
 ];
-
-const evaluation = {
-    name: 'evaluation', label: 'Evaluations',
-    enabled: true,
-    fields: evaluationFields
-};
 
 
 const planning = {
     name: 'planning',
     label: 'Planning',
-    enabled: true,
+    enabled: false,
     fields: planningFields,
 }
 
 const surprices = {
     name: 'surprises',
-    label: 'Un planned - expected work',
+    label: 'Expected unplanned works:',
     enabled: true,
     fields: [{
-        label: 'work', type: 'text'
+        name: 'work', label: 'work', type: 'text'
     }]
 };
 
 const initialConfigState = {
     levels: {
         yearly: true,
-        quarterly: false,
-        monthly: false,
-        weekly: false,
-        daily: false,
+        quarterly: true,
+        monthly: true,
+        weekly: true,
+        daily: true,
     },
     sections: {
         yearly: [
+            {...planning, enabled: true},
             {
-                name: 'evaluation', label: 'Evaluation', enabled: true, fields: [
-                    { label: 'Happy', type: 'text' },
-                    { label: 'Stop', type: 'text' },
-                ]
+                name: 'evaluation', label: 'Last Year Review',
+                enabled: true,
+                fields: evaluationFields
             },
-            {
-                name: 'planning', label: 'Planning', enabled: true, fields: [
-                    { label: 'Yearly Plan', type: 'text' },
-                ]
-            },
-        ],
-        quarterly: [
-            evaluation,
-            planning,
             {
                 name: 'taskSplitUp',
-                lable: 'Split Task:',
+                label: 'Break down Year goal to quaters:',
                 enabled: true,
                 fields: [
-                    { label: 'Month 1', type: 'text' },
-                    { label: 'Month 2', type: 'text' },
-                    { label: 'Month 3', type: 'text' },
+                    { name: 'q1', label: 'Quater 1', type: 'text' },
+                    { name: 'q2', label: 'Quater 2', type: 'text' },
+                    { name: 'q3', label: 'Quater 3', type: 'text' },
+                    { name: 'q4', label: 'Quater 4', type: 'text' },
+                ],
+
+            },
+            surprices
+        ],
+        quarterly: [
+            {
+                name: 'evaluation', label: 'Last Quater Review',
+                enabled: true,
+                fields: evaluationFields
+            },
+            {...planning, enabled: true},
+            {
+                name: 'taskSplitUp',
+                label: 'Break down Quater goal to months:',
+                enabled: true,
+                fields: [
+                    { name: 'm1', label: 'Month 1', type: 'text' },
+                    { name: 'm2', label: 'Month 2', type: 'text' },
+                    { name: 'm3', label: 'Month 3', type: 'text' },
                 ],
 
             },
             surprices,
         ],
         monthly: [
-            evaluation,
-            planning,
+            {
+                name: 'evaluation', label: 'Last Month Review',
+                enabled: true,
+                fields: evaluationFields
+            },
+            {...planning, enabled: true},
             {
                 name: 'taskSplitUp',
-                lable: 'Split Task:',
+                label: 'Break down Month goal to weeks:',
                 enabled: true,
                 fields: [
-                    { label: 'Week 1', type: 'text' },
-                    { label: 'Week 2', type: 'text' },
-                    { label: 'Week 3', type: 'text' },
-                    { label: 'Week 4', type: 'text' },
+                    { name: 'w1', label: 'Week 1', type: 'text' },
+                    { name: 'w2', label: 'Week 2', type: 'text' },
+                    { name: 'w3', label: 'Week 3', type: 'text' },
+                    { name: 'w4', label: 'Week 4', type: 'text' },
                 ],
 
             },
             surprices
         ],
         weekly: [
-            evaluation,
-            planning,
+            {
+                name: 'evaluation', label: 'Last Week Review',
+                enabled: true,
+                fields: evaluationFields
+            },
+            {...planning, enabled: true},
             {
                 name: 'taskSplitUp',
-                lable: 'Split Task:',
+                label: 'Break down Weekly goal to days:',
                 enabled: true,
                 fields: [
-                    { label: 'Mon', type: 'text' },
-                    { label: 'Tue', type: 'text' },
-                    { label: 'Wed', type: 'text' },
-                    { label: 'Thu', type: 'text' },
-                    { label: 'Fri', type: 'text' },
-                    { label: 'Sat', type: 'text' },
-                    { label: 'Sun', type: 'text' },
+                    { name: 'mon', label: 'Mon', type: 'text' },
+                    { name: 'tue', label: 'Tue', type: 'text' },
+                    { name: 'wed', label: 'Wed', type: 'text' },
+                    { name: 'thu', label: 'Thu', type: 'text' },
+                    { name: 'fri', label: 'Fri', type: 'text' },
+                    { name: 'sat', label: 'Sat', type: 'text' },
+                    { name: 'sun', label: 'Sun', type: 'text' },
                 ],
 
             },
@@ -112,30 +126,39 @@ const initialConfigState = {
         daily: [
             {
                 name: 'evaluations',
-                label: 'Evaluation',
+                label: 'How you perform on your goal(only planned task):',
                 enabled: true,
                 fields: [
-                    { label: 'What went well in the past 24 hours?', type: 'text' },
-                    { label: 'What is the one thing I can do best tomorrow?', type: 'text' },
-                    { label: 'What is one thing I can improve?', type: 'text' },
+                    { name: 'went-well', label: 'What went well in the past 24 hours?', type: 'text' },
+                    { name: 'best-tomo', label: 'What is the one thing I can do best tomorrow?', type: 'text' },
+                    { name: 'improve', label: 'What is one thing I can improve?', type: 'text' },
+                    { name: 'organize', label: 'Organize tomorrow today', type: 'text' },
                 ]
             },
             {
                 name: 'rituals',
-                label: 'Rituals',
+                label: 'Mind and body',
                 enabled: true,
+                // fields: [
+                //     { name: 'meditation', label: 'Meditation', type: 'checkbox', options: ['Yes', 'No'] },
+                //     { name: 'reading', label: 'Reading', type: 'checkbox', options: ['Yes', 'No'] },
+                //     { name: 'excercise', label: 'Exercise', type: 'checkbox', options: ['Yes', 'No'] },
+                //     { name: 'diet', label: 'Diet', type: 'checkbox', options: ['Yes', 'No'] },
+                // ]
                 fields: [
-                    { label: 'Meditation', type: 'checkbox', options: ['Yes', 'No'] },
-                    { label: 'Reading', type: 'checkbox', options: ['Yes', 'No'] },
-                    { label: 'Exercise', type: 'checkbox', options: ['Yes', 'No'] },
+                    { name: 'deepwork', label: 'Deep work', type: 'time', options: ['Yes', 'No'] },
+                    { name: 'meditation', label: 'Meditation', type: 'time', options: ['Yes', 'No'] },
+                    { name: 'reading', label: 'Reading', type: 'time', options: ['Yes', 'No'] },
+                    { name: 'excercise', label: 'Exercise', type: 'time', options: ['Yes', 'No'] },
+                    { name: 'diet', label: 'Diet', type: 'checkbox', options: ['Yes', 'No'] },
                 ]
             },
             {
                 name: 'ratings',
-                label: 'Ratings',
+                label: 'Rate your day (6 for goal and 4 for mind and body):',
                 enabled: true,
                 fields: [
-                    { label: 'Out of 10', type: 'text' },
+                    { name: 'total', label: '10 Out of:', type: 'number' },
                 ]
             },
         ]
