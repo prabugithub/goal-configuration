@@ -2,7 +2,7 @@
 
 import './App.css';
 import { useEffect, useState } from 'react';
-import { Container, CssBaseline, IconButton, Typography, Tabs, Tab, Box, useMediaQuery, useTheme, Stack } from '@mui/material';
+import { Container, CssBaseline, IconButton, Typography, Tabs, Tab, Box, useMediaQuery, useTheme, Stack, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -43,6 +43,8 @@ function App() {
   const [tabIndex, setTabIndex] = useState(1);
   const [showDashboard, setShowDashboard] = useState(false);
   const [allGoals, setAllGoals] = useState({});
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [deleteConfigDialogOpen, setDeleteConfigDialogOpen] = useState(false);
 
   const { config, setConfig, hasConfiguration, setHasConfiguration, doResetConfig, setDoResetConfig } = useGoalConfig();
   const { goals } = useGoals(user?.uid);
@@ -79,28 +81,24 @@ function App() {
   }, []);
 
   const handleLogout = async () => {
-    const isConfirmed = window.confirm("Are you sure you want to log out?");
-    if (!isConfirmed) return;
-
     try {
       await signOut(auth);
       console.log("User logged out successfully");
       setUser(null);
+      setLogoutDialogOpen(false);
     } catch (error) {
       console.error("Logout error:", error);
     }
   };
 
   const handleConfigDelete = async () => {
-    const isConfirmed = window.confirm("This will delete your goal configuration. Are you sure?");
-    if (!isConfirmed) return;
-
     if (user) {
       try {
         await deleteUserConfiguration(user.uid);
         setConfig(initialConfigState);
         setHasConfiguration(false);
         setDoResetConfig(true);
+        setDeleteConfigDialogOpen(false);
         console.log("User configuration deleted successfully.");
       } catch (error) {
         console.error("Error deleting configuration:", error);
@@ -124,13 +122,13 @@ function App() {
         {user ? (
           <Container maxWidth="sm" className="container">
             <header className="app-header">
-              <IconButton color="secondary" onClick={handleConfigDelete} title="Delete Configuration">
+              <IconButton color="secondary" onClick={() => setDeleteConfigDialogOpen(true)} title="Delete Configuration">
                 <SettingsIcon />
               </IconButton>
               <Typography variant="h5" color="primary" gutterBottom>
                 {hasConfiguration ? "Your Onething!" : "Focus2Win!"}
               </Typography>
-              <IconButton color="primary" onClick={handleLogout} title="Logout">
+              <IconButton color="primary" onClick={() => setLogoutDialogOpen(true)} title="Logout">
                 <LogoutIcon />
               </IconButton>
             </header>
@@ -167,7 +165,7 @@ function App() {
                           🎯 Quick Actions
                         </Typography>
                         <Stack direction={isMobile ? 'column' : 'row'} spacing={1}>
-                          <GoalSearch goals={goals} config={config} onSelectGoal={() => {}} />
+                          <GoalSearch goals={goals} config={config} onSelectGoal={() => { }} />
                           <WhatsAppShare goals={goals} config={config} metrics={metrics} />
                           <ReportGenerator goals={goals} config={config} metrics={metrics} userId={user?.uid} />
                           <ExportButton goals={goals} config={config} userId={user?.uid} />
@@ -228,6 +226,50 @@ function App() {
             )}
 
             {!hasConfiguration && steps[currentStep]}
+
+            {/* Logout Confirmation Dialog */}
+            <Dialog
+              open={logoutDialogOpen}
+              onClose={() => setLogoutDialogOpen(false)}
+              maxWidth="xs"
+              fullWidth
+            >
+              <DialogTitle>Confirm Logout</DialogTitle>
+              <DialogContent>
+                <Typography>Are you sure you want to log out?</Typography>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setLogoutDialogOpen(false)} color="primary">
+                  Cancel
+                </Button>
+                <Button onClick={handleLogout} color="error" variant="contained">
+                  Logout
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            {/* Delete Configuration Confirmation Dialog */}
+            <Dialog
+              open={deleteConfigDialogOpen}
+              onClose={() => setDeleteConfigDialogOpen(false)}
+              maxWidth="xs"
+              fullWidth
+            >
+              <DialogTitle>Delete Configuration</DialogTitle>
+              <DialogContent>
+                <Typography>
+                  This will delete your goal configuration. Are you sure?
+                </Typography>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setDeleteConfigDialogOpen(false)} color="primary">
+                  Cancel
+                </Button>
+                <Button onClick={handleConfigDelete} color="error" variant="contained">
+                  Delete
+                </Button>
+              </DialogActions>
+            </Dialog>
           </Container>
         ) : (
           <Login key="login" />

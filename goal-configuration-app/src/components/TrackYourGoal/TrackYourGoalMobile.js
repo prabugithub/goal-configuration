@@ -27,6 +27,7 @@ import {
   CardContent,
   Chip,
   LinearProgress,
+  Rating,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SaveIcon from '@mui/icons-material/Save';
@@ -142,6 +143,44 @@ export const TrackYourGoalMobile = ({
     setEditMode(false);
   };
 
+  // Helper function to check if a field should be displayed based on conditional logic
+  const shouldShowField = (field, section) => {
+    // Find the controlling field by checking if any field in the section has a conditionalField pointing to this field
+    const controllingField = section.fields.find(f =>
+      f.conditionalField && f.conditionalField.targetFieldName === field.name
+    );
+
+    // If no controlling field found, always show the field
+    if (!controllingField) {
+      return true;
+    }
+
+    // If this field is controlled by another field, check the condition
+    const controlValue = formData[section.name]?.[controllingField.name];
+    const condition = controllingField.conditionalField.condition;
+    const thresholdValue = controllingField.conditionalField.value;
+
+    // Evaluate the condition
+    switch (condition) {
+      case '<':
+        return Number(controlValue) < thresholdValue;
+      case '<=':
+        return Number(controlValue) <= thresholdValue;
+      case '>':
+        return Number(controlValue) > thresholdValue;
+      case '>=':
+        return Number(controlValue) >= thresholdValue;
+      case '==':
+      case '===':
+        return controlValue == thresholdValue;
+      case '!=':
+      case '!==':
+        return controlValue != thresholdValue;
+      default:
+        return true;
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -196,16 +235,23 @@ export const TrackYourGoalMobile = ({
             </AccordionSummary>
             <AccordionDetails sx={{ p: isMobile ? 1.5 : 2 }}>
               <Stack spacing={2}>
-                {section.fields.map((field) => (
-                  <FormField
-                    key={field.name}
-                    field={field}
-                    value={formData[section.name]?.[field.name] || ''}
-                    onChange={(val) => handleFieldChange(section.name, field.name, val)}
-                    disabled={!editMode}
-                    isMobile={isMobile}
-                  />
-                ))}
+                {section.fields.map((field) => {
+                  // Check if field should be shown based on conditional logic
+                  if (!shouldShowField(field, section)) {
+                    return null;
+                  }
+
+                  return (
+                    <FormField
+                      key={field.name}
+                      field={field}
+                      value={formData[section.name]?.[field.name] || ''}
+                      onChange={(val) => handleFieldChange(section.name, field.name, val)}
+                      disabled={!editMode}
+                      isMobile={isMobile}
+                    />
+                  );
+                })}
               </Stack>
             </AccordionDetails>
           </Accordion>
@@ -313,6 +359,46 @@ const FormField = ({ field, value, onChange, disabled, isMobile }) => {
             variant="outlined"
             size="small"
           />
+        </Box>
+      );
+
+    case 'rating':
+      const ratingValue = Number(value) || 0;
+      const maxRating = 10;
+
+      return (
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+            <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+              {field.label}
+            </Typography>
+            <Typography variant="body2" color="primary.main" fontWeight="bold">
+              {ratingValue}/{maxRating}
+            </Typography>
+          </Box>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 1.5,
+            bgcolor: 'grey.50',
+            borderRadius: 1,
+          }}>
+            <Rating
+              value={ratingValue}
+              max={maxRating}
+              size="large"
+              precision={1}
+              onChange={(event, newValue) => onChange(newValue || 0)}
+              disabled={disabled}
+              sx={{
+                color: 'warning.main',
+                '& .MuiRating-iconEmpty': {
+                  color: 'grey.300'
+                }
+              }}
+            />
+          </Box>
         </Box>
       );
 
