@@ -19,6 +19,44 @@ import GenericLogic from "../../common/utils/generic-logic";
 import CONSTANTS from "../../common/constants";
 
 const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
+    // Helper function to check if a field should be displayed based on conditional logic
+    const shouldShowField = (field, section) => {
+        // Find the controlling field by checking if any field in the section has a conditionalField pointing to this field
+        const controllingField = section.fields.find(f =>
+            f.conditionalField && f.conditionalField.targetFieldName === field.name
+        );
+
+        // If no controlling field found, always show the field
+        if (!controllingField) {
+            return true;
+        }
+
+        // If this field is controlled by another field, check the condition
+        const controlValue = savedData[section.name]?.[controllingField.name || controllingField.label];
+        const condition = controllingField.conditionalField.condition;
+        const thresholdValue = controllingField.conditionalField.value;
+
+        // Evaluate the condition
+        switch (condition) {
+            case '<':
+                return Number(controlValue) < thresholdValue;
+            case '<=':
+                return Number(controlValue) <= thresholdValue;
+            case '>':
+                return Number(controlValue) > thresholdValue;
+            case '>=':
+                return Number(controlValue) >= thresholdValue;
+            case '==':
+            case '===':
+                return controlValue == thresholdValue;
+            case '!=':
+            case '!==':
+                return controlValue != thresholdValue;
+            default:
+                return true;
+        }
+    };
+
     const renderFieldValue = (field, value) => {
         if (!value && value !== 0) {
             return (
@@ -265,6 +303,11 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
                     {/* Fields in Stack */}
                     <Stack spacing={2}>
                         {section?.fields?.map((field, fieldIndex) => {
+                            // Check if field should be shown based on conditional logic
+                            if (!shouldShowField(field, section)) {
+                                return null;
+                            }
+
                             const value = savedData[section.name] && (savedData[section.name][field.name] || savedData[section.name][field.label]);
 
                             return (

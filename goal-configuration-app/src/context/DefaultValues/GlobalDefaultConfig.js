@@ -138,6 +138,8 @@ const initialConfigState = {
                         step: 10
                     },
                     { name: 'deepwork', label: 'Deep work', type: 'duration' },
+                    { name: 'energy', label: 'How was the energy/efficient on deep work?', type: 'rating', conditionalField: { targetFieldName: 'reason', condition: '<', value: 6 } },
+                    { name: 'reason', label: 'What is the reason for low energy?', type: 'dropdown', options: ['no reason', 'distracted', 'body tired', 'low sleep', 'family', 'other'] },
                 ]
             },
             {
@@ -147,7 +149,7 @@ const initialConfigState = {
                 fields: [
                     { name: 'went-well', label: 'What went well in the past 24 hours?', type: 'text' },
                     { name: 'best-tomo', label: 'What is the one thing I can do best tomorrow?', type: 'text' },
-                    { name: 'improve', label: 'What is one thing I can improve?', type: 'text' },
+                    { name: 'improve', label: 'How I can improve?', type: 'text' },
                     { name: 'organize', label: 'Organize tomorrow today', type: 'text' },
                 ]
             },

@@ -81,6 +81,44 @@ const TrackYourGoal = () => {
 
     const getFormatedDate = (date) => date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear();
 
+    // Helper function to check if a field should be displayed based on conditional logic
+    const shouldShowField = (field, section, level) => {
+        // Find the controlling field by checking if any field in the section has a conditionalField pointing to this field
+        const controllingField = section.fields.find(f =>
+            f.conditionalField && f.conditionalField.targetFieldName === field.name
+        );
+
+        // If no controlling field found, always show the field
+        if (!controllingField) {
+            return true;
+        }
+
+        // If this field is controlled by another field, check the condition
+        const controlValue = formValues[level]?.[section.name]?.[controllingField.name || controllingField.label];
+        const condition = controllingField.conditionalField.condition;
+        const thresholdValue = controllingField.conditionalField.value;
+
+        // Evaluate the condition
+        switch (condition) {
+            case '<':
+                return Number(controlValue) < thresholdValue;
+            case '<=':
+                return Number(controlValue) <= thresholdValue;
+            case '>':
+                return Number(controlValue) > thresholdValue;
+            case '>=':
+                return Number(controlValue) >= thresholdValue;
+            case '==':
+            case '===':
+                return controlValue == thresholdValue;
+            case '!=':
+            case '!==':
+                return controlValue != thresholdValue;
+            default:
+                return true;
+        }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             const level = levels[tabIndex];
@@ -114,13 +152,13 @@ const TrackYourGoal = () => {
                     }
 
                 };
-
+                if (!data || tabIndex === levels.length - 1) {
+                    setLoading(false);
+                }
                 // Mark this tab as loaded
                 loadedTabs.current.add(tabKey);
             } catch (error) {
                 console.error("Error fetching goal data:", error);
-            } finally {
-                setLoading(false); // Stop loading
             }
         };
 
@@ -946,11 +984,18 @@ const TrackYourGoal = () => {
 
                                     {/* Fields in Stack */}
                                     <Stack spacing={2}>
-                                        {section.fields.map((field, index) => (
-                                            <Box key={`field-${levels[tabIndex]}-${section.name}-${index}`} sx={{ width: '100%' }}>
-                                                {renderField(field, levels[tabIndex], section.name, index)}
-                                            </Box>
-                                        ))}
+                                        {section.fields.map((field, index) => {
+                                            // Check if field should be shown based on conditional logic
+                                            if (!shouldShowField(field, section, levels[tabIndex])) {
+                                                return null;
+                                            }
+
+                                            return (
+                                                <Box key={`field-${levels[tabIndex]}-${section.name}-${index}`} sx={{ width: '100%' }}>
+                                                    {renderField(field, levels[tabIndex], section.name, index)}
+                                                </Box>
+                                            );
+                                        })}
                                     </Stack>
                                 </Paper>
                             ))}
