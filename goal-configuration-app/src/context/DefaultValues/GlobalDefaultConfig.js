@@ -132,14 +132,15 @@ const initialConfigState = {
                     {
                         name: 'completion',
                         label: 'Goal completion percentage',
+                        icon: '🎯',
                         type: 'percentage',
                         min: 0,
                         max: 100,
                         step: 10
                     },
-                    { name: 'deepwork', label: 'Deep work', type: 'duration' },
-                    { name: 'energy', label: 'How was the energy/efficient on deep work?', type: 'rating', conditionalField: { targetFieldName: 'reason', condition: '<', value: 6 } },
-                    { name: 'reason', label: 'What is the reason for low energy?', type: 'dropdown', options: ['no reason', 'distracted', 'body tired', 'low sleep', 'family', 'other'] },
+                    { name: 'deepwork', icon: '⏱', label: 'Deep work', type: 'duration' },
+                    { name: 'energy', icon: '⚡', label: 'How was the energy/efficient on deep work?', type: 'rating', conditionalField: { targetFieldName: 'reason', condition: '<', value: 6 } },
+                    { name: 'reason', icon: '', label: 'What is the reason for low energy?', type: 'dropdown', options: ['no reason', 'distracted', 'body tired', 'low sleep', 'family', 'other'] },
                 ]
             },
             {
@@ -147,10 +148,10 @@ const initialConfigState = {
                 label: 'Daily Reflection',
                 enabled: true,
                 fields: [
-                    { name: 'went-well', label: 'What went well in the past 24 hours?', type: 'text' },
-                    { name: 'best-tomo', label: 'What is the one thing I can do best tomorrow?', type: 'text' },
-                    { name: 'improve', label: 'How I can improve?', type: 'text' },
-                    { name: 'organize', label: 'Organize tomorrow today', type: 'text' },
+                    { name: 'went-well', icon: '✔', label: 'What went well in the past 24 hours?', type: 'text' },
+                    { name: 'best-tomo', icon: '🎯', label: 'What is the one thing I can do best tomorrow?', type: 'text' },
+                    { name: 'improve', icon: '🔁', label: 'How I can improve?', type: 'text' },
+                    { name: 'organize', icon: '📅', label: 'Organize tomorrow today', type: 'text' },
                 ]
             },
             {
@@ -158,10 +159,10 @@ const initialConfigState = {
                 label: 'Rituals',
                 enabled: true,
                 fields: [
-                    { name: 'meditation', label: 'Meditation', type: 'duration' },
-                    { name: 'reading', label: 'Reading', type: 'duration' },
-                    { name: 'excercise', label: 'Exercise', type: 'duration' },
-                    { name: 'diet', label: 'Followed diet plan?', type: 'checkbox', options: ['Yes', 'No'] },
+                    { name: 'meditation', icon: '🧘', onlyIcon: true, label: 'Meditation', type: 'duration' },
+                    { name: 'reading', icon: '📖', onlyIcon: true, label: 'Reading', type: 'duration' },
+                    { name: 'excercise', icon: '🏃', onlyIcon: true, label: 'Exercise', type: 'duration' },
+                    { name: 'diet', icon: '🥗', onlyIcon: true, label: 'Followed diet plan?', type: 'checkbox', options: ['Yes', 'No'] },
                 ]
             },
             {
@@ -169,7 +170,7 @@ const initialConfigState = {
                 label: 'Daily Rating',
                 enabled: true,
                 fields: [
-                    { name: 'total', label: 'Overall day rating (out of 10)', type: 'rating' },
+                    { name: 'day-rating', icon: '⭐', label: 'Overall day rating (out of 10)', type: 'rating' },
                 ]
             },
         ]

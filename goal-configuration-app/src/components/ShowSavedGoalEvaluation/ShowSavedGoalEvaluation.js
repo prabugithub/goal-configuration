@@ -19,6 +19,9 @@ import GenericLogic from "../../common/utils/generic-logic";
 import CONSTANTS from "../../common/constants";
 
 const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
+    // Check if this is daily level for compact view
+    const isDailyLevel = level === 'daily';
+
     // Helper function to check if a field should be displayed based on conditional logic
     const shouldShowField = (field, section) => {
         // Find the controlling field by checking if any field in the section has a conditionalField pointing to this field
@@ -266,6 +269,162 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
         );
     };
 
+    // Render compact inline field value for daily level
+    const renderCompactFieldValue = (field, value) => {
+        if (!value && value !== 0) {
+            return (
+                <Typography variant="body2" sx={{ color: 'text.disabled', fontStyle: 'italic' }}>
+                    -
+                </Typography>
+            );
+        }
+
+        // Percentage field - show progress bar inline with percentage
+        if (field.type === 'percentage') {
+            const percentage = Number(value) || 0;
+            const color = percentage >= 70 ? 'success.main' :
+                percentage >= 40 ? 'warning.main' : 'error.main';
+
+            return (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 120 }}>
+                    <Typography variant="body2" fontWeight="bold" sx={{ minWidth: 35 }}>
+                        {percentage}%
+                    </Typography>
+                    <LinearProgress
+                        variant="determinate"
+                        value={percentage}
+                        sx={{
+                            flex: 1,
+                            height: 6,
+                            borderRadius: 1,
+                            bgcolor: 'grey.200',
+                            '& .MuiLinearProgress-bar': {
+                                bgcolor: color,
+                                borderRadius: 1
+                            }
+                        }}
+                    />
+                </Box>
+            );
+        }
+
+        // Rating field - show stars inline with rating number
+        if (field.type === 'rating') {
+            const rating = Number(value) || 0;
+            const maxRating = 10;
+
+            return (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Rating
+                        value={rating}
+                        max={maxRating}
+                        readOnly
+                        size="small"
+                        precision={1}
+                        sx={{
+                            color: 'warning.main',
+                            '& .MuiRating-iconEmpty': {
+                                color: 'grey.300'
+                            }
+                        }}
+                    />
+                    <Typography variant="body2" fontWeight="600" color="text.secondary">
+                        {rating}/{maxRating}
+                    </Typography>
+                </Box>
+            );
+        }
+
+        // Duration field - show as compact time string
+        if (field.type === 'duration' || field.type === 'time') {
+            const totalMinutes = Number(value) || 0;
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            const timeString = hours > 0
+                ? `${hours}h ${minutes}m`
+                : `${minutes}m`;
+
+            return (
+                <Typography variant="body2" fontWeight="600" color="primary.main">
+                    {timeString}
+                </Typography>
+            );
+        }
+
+        // Boolean field - show as Yes/No
+        if (field.type === 'boolean') {
+            const boolValue = Array.isArray(value)
+                ? (value.length > 0 && value[0])
+                : value;
+
+            const trueLabel = field.options && field.options.length >= 2 ? field.options[0] : 'Yes';
+            const falseLabel = field.options && field.options.length >= 2 ? field.options[1] : 'No';
+
+            const isCheckedBool = field.options && field.options.length >= 2
+                ? (boolValue === field.options[0] || boolValue === true)
+                : (boolValue === 'Yes' || boolValue === true);
+
+            return (
+                <Typography
+                    variant="body2"
+                    fontWeight="600"
+                    color={isCheckedBool ? 'success.main' : 'text.secondary'}
+                >
+                    {isCheckedBool ? trueLabel : falseLabel}
+                </Typography>
+            );
+        }
+
+        // Checkbox field - show selected items comma-separated
+        if (field.type === 'checkbox') {
+            if (Array.isArray(value)) {
+                return (
+                    <Typography variant="body2" color="text.secondary">
+                        {value.join(", ")}
+                    </Typography>
+                );
+            }
+            return (
+                <Typography variant="body2" color="text.secondary">
+                    {value}
+                </Typography>
+            );
+        }
+
+        // Number field
+        if (field.type === 'number') {
+            return (
+                <Typography variant="body2" fontWeight="600" color="primary.main">
+                    {value}
+                </Typography>
+            );
+        }
+
+        // Text field - show as-is
+        if (field.type === 'text') {
+            return (
+                <Typography variant="body2" color="text.secondary">
+                    {value}
+                </Typography>
+            );
+        }
+
+        // Default - render as is
+        if (Array.isArray(value)) {
+            return (
+                <Typography variant="body2" color="text.secondary">
+                    {value.join(", ")}
+                </Typography>
+            );
+        }
+
+        return (
+            <Typography variant="body2" color="text.secondary">
+                {value}
+            </Typography>
+        );
+    };
+
     return (
         <Box sx={{ width: '100%' }}>
             {config.map((section, sectionIndex) => (
@@ -300,36 +459,110 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
                         </Typography>
                     </Box>
 
-                    {/* Fields in Stack */}
-                    <Stack spacing={2}>
-                        {section?.fields?.map((field, fieldIndex) => {
-                            // Check if field should be shown based on conditional logic
-                            if (!shouldShowField(field, section)) {
-                                return null;
-                            }
+                    {/* Fields - Compact view for daily, regular view for others */}
+                    {isDailyLevel ? (
+                        // Compact inline view for daily level
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: 2,
+                                alignItems: 'center'
+                            }}
+                        >
+                            {section?.fields?.map((field, fieldIndex) => {
+                                // Check if field should be shown based on conditional logic (ignore conditional fields in compact view)
+                                if (!shouldShowField(field, section)) {
+                                    return null;
+                                }
 
-                            const value = savedData[section.name] && (savedData[section.name][field.name] || savedData[section.name][field.label]);
+                                const value = savedData[section.name] && (savedData[section.name][field.name] || savedData[section.name][field.label]);
 
-                            return (
-                                <Box
-                                    key={`saved-field-${sectionIndex}-${fieldIndex}`}
-                                    sx={{ width: '100%' }}
-                                >
-                                    <Typography
-                                        variant="subtitle2"
+                                return (
+                                    <Box
+                                        key={`saved-field-${sectionIndex}-${fieldIndex}`}
                                         sx={{
-                                            fontWeight: 600,
-                                            color: 'text.primary',
-                                            mb: 1
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 0.5
                                         }}
                                     >
-                                        {field.label}
-                                    </Typography>
-                                    {renderFieldValue(field, value)}
-                                </Box>
-                            );
-                        })}
-                    </Stack>
+                                        {/* Field label with icon */}
+                                        {field.onlyIcon ? (
+                                            // Show only icon if onlyIcon is true
+                                            field.icon && (
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{
+                                                        fontSize: '1.2rem',
+                                                        display: 'flex',
+                                                        alignItems: 'center'
+                                                    }}
+                                                    title={field.label}
+                                                >
+                                                    {field.icon}:
+                                                </Typography>
+                                            )
+                                        ) : (
+                                            // Show icon and text
+                                            <Typography
+                                                variant="body2"
+                                                sx={{
+                                                    fontWeight: 600,
+                                                    color: 'text.primary',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 0.3
+                                                }}
+                                            >
+                                                {field.icon && (
+                                                    <span style={{ fontSize: '1.1rem' }}>{field.icon}</span>
+                                                )}
+                                                {GenericLogic.capitalizeFirstLetter(field.name)}:
+                                            </Typography>
+                                        )}
+                                        {renderCompactFieldValue(field, value)}
+                                        {fieldIndex < section.fields.filter(f => shouldShowField(f, section)).length - 1 && (
+                                            <Typography variant="body2" sx={{ color: 'text.disabled', mx: 0.5 }}>
+                                                |
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                );
+                            })}
+                        </Box>
+                    ) : (
+                        // Regular stacked view for other levels
+                        <Stack spacing={2}>
+                            {section?.fields?.map((field, fieldIndex) => {
+                                // Check if field should be shown based on conditional logic
+                                if (!shouldShowField(field, section)) {
+                                    return null;
+                                }
+
+                                const value = savedData[section.name] && (savedData[section.name][field.name] || savedData[section.name][field.label]);
+
+                                return (
+                                    <Box
+                                        key={`saved-field-${sectionIndex}-${fieldIndex}`}
+                                        sx={{ width: '100%' }}
+                                    >
+                                        <Typography
+                                            variant="subtitle2"
+                                            sx={{
+                                                fontWeight: 600,
+                                                color: 'text.primary',
+                                                mb: 1
+                                            }}
+                                        >
+                                            {GenericLogic.capitalizeFirstLetter(field.name)}
+                                        </Typography>
+                                        {renderFieldValue(field, value)}
+                                    </Box>
+                                );
+                            })}
+                        </Stack>
+                    )}
                 </Paper>
             ))}
         </Box>
