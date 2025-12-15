@@ -1,10 +1,11 @@
 // CACHE BUSTER v2
-import { useState, useCallback, useContext } from 'react';
+import { useState, useCallback, useContext, useEffect } from 'react';
 import {
   saveGoal,
   getGoal,
   updateGoal,
   deleteGoal,
+  getAllGoals,
 } from '../api/services/firebaseServices';
 import { useGoalCache } from './useGoalCache';
 import { ToastContext } from '../context/ToastContext';
@@ -32,6 +33,34 @@ export const useGoals = (userId) => {
   // Safely get toast from context, fallback to console methods
   const toastContext = useContext(ToastContext);
   const toast = toastContext || defaultToast;
+
+  // Load all goals from Firebase
+  const loadAllGoals = useCallback(
+    async () => {
+      if (!userId) {
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const allGoals = await getAllGoals(userId);
+        setGoals(allGoals);
+      } catch (error) {
+        console.error('Error loading all goals:', error);
+        toast.error('Failed to load goals');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [userId, toast]
+  );
+
+  // Load all goals on mount
+  useEffect(() => {
+    if (userId) {
+      loadAllGoals();
+    }
+  }, [userId, loadAllGoals]);
 
   // Fetch a goal
   const fetchGoal = useCallback(
@@ -172,6 +201,7 @@ export const useGoals = (userId) => {
   return {
     goals,
     loading,
+    loadAllGoals,
     fetchGoal,
     createGoal,
     editGoal,

@@ -40,12 +40,22 @@ export const Dashboard = ({ goals = {}, config = {} }) => {
   });
 
   useEffect(() => {
+    console.log('Dashboard received goals:', goals);
+
     // Calculate metrics
     const weeklyStats = metrics.getPeriodCompletion('daily', 'week');
     const monthlyStats = metrics.getPeriodCompletion('weekly', 'month');
     const quarterlyStats = metrics.getPeriodCompletion('monthly', 'quarter');
     const yearlyStats = metrics.getPeriodCompletion('quarterly', 'year');
     const streak = metrics.getStreak('daily');
+
+    console.log('Calculated stats:', {
+      weeklyStats,
+      monthlyStats,
+      quarterlyStats,
+      yearlyStats,
+      streak,
+    });
 
     setStats({
       weeklyCompletion: weeklyStats.percentage,

@@ -94,3 +94,116 @@ export const deleteUserConfiguration = async (uid) => {
     throw error; // Rethrow error to handle it in App.js
   }
 };
+
+// Helper to generate date identifiers for recent goals
+const getRecentIdentifiers = (level) => {
+  const identifiers = [];
+  const now = new Date();
+
+  if (level === 'daily') {
+    // Get last 365 days (full year of data for accurate calculations)
+    for (let i = 0; i < 365; i++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      identifiers.push(date.toISOString().split('T')[0]); // YYYY-MM-DD
+    }
+  } else if (level === 'weekly') {
+    // Get last 12 weeks
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - (i * 7));
+      const year = date.getFullYear();
+      const week = getWeekNumber(date);
+      identifiers.push(`${year}-W${String(week).padStart(2, '0')}`);
+    }
+  } else if (level === 'monthly') {
+    // Get last 12 months
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(now);
+      date.setMonth(date.getMonth() - i);
+      identifiers.push(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+    }
+  } else if (level === 'quarterly') {
+    // Get last 8 quarters
+    for (let i = 0; i < 8; i++) {
+      const date = new Date(now);
+      date.setMonth(date.getMonth() - (i * 3));
+      const year = date.getFullYear();
+      const quarter = Math.floor(date.getMonth() / 3) + 1;
+      identifiers.push(`${year}-Q${quarter}`);
+    }
+  } else if (level === 'yearly') {
+    // Get last 5 years
+    for (let i = 0; i < 5; i++) {
+      identifiers.push(String(now.getFullYear() - i));
+    }
+  }
+
+  return identifiers;
+};
+
+// Helper to get week number
+const getWeekNumber = (date) => {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+};
+
+// Get all goals for a user across all levels
+export const getAllGoals = async (userId) => {
+  if (!userId) {
+    console.error("Missing userId for getAllGoals");
+    return {};
+  }
+
+  try {
+    const allGoals = {};
+    const levels = ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'];
+
+    console.log('Starting to load goals for userId:', userId);
+
+    // Fetch goals for each level in parallel
+    const levelPromises = levels.map(async (level) => {
+      const identifiers = getRecentIdentifiers(level);
+      console.log(`Fetching ${level} goals for ${identifiers.length} identifiers...`);
+
+      const goals = {};
+
+      // Fetch all identifiers for this level in parallel
+      const goalPromises = identifiers.map(async (identifier) => {
+        try {
+          const docRef = doc(db, `users/${userId}/goals/${level}/${identifier}/data`);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            goals[identifier] = docSnap.data();
+            console.log(`✓ Loaded ${level}/${identifier}`);
+            return { identifier, data: docSnap.data() };
+          }
+        } catch (error) {
+          // Silently skip missing documents
+          console.log(`  Skipped ${level}/${identifier} (not found)`);
+        }
+        return null;
+      });
+
+      await Promise.all(goalPromises);
+
+      if (Object.keys(goals).length > 0) {
+        allGoals[level] = goals;
+        console.log(`Loaded ${Object.keys(goals).length} ${level} goals`);
+      }
+    });
+
+    await Promise.all(levelPromises);
+
+    console.log('Successfully loaded all goals:', allGoals);
+    return allGoals;
+  } catch (error) {
+    console.error("Error fetching all goals:", error);
+    console.error("Error details:", error.message, error.code);
+    return {};
+  }
+};

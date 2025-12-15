@@ -25,7 +25,7 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
     // Helper function to check if a field should be displayed based on conditional logic
     const shouldShowField = (field, section) => {
         // Find the controlling field by checking if any field in the section has a conditionalField pointing to this field
-        const controllingField = section.fields.find(f =>
+        const controllingField = section?.fields?.find(f =>
             f.conditionalField && f.conditionalField.targetFieldName === field.name
         );
 

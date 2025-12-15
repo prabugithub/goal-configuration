@@ -44,6 +44,8 @@ import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import { useGoalConfig } from '../../context/GoalConfigContext';
 import { deleteGoal, getGoal, saveGoal } from '../../api/services/firebaseServices';
 import { useAuth } from '../../context/AuthContext';
+import { useGoals } from '../../hooks/useGoals';
+import { useMetrics } from '../../hooks/useMetrics';
 import GenericLogic from '../../common/utils/generic-logic';
 import ShowSavedGoalEvaluation from '../ShowSavedGoalEvaluation/ShowSavedGoalEvaluation';
 import BreadcrumbNavigation from '../BreadcrumbNavigation/BreadcrumbNavigation';
@@ -55,6 +57,8 @@ import CONSTANTS from '../../common/constants';
 const TrackYourGoal = () => {
     const { config, setHasConfiguration } = useGoalConfig();
     const { user } = useAuth();
+    const { goals } = useGoals(user?.uid);
+    const metrics = useMetrics(goals, config);
 
     const [formValues, setFormValues] = useState({});
     const [tabIndex, setTabIndex] = useState(0);
@@ -87,7 +91,7 @@ const TrackYourGoal = () => {
     // Helper function to check if a field should be displayed based on conditional logic
     const shouldShowField = (field, section, level) => {
         // Find the controlling field by checking if any field in the section has a conditionalField pointing to this field
-        const controllingField = section.fields.find(f =>
+        const controllingField = section?.fields?.find(f =>
             f.conditionalField && f.conditionalField.targetFieldName === field.name
         );
 
@@ -765,10 +769,16 @@ const TrackYourGoal = () => {
                 setEditMode(true);
                 break;
             case 'save':
-                await saveGoal(formValues[level], user.uid, level, identifier);
+                // Auto-calculate completion for weekly/monthly/quarterly
+                let goalDataToSave = formValues[level];
+                if (metrics && metrics.autoCalculateCompletion) {
+                    goalDataToSave = metrics.autoCalculateCompletion(level, identifier, formValues[level]);
+                }
+
+                await saveGoal(goalDataToSave, user.uid, level, identifier);
                 setSavedData((prev) => ({
                     ...prev,
-                    [level]: formValues[level],
+                    [level]: goalDataToSave,
                 }));
                 setEditMode(false);
                 alert(`${level} goals updated successfully!`);
@@ -781,10 +791,16 @@ const TrackYourGoal = () => {
                 setEditMode(false);
                 break;
             default:
-                await saveGoal(formValues[level], user.uid, level, identifier);
+                // Auto-calculate completion for weekly/monthly/quarterly
+                let goalData = formValues[level];
+                if (metrics && metrics.autoCalculateCompletion) {
+                    goalData = metrics.autoCalculateCompletion(level, identifier, formValues[level]);
+                }
+
+                await saveGoal(goalData, user.uid, level, identifier);
                 setSavedData((prev) => ({
                     ...prev,
-                    [level]: formValues[level],
+                    [level]: goalData,
                 }));
                 if (levels.length > tabIndex + 1)
                     setTabIndex(tabIndex + 1);

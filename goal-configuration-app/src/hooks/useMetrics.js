@@ -143,63 +143,430 @@ export const useMetrics = (goals = {}, config = {}) => {
     [goals]
   );
 
+  // Helper to generate identifier for a date based on level
+  const getIdentifierForDate = useCallback((date, level) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+
+    switch (level) {
+      case 'daily':
+        return format(date, 'yyyy-MM-dd');
+
+      case 'weekly':
+        const d = new Date(Date.UTC(year, month, date.getDate()));
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        const weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+
+      case 'monthly':
+        return `${year}-${String(month + 1).padStart(2, '0')}`;
+
+      case 'quarterly':
+        const quarter = Math.floor(month / 3) + 1;
+        return `${year}-Q${quarter}`;
+
+      case 'yearly':
+        return String(year);
+
+      default:
+        return format(date, 'yyyy-MM-dd');
+    }
+  }, []);
+
+  // Helper to get dates for a week based on week identifier
+  const getWeekDates = useCallback((weekIdentifier) => {
+    // Parse week identifier like "2025-W50"
+    const [yearStr, weekStr] = weekIdentifier.split('-W');
+    const year = parseInt(yearStr);
+    const week = parseInt(weekStr);
+
+    // Calculate the date of the Monday of that week
+    const jan4 = new Date(year, 0, 4);
+    const jan4Day = jan4.getDay() || 7;
+    const mondayOfWeek1 = new Date(jan4);
+    mondayOfWeek1.setDate(jan4.getDate() - jan4Day + 1);
+
+    const monday = new Date(mondayOfWeek1);
+    monday.setDate(mondayOfWeek1.getDate() + (week - 1) * 7);
+
+    // Generate all 7 days of the week
+    const weekDates = {};
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
+      weekDates[dayNames[i]] = format(date, 'yyyy-MM-dd');
+    }
+
+    return weekDates;
+  }, []);
+
   // Get completion data for a specific period
   const getPeriodCompletion = useCallback(
     (level, periodType) => {
-      if (!goals[level]) return { percentage: 0, completed: 0, total: 0 };
-
-      let dates = [];
       const now = new Date();
 
-      switch (periodType) {
-        case 'week':
-          const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-          const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-          dates = eachDayOfInterval({ start: weekStart, end: weekEnd });
-          break;
+      // HIERARCHICAL CALCULATION LOGIC
 
-        case 'month':
-          const monthStart = startOfMonth(now);
-          const monthEnd = endOfMonth(now);
-          dates = eachDayOfInterval({ start: monthStart, end: monthEnd });
-          break;
+      // 1. WEEKLY COMPLETION (based on daily goals from planned days)
+      if (level === 'daily' && periodType === 'week') {
+        if (!goals.weekly || !goals.daily) {
+          return { percentage: 0, completed: 0, total: 0 };
+        }
 
-        case 'quarter':
-          const quarterStart = startOfQuarter(now);
-          const quarterEnd = endOfQuarter(now);
-          dates = eachDayOfInterval({ start: quarterStart, end: quarterEnd });
-          break;
+        // Get current week identifier
+        const currentWeekId = getIdentifierForDate(now, 'weekly');
+        const weeklyGoal = goals.weekly[currentWeekId];
 
-        case 'year':
-          const yearStart = startOfYear(now);
-          const yearEnd = endOfYear(now);
-          dates = eachDayOfInterval({ start: yearStart, end: yearEnd });
-          break;
+        if (!weeklyGoal || !weeklyGoal.taskSplitUp) {
+          return { percentage: 0, completed: 0, total: 0 };
+        }
 
-        default:
-          dates = eachDayOfInterval({
-            start: new Date(now.getFullYear(), now.getMonth(), 1),
-            end: new Date(now.getFullYear(), now.getMonth() + 1, 0),
-          });
+        // Get the actual dates for this week
+        const weekDates = getWeekDates(currentWeekId);
+
+        // Count total planned days
+        const plannedDays = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
+        const totalPlannedDays = plannedDays.length;
+
+        if (totalPlannedDays === 0) {
+          return { percentage: 0, completed: 0, total: 0 };
+        }
+
+        // Sum the completion percentages of all planned days
+        let totalCompletion = 0;
+        let completedDaysCount = 0;
+
+        Object.entries(weeklyGoal.taskSplitUp).forEach(([day, task]) => {
+          if (task && task.trim() !== '') {
+            // This day is planned
+            const dateKey = weekDates[day];
+            const dailyGoal = goals.daily[dateKey];
+
+            if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
+              totalCompletion += Number(dailyGoal.performance.completion) || 0;
+              completedDaysCount++;
+            }
+          }
+        });
+
+        // Weekly completion = sum of all daily completions / total planned days
+        const weeklyCompletion = totalCompletion / totalPlannedDays;
+
+        return {
+          percentage: Math.round(weeklyCompletion),
+          completed: completedDaysCount,
+          total: totalPlannedDays,
+        };
       }
 
-      let completed = 0;
-      dates.forEach((date) => {
-        const dateKey = format(date, 'yyyy-MM-dd');
-        if (goals[level][dateKey] && Object.keys(goals[level][dateKey]).length > 0) {
-          completed++;
+      // 2. MONTHLY COMPLETION (based on daily goals from all planned days in all weeks)
+      if (level === 'weekly' && periodType === 'month') {
+        if (!goals.weekly || !goals.daily) {
+          return { percentage: 0, completed: 0, total: 0 };
         }
-      });
 
-      const percentage = (completed / dates.length) * 100;
+        const monthStart = startOfMonth(now);
+        const monthEnd = endOfMonth(now);
+        const monthDates = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-      return {
-        percentage: Math.round(percentage),
-        completed,
-        total: dates.length,
-      };
+        // Get all weeks in this month
+        const weekIdentifiers = new Set();
+        monthDates.forEach(date => {
+          weekIdentifiers.add(getIdentifierForDate(date, 'weekly'));
+        });
+
+        // First, count total planned days across all weeks
+        let totalPlannedDays = 0;
+        weekIdentifiers.forEach(weekId => {
+          const weeklyGoal = goals.weekly[weekId];
+          if (weeklyGoal && weeklyGoal.taskSplitUp) {
+            const planned = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
+            totalPlannedDays += planned.length;
+          }
+        });
+
+        if (totalPlannedDays === 0) {
+          return { percentage: 0, completed: 0, total: 0 };
+        }
+
+        // Calculate completion for days that have data
+        let totalCompletion = 0;
+        let completedDaysCount = 0;
+
+        weekIdentifiers.forEach(weekId => {
+          const weeklyGoal = goals.weekly[weekId];
+          if (weeklyGoal && weeklyGoal.taskSplitUp) {
+            const weekDates = getWeekDates(weekId);
+
+            Object.entries(weeklyGoal.taskSplitUp).forEach(([day, task]) => {
+              if (task && task.trim() !== '') {
+                const dateKey = weekDates[day];
+                const dailyGoal = goals.daily[dateKey];
+
+                if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
+                  totalCompletion += Number(dailyGoal.performance.completion) || 0;
+                  completedDaysCount++;
+                }
+              }
+            });
+          }
+        });
+
+        // Each planned day represents a portion of the month
+        const dayWeight = 100 / totalPlannedDays;
+        const avgDayCompletion = completedDaysCount > 0 ? totalCompletion / completedDaysCount : 0;
+        const monthlyCompletion = (avgDayCompletion * completedDaysCount * dayWeight) / 100;
+
+        return {
+          percentage: Math.round(monthlyCompletion),
+          completed: completedDaysCount,
+          total: totalPlannedDays,
+        };
+      }
+
+      // 3. QUARTERLY COMPLETION (based on monthly goals' completion values)
+      if (level === 'monthly' && periodType === 'quarter') {
+        if (!goals.monthly) {
+          return { percentage: 0, completed: 0, total: 0 };
+        }
+
+        const quarterStart = startOfQuarter(now);
+        const quarterEnd = endOfQuarter(now);
+        const quarterMonths = eachDayOfInterval({ start: quarterStart, end: quarterEnd });
+
+        const monthIdentifiers = new Set();
+        quarterMonths.forEach(date => {
+          monthIdentifiers.add(getIdentifierForDate(date, 'monthly'));
+        });
+
+        const totalMonths = monthIdentifiers.size; // Always 3 months in a quarter
+
+        let totalCompletion = 0;
+        let completedMonths = 0;
+
+        monthIdentifiers.forEach(monthId => {
+          const monthlyGoal = goals.monthly[monthId];
+          if (monthlyGoal && monthlyGoal.performance && typeof monthlyGoal.performance.completion !== 'undefined') {
+            totalCompletion += Number(monthlyGoal.performance.completion) || 0;
+            completedMonths++;
+          }
+        });
+
+        // Each month = 33.33% of the quarter
+        const monthWeight = 100 / totalMonths;
+        const avgMonthCompletion = completedMonths > 0 ? totalCompletion / completedMonths : 0;
+        const quarterlyCompletion = (avgMonthCompletion * completedMonths * monthWeight) / 100;
+
+        return {
+          percentage: Math.round(quarterlyCompletion),
+          completed: completedMonths,
+          total: totalMonths,
+        };
+      }
+
+      // 4. YEARLY COMPLETION (based on quarterly goals with partial weighting)
+      if (level === 'quarterly' && periodType === 'year') {
+        if (!goals.quarterly) {
+          return { percentage: 0, completed: 0, total: 0 };
+        }
+
+        // Get all 4 quarters
+        const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+        const currentYear = now.getFullYear();
+
+        let totalWeightedCompletion = 0;
+        let completedQuarters = 0;
+
+        quarters.forEach((q, index) => {
+          const quarterId = `${currentYear}-${q}`;
+          const quarterlyGoal = goals.quarterly[quarterId];
+
+          if (quarterlyGoal && quarterlyGoal.performance && typeof quarterlyGoal.performance.completion !== 'undefined') {
+            const qCompletion = Number(quarterlyGoal.performance.completion) || 0;
+            totalWeightedCompletion += qCompletion;
+            completedQuarters++;
+          }
+        });
+
+        // Each quarter = 25% of the year
+        // If 2 quarters completed with avg 70%, yearly = (70% * 2) * 25% = 35%
+        const quarterWeight = 25; // Each quarter is 25% of the year
+        const avgQuarterCompletion = completedQuarters > 0 ? totalWeightedCompletion / completedQuarters : 0;
+        const yearlyCompletion = (avgQuarterCompletion * completedQuarters * quarterWeight) / 100;
+
+        return {
+          percentage: Math.round(yearlyCompletion),
+          completed: completedQuarters,
+          total: 4,
+        };
+      }
+
+      // Fallback for any other combinations
+      return { percentage: 0, completed: 0, total: 0 };
     },
-    [goals]
+    [goals, getIdentifierForDate, getWeekDates]
+  );
+
+  // Auto-calculate performance.completion for a goal before saving
+  const autoCalculateCompletion = useCallback(
+    (level, identifier, goalData) => {
+      // Only auto-calculate for weekly, monthly, quarterly (daily is manual)
+      if (level === 'daily') {
+        return goalData; // Daily completion is set manually
+      }
+
+      // Weekly: Calculate from daily goals
+      if (level === 'weekly') {
+        if (!goalData.taskSplitUp || !goals.daily) {
+          return goalData;
+        }
+
+        const weekDates = getWeekDates(identifier);
+        const plannedDays = Object.values(goalData.taskSplitUp).filter(t => t && t.trim() !== '');
+        const totalPlannedDays = plannedDays.length;
+
+        if (totalPlannedDays === 0) {
+          return goalData;
+        }
+
+        let totalCompletion = 0;
+
+        Object.entries(goalData.taskSplitUp).forEach(([day, task]) => {
+          if (task && task.trim() !== '') {
+            const dateKey = weekDates[day];
+            const dailyGoal = goals.daily[dateKey];
+
+            if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
+              totalCompletion += Number(dailyGoal.performance.completion) || 0;
+            }
+          }
+        });
+
+        const weeklyCompletion = totalCompletion / totalPlannedDays;
+
+        return {
+          ...goalData,
+          performance: {
+            ...goalData.performance,
+            completion: Math.round(weeklyCompletion)
+          }
+        };
+      }
+
+      // Monthly: Calculate from daily goals across all weeks
+      if (level === 'monthly') {
+        if (!goals.weekly || !goals.daily) {
+          return goalData;
+        }
+
+        const [year, month] = identifier.split('-');
+        const monthDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const monthStart = startOfMonth(monthDate);
+        const monthEnd = endOfMonth(monthDate);
+        const monthDates = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+        const weekIdentifiers = new Set();
+        monthDates.forEach(date => {
+          weekIdentifiers.add(getIdentifierForDate(date, 'weekly'));
+        });
+
+        let totalPlannedDays = 0;
+        weekIdentifiers.forEach(weekId => {
+          const weeklyGoal = goals.weekly[weekId];
+          if (weeklyGoal && weeklyGoal.taskSplitUp) {
+            const planned = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
+            totalPlannedDays += planned.length;
+          }
+        });
+
+        if (totalPlannedDays === 0) {
+          return goalData;
+        }
+
+        let totalCompletion = 0;
+        let completedDaysCount = 0;
+
+        weekIdentifiers.forEach(weekId => {
+          const weeklyGoal = goals.weekly[weekId];
+          if (weeklyGoal && weeklyGoal.taskSplitUp) {
+            const weekDates = getWeekDates(weekId);
+
+            Object.entries(weeklyGoal.taskSplitUp).forEach(([day, task]) => {
+              if (task && task.trim() !== '') {
+                const dateKey = weekDates[day];
+                const dailyGoal = goals.daily[dateKey];
+
+                if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
+                  totalCompletion += Number(dailyGoal.performance.completion) || 0;
+                  completedDaysCount++;
+                }
+              }
+            });
+          }
+        });
+
+        const dayWeight = 100 / totalPlannedDays;
+        const avgDayCompletion = completedDaysCount > 0 ? totalCompletion / completedDaysCount : 0;
+        const monthlyCompletion = (avgDayCompletion * completedDaysCount * dayWeight) / 100;
+
+        return {
+          ...goalData,
+          performance: {
+            ...goalData.performance,
+            completion: Math.round(monthlyCompletion)
+          }
+        };
+      }
+
+      // Quarterly: Calculate from monthly goals
+      if (level === 'quarterly') {
+        if (!goals.monthly) {
+          return goalData;
+        }
+
+        const [year, quarter] = identifier.split('-Q');
+        const quarterNum = parseInt(quarter);
+        const quarterStart = startOfQuarter(new Date(parseInt(year), (quarterNum - 1) * 3, 1));
+        const quarterEnd = endOfQuarter(quarterStart);
+        const quarterMonths = eachDayOfInterval({ start: quarterStart, end: quarterEnd });
+
+        const monthIdentifiers = new Set();
+        quarterMonths.forEach(date => {
+          monthIdentifiers.add(getIdentifierForDate(date, 'monthly'));
+        });
+
+        const totalMonths = monthIdentifiers.size;
+        let totalCompletion = 0;
+        let completedMonths = 0;
+
+        monthIdentifiers.forEach(monthId => {
+          const monthlyGoal = goals.monthly[monthId];
+          if (monthlyGoal && monthlyGoal.performance && typeof monthlyGoal.performance.completion !== 'undefined') {
+            totalCompletion += Number(monthlyGoal.performance.completion) || 0;
+            completedMonths++;
+          }
+        });
+
+        const monthWeight = 100 / totalMonths;
+        const avgMonthCompletion = completedMonths > 0 ? totalCompletion / completedMonths : 0;
+        const quarterlyCompletion = (avgMonthCompletion * completedMonths * monthWeight) / 100;
+
+        return {
+          ...goalData,
+          performance: {
+            ...goalData.performance,
+            completion: Math.round(quarterlyCompletion)
+          }
+        };
+      }
+
+      return goalData;
+    },
+    [goals, getIdentifierForDate, getWeekDates]
   );
 
   // Get insight recommendations based on metrics
@@ -264,7 +631,8 @@ export const useMetrics = (goals = {}, config = {}) => {
       getHabitCompletion,
       getPeriodCompletion,
       getInsights,
+      autoCalculateCompletion,
     }),
-    [getCompletion, getStreak, getTrend, getHabitCompletion, getPeriodCompletion, getInsights]
+    [getCompletion, getStreak, getTrend, getHabitCompletion, getPeriodCompletion, getInsights, autoCalculateCompletion]
   );
 };
