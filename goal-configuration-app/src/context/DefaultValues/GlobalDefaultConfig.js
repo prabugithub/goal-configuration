@@ -124,10 +124,23 @@ const initialConfigState = {
             surprices,
         ],
         daily: [
+              {
+                name: 'rituals',
+                label: 'Rituals',
+                order: 2,
+                enabled: true,
+                fields: [
+                    { name: 'meditation', icon: '🧘', onlyIcon: true, label: 'Meditation', type: 'duration' },
+                    { name: 'reading', icon: '📖', onlyIcon: true, label: 'Reading', type: 'duration' },
+                    { name: 'excercise', icon: '🏃', onlyIcon: true, label: 'Exercise', type: 'duration' },
+                    { name: 'diet', icon: '🥗', onlyIcon: true, label: 'Followed diet plan?', type: 'checkbox', options: ['Yes', 'No'] },
+                ]
+            },
             {
                 name: 'performance',
                 label: 'Goal Performance',
                 enabled: true,
+                order: 1,
                 fields: [
                     {
                         name: 'completion',
@@ -146,6 +159,7 @@ const initialConfigState = {
             {
                 name: 'evaluations',
                 label: 'Daily Reflection',
+                order: 4,
                 enabled: true,
                 fields: [
                     { name: 'went-well', icon: '✔', label: 'What went well in the past 24 hours?', type: 'text' },
@@ -154,20 +168,11 @@ const initialConfigState = {
                     { name: 'organize', icon: '📅', label: 'Organize tomorrow today', type: 'text' },
                 ]
             },
-            {
-                name: 'rituals',
-                label: 'Rituals',
-                enabled: true,
-                fields: [
-                    { name: 'meditation', icon: '🧘', onlyIcon: true, label: 'Meditation', type: 'duration' },
-                    { name: 'reading', icon: '📖', onlyIcon: true, label: 'Reading', type: 'duration' },
-                    { name: 'excercise', icon: '🏃', onlyIcon: true, label: 'Exercise', type: 'duration' },
-                    { name: 'diet', icon: '🥗', onlyIcon: true, label: 'Followed diet plan?', type: 'checkbox', options: ['Yes', 'No'] },
-                ]
-            },
+            
             {
                 name: 'ratings',
                 label: 'Daily Rating',
+                order: 3,
                 enabled: true,
                 fields: [
                     { name: 'day-rating', icon: '⭐', label: 'Overall day rating (out of 10)', type: 'rating' },
