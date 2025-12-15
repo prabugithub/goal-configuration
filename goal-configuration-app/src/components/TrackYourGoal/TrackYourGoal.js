@@ -23,11 +23,14 @@ import {
     InputAdornment,
     Slider,
     Rating,
-    Switch
+    Switch,
+    IconButton,
+    Tooltip
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
+import DeleteIcon from '@mui/icons-material/Delete';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -891,43 +894,72 @@ const TrackYourGoal = () => {
                 <Box>
                     {savedData[levels[tabIndex]] && !editMode && (
                         <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                            <Button
-                                startIcon={<EditIcon />}
-                                variant="contained"
-                                color="primary"
-                                onClick={() => handleSubmit('edit')}
-                            >
-                                Edit
-                            </Button>
-                            {showDeleteButton() && (
-                                <Button
-                                    variant="contained"
-                                    color="error"
-                                    onClick={() => handleSubmit('delete')}
+                            <Tooltip title="Edit">
+                                <IconButton
+                                    color="primary"
+                                    onClick={() => handleSubmit('edit')}
+                                    sx={{
+                                        bgcolor: 'primary.main',
+                                        color: 'white',
+                                        '&:hover': {
+                                            bgcolor: 'primary.dark',
+                                        }
+                                    }}
                                 >
-                                    Delete
-                                </Button>
+                                    <EditIcon />
+                                </IconButton>
+                            </Tooltip>
+                            {showDeleteButton() && (
+                                <Tooltip title="Delete">
+                                    <IconButton
+                                        color="error"
+                                        onClick={() => handleSubmit('delete')}
+                                        sx={{
+                                            bgcolor: 'error.main',
+                                            color: 'white',
+                                            '&:hover': {
+                                                bgcolor: 'error.dark',
+                                            }
+                                        }}
+                                    >
+                                        <DeleteIcon />
+                                    </IconButton>
+                                </Tooltip>
                             )}
                         </Box>
                     )}
                     {editMode && (
                         <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                            <Button
-                                startIcon={<SaveIcon />}
-                                variant="contained"
-                                color="success"
-                                onClick={() => handleSubmit('save')}
-                            >
-                                Save
-                            </Button>
-                            <Button
-                                startIcon={<CancelIcon />}
-                                variant="contained"
-                                color="error"
-                                onClick={() => handleSubmit('cancel')}
-                            >
-                                Cancel
-                            </Button>
+                            <Tooltip title="Save">
+                                <IconButton
+                                    color="success"
+                                    onClick={() => handleSubmit('save')}
+                                    sx={{
+                                        bgcolor: 'success.main',
+                                        color: 'white',
+                                        '&:hover': {
+                                            bgcolor: 'success.dark',
+                                        }
+                                    }}
+                                >
+                                    <SaveIcon />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Cancel">
+                                <IconButton
+                                    color="error"
+                                    onClick={() => handleSubmit('cancel')}
+                                    sx={{
+                                        bgcolor: 'error.main',
+                                        color: 'white',
+                                        '&:hover': {
+                                            bgcolor: 'error.dark',
+                                        }
+                                    }}
+                                >
+                                    <CancelIcon />
+                                </IconButton>
+                            </Tooltip>
                         </Box>
                     )}
 

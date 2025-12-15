@@ -28,6 +28,8 @@ import {
   Chip,
   LinearProgress,
   Rating,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SaveIcon from '@mui/icons-material/Save';
@@ -269,53 +271,84 @@ export const TrackYourGoalMobile = ({
           borderTop: `1px solid ${theme.palette.divider}`,
           p: 1.5,
           display: 'flex',
+          justifyContent: 'flex-end',
           gap: 1,
           zIndex: 100,
         }}
       >
         {editMode ? (
           <>
-            <Button
-              fullWidth
-              variant="contained"
-              color="primary"
-              startIcon={<SaveIcon />}
-              onClick={handleSave}
-              disabled={loading}
-            >
-              Save
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              color="inherit"
-              startIcon={<CancelIcon />}
-              onClick={handleCancel}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
+            <Tooltip title="Save">
+              <IconButton
+                color="success"
+                onClick={handleSave}
+                disabled={loading}
+                sx={{
+                  bgcolor: 'success.main',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: 'success.dark',
+                  },
+                  '&:disabled': {
+                    bgcolor: 'grey.300',
+                  }
+                }}
+              >
+                <SaveIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Cancel">
+              <IconButton
+                color="error"
+                onClick={handleCancel}
+                disabled={loading}
+                sx={{
+                  bgcolor: 'error.main',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: 'error.dark',
+                  },
+                  '&:disabled': {
+                    bgcolor: 'grey.300',
+                  }
+                }}
+              >
+                <CancelIcon />
+              </IconButton>
+            </Tooltip>
           </>
         ) : (
           <>
-            <Button
-              fullWidth
-              variant="contained"
-              color="primary"
-              startIcon={<EditIcon />}
-              onClick={handleEdit}
-            >
-              Edit
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              color="error"
-              startIcon={<DeleteIcon />}
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              Delete
-            </Button>
+            <Tooltip title="Edit">
+              <IconButton
+                color="primary"
+                onClick={handleEdit}
+                sx={{
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: 'primary.dark',
+                  }
+                }}
+              >
+                <EditIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Delete">
+              <IconButton
+                color="error"
+                onClick={() => setDeleteDialogOpen(true)}
+                sx={{
+                  bgcolor: 'error.main',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: 'error.dark',
+                  }
+                }}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Tooltip>
           </>
         )}
       </Box>
