@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Container,
   Box,
@@ -13,11 +13,14 @@ import {
   Chip,
   LinearProgress,
   CircularProgress,
+  IconButton,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { format, startOfWeek, startOfMonth, startOfQuarter, startOfYear } from 'date-fns';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { format, startOfWeek, startOfMonth, startOfQuarter, startOfYear, endOfMonth, eachDayOfInterval, addMonths, subMonths } from 'date-fns';
 import { useMetrics } from '../../hooks/useMetrics';
 
 /**
@@ -189,6 +192,18 @@ export const Dashboard = ({ goals = {}, config = {} }) => {
 
         <RecentEntriesTimeline goals={goals} isMobile={isMobile} />
       </Box> */}
+
+      {/* Activity Heatmap Section */}
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant={isMobile ? 'h6' : 'h5'}
+          sx={{ fontWeight: 'bold', mb: 2 }}
+        >
+          🔥 Activity Heatmap
+        </Typography>
+
+        <MonthHeatmap goals={goals} isMobile={isMobile} />
+      </Box>
 
       {/* Insights Section */}
       <Box>
@@ -389,6 +404,195 @@ const getInsightEmoji = (type) => {
     neutral: '💡',
   };
   return emojis[type] || emojis.neutral;
+};
+
+/**
+ * Month Heatmap - Calendar heatmap with month navigation
+ */
+const MonthHeatmap = ({ goals = {}, isMobile }) => {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  const heatmapData = useMemo(() => {
+    if (!goals.daily) return [];
+
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+    return daysInMonth.map(date => {
+      const dateKey = format(date, 'yyyy-MM-dd');
+      const dailyGoal = goals.daily[dateKey];
+      const completion = dailyGoal?.performance?.completion || 0;
+
+      return {
+        date: dateKey,
+        dateObj: date,
+        day: date.getDate(),
+        dayOfWeek: date.getDay(), // 0 = Sunday, 1 = Monday, etc.
+        value: dailyGoal ? 1 : 0,
+        completion: completion,
+        displayDate: format(date, 'MMM d'),
+      };
+    });
+  }, [goals, currentMonth]);
+
+  const getColor = (value, completion) => {
+    if (value === 0) return '#f0f0f0'; // No data
+    if (completion >= 80) return '#27AE60'; // Green for high completion
+    if (completion >= 60) return '#52C77A'; // Light green
+    if (completion >= 40) return '#FFA726'; // Orange
+    if (completion >= 20) return '#FF7043'; // Light red
+    return '#E74C3C'; // Red for low completion
+  };
+
+  const handlePrevMonth = () => {
+    setCurrentMonth(prev => subMonths(prev, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth(prev => addMonths(prev, 1));
+  };
+
+  const canGoNext = () => {
+    const nextMonth = addMonths(currentMonth, 1);
+    return nextMonth <= new Date();
+  };
+
+  const cellSize = isMobile ? 32 : 40;
+  const gap = isMobile ? 4 : 6;
+
+  // Calculate stats for the month
+  const totalDays = heatmapData.length;
+  const daysWithData = heatmapData.filter(d => d.value === 1).length;
+  const avgCompletion = daysWithData > 0
+    ? Math.round(heatmapData.reduce((sum, d) => sum + d.completion, 0) / daysWithData)
+    : 0;
+
+  // Group days by week for calendar layout
+  const weeks = [];
+  let currentWeek = [];
+  const firstDayOfWeek = heatmapData[0]?.dayOfWeek || 0;
+
+  // Add empty cells for days before month starts
+  for (let i = 0; i < firstDayOfWeek; i++) {
+    currentWeek.push(null);
+  }
+
+  heatmapData.forEach((day) => {
+    currentWeek.push(day);
+    if (currentWeek.length === 7) {
+      weeks.push(currentWeek);
+      currentWeek = [];
+    }
+  });
+
+  // Add remaining days to last week
+  if (currentWeek.length > 0) {
+    while (currentWeek.length < 7) {
+      currentWeek.push(null);
+    }
+    weeks.push(currentWeek);
+  }
+
+  return (
+    <Card>
+      <CardContent>
+        {/* Month navigation header */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <IconButton onClick={handlePrevMonth} size="small">
+            <ChevronLeftIcon />
+          </IconButton>
+          <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+            {format(currentMonth, 'MMMM yyyy')}
+          </Typography>
+          <IconButton onClick={handleNextMonth} size="small" disabled={!canGoNext()}>
+            <ChevronRightIcon />
+          </IconButton>
+        </Box>
+
+        {/* Stats */}
+        <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {daysWithData}/{totalDays} days tracked
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Avg: {avgCompletion}% completion
+          </Typography>
+        </Box>
+
+        {/* Day of week headers */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap, mb: 1 }}>
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+            <Box
+              key={day}
+              sx={{
+                textAlign: 'center',
+                fontSize: isMobile ? '0.65rem' : '0.75rem',
+                fontWeight: 'bold',
+                color: 'text.secondary',
+              }}
+            >
+              {day.slice(0, isMobile ? 1 : 3)}
+            </Box>
+          ))}
+        </Box>
+
+        {/* Calendar grid */}
+        {weeks.map((week, weekIdx) => (
+          <Box key={weekIdx} sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap, mb: gap }}>
+            {week.map((day, dayIdx) => (
+              <Box
+                key={`${weekIdx}-${dayIdx}`}
+                title={day ? `${day.displayDate}: ${day.value ? day.completion + '%' : 'No data'}` : ''}
+                sx={{
+                  width: cellSize,
+                  height: cellSize,
+                  backgroundColor: day ? getColor(day.value, day.completion) : 'transparent',
+                  borderRadius: '6px',
+                  cursor: day ? 'pointer' : 'default',
+                  border: day ? `1px solid ${day.value ? '#ccc' : '#e0e0e0'}` : 'none',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: isMobile ? '0.65rem' : '0.75rem',
+                  fontWeight: day?.value ? 'bold' : 'normal',
+                  color: day?.completion >= 60 ? '#fff' : '#333',
+                  '&:hover': day ? {
+                    transform: 'scale(1.15)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    zIndex: 1,
+                  } : {},
+                }}
+              >
+                {day?.day}
+              </Box>
+            ))}
+          </Box>
+        ))}
+
+        {/* Legend */}
+        <Box sx={{ mt: 2, display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap', fontSize: isMobile ? '0.7rem' : '0.75rem' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ width: 12, height: 12, backgroundColor: '#f0f0f0', borderRadius: '2px', border: '1px solid #ddd' }} />
+            <Typography variant="caption">No data</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ width: 12, height: 12, backgroundColor: '#E74C3C', borderRadius: '2px' }} />
+            <Typography variant="caption">&lt;20%</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ width: 12, height: 12, backgroundColor: '#FFA726', borderRadius: '2px' }} />
+            <Typography variant="caption">40-60%</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ width: 12, height: 12, backgroundColor: '#27AE60', borderRadius: '2px' }} />
+            <Typography variant="caption">80%+</Typography>
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
 };
 
 export default Dashboard;

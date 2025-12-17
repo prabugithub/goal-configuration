@@ -151,7 +151,7 @@ function App() {
                   <Tabs value={tabIndex} onChange={(e, newVal) => setTabIndex(newVal)} centered sx={{ mb: 2 }}>
                     <Tab label="📊 Dashboard" />
                     <Tab label="📝 Goal Entry" />
-                    <Tab label="📈 Analytics" />
+                    {/* <Tab label="📈 Analytics" /> */}
                     <Tab label="📋 Reports" />
                   </Tabs>
                 )}
@@ -187,18 +187,18 @@ function App() {
                     </TabPanel>
                   )}
 
-                  {/* Analytics Tab */}
-                  {(tabIndex === 2 || (!isMobile && !showDashboard)) && (
+                  {/* Analytics Tab - Hidden */}
+                  {/* {(tabIndex === 2 || (!isMobile && !showDashboard)) && (
                     <TabPanel value={tabIndex} index={2}>
                       <Box sx={{ mb: 3 }}>
                         <AnalyticsCharts metrics={metrics} goals={goals} />
                       </Box>
                     </TabPanel>
-                  )}
+                  )} */}
 
                   {/* Reports Tab */}
-                  {(tabIndex === 3 || (!isMobile && !showDashboard)) && (
-                    <TabPanel value={tabIndex} index={3}>
+                  {(tabIndex === 2 || (!isMobile && !showDashboard)) && (
+                    <TabPanel value={tabIndex} index={2}>
                       <Box sx={{ mb: 3 }}>
                         <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold', mb: 2 }}>
                           📋 Reports & Sharing
