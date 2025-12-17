@@ -195,8 +195,26 @@ export const useMetrics = (goals = {}, config = {}) => {
 
   // Get completion data for a specific period
   const getPeriodCompletion = useCallback(
-    (level, periodType) => {
-      const now = new Date();
+    (level, periodType, offset = 0) => {
+      let now = new Date();
+
+      // Apply time offset based on period type
+      if (offset > 0) {
+        switch(periodType) {
+          case 'week':
+            now.setDate(now.getDate() - (offset * 7));
+            break;
+          case 'month':
+            now.setMonth(now.getMonth() - offset);
+            break;
+          case 'quarter':
+            now.setMonth(now.getMonth() - (offset * 3));
+            break;
+          case 'year':
+            now.setFullYear(now.getFullYear() - offset);
+            break;
+        }
+      }
 
       // HIERARCHICAL CALCULATION LOGIC
 

@@ -17,7 +17,6 @@ import TrackYourGoal from './components/TrackYourGoal/TrackYourGoal';
 import ProgressDashboard from './components/ProgressDashboard/ProgressDashboard';
 import Dashboard from './components/Dashboard/Dashboard';
 import AnalyticsCharts from './components/Analytics/AnalyticsCharts';
-import ProgressRings from './components/Analytics/ProgressRings';
 import GoalSearch from './components/GoalSearch/GoalSearch';
 import WhatsAppShare from './components/ShareReport/WhatsAppShare';
 import ReportGenerator from './components/ShareReport/ReportGenerator';
@@ -174,9 +173,6 @@ function App() {
 
                       {/* Main Dashboard */}
                       <Dashboard goals={goals} config={config} />
-
-                      {/* Progress Rings */}
-                      <ProgressRings metrics={metrics} goals={goals} />
                     </TabPanel>
                   )}
 

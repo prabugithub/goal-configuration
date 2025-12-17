@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Box,
   Card,
@@ -10,9 +10,15 @@ import {
   Chip,
   useTheme,
   useMediaQuery,
+  IconButton,
+  ButtonGroup,
+  Button,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { format, subWeeks, subMonths, subQuarters, subYears, startOfWeek, startOfMonth, startOfQuarter, startOfYear, addWeeks, addMonths, addQuarters, addYears } from 'date-fns';
 
 /**
  * ProgressRings - Circular progress indicators for different time periods
@@ -22,19 +28,50 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
  * - Smooth animations
  * - Status indicators
  * - Trend visualization
+ * - Time navigation (view previous periods)
  * - Responsive design
  */
 export const ProgressRings = ({ metrics, goals = {} }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+  const [timeOffset, setTimeOffset] = useState({
+    weekly: 0,
+    monthly: 0,
+    quarterly: 0,
+    yearly: 0,
+  });
+
+  const getDateLabel = (period, offset) => {
+    const now = new Date();
+    let targetDate;
+
+    switch(period) {
+      case 'weekly':
+        targetDate = subWeeks(now, offset);
+        return offset === 0 ? 'This Week' : format(startOfWeek(targetDate), 'MMM d');
+      case 'monthly':
+        targetDate = subMonths(now, offset);
+        return offset === 0 ? 'This Month' : format(startOfMonth(targetDate), 'MMM yyyy');
+      case 'quarterly':
+        targetDate = subQuarters(now, offset);
+        const quarter = Math.floor(targetDate.getMonth() / 3) + 1;
+        return offset === 0 ? 'This Quarter' : `Q${quarter} ${targetDate.getFullYear()}`;
+      case 'yearly':
+        targetDate = subYears(now, offset);
+        return offset === 0 ? 'This Year' : targetDate.getFullYear().toString();
+      default:
+        return '';
+    }
+  };
+
   const progressData = useMemo(() => {
     if (!metrics) return null;
 
-    const weeklyData = metrics.getPeriodCompletion('daily', 'week');
-    const monthlyData = metrics.getPeriodCompletion('weekly', 'month');
-    const quarterlyData = metrics.getPeriodCompletion('monthly', 'quarter');
-    const yearlyData = metrics.getPeriodCompletion('quarterly', 'year');
+    const weeklyData = metrics.getPeriodCompletion('daily', 'week', timeOffset.weekly);
+    const monthlyData = metrics.getPeriodCompletion('weekly', 'month', timeOffset.monthly);
+    const quarterlyData = metrics.getPeriodCompletion('monthly', 'quarter', timeOffset.quarterly);
+    const yearlyData = metrics.getPeriodCompletion('quarterly', 'year', timeOffset.yearly);
 
     const weeklyTrend = metrics.getTrend('daily', 7);
     const monthlyTrend = metrics.getTrend('weekly', 30);
@@ -48,9 +85,11 @@ export const ProgressRings = ({ metrics, goals = {} }) => {
         total: weeklyData.total,
         trend: weeklyTrend.direction,
         trendPercent: weeklyTrend.percentage,
-        label: 'This Week',
+        label: getDateLabel('weekly', timeOffset.weekly),
         emoji: '🌅',
         color: '#3498DB',
+        period: 'weekly',
+        offset: timeOffset.weekly,
       },
       monthly: {
         percentage: monthlyData.percentage,
@@ -58,9 +97,11 @@ export const ProgressRings = ({ metrics, goals = {} }) => {
         total: monthlyData.total,
         trend: monthlyTrend.direction,
         trendPercent: monthlyTrend.percentage,
-        label: 'This Month',
+        label: getDateLabel('monthly', timeOffset.monthly),
         emoji: '📅',
         color: '#9B59B6',
+        period: 'monthly',
+        offset: timeOffset.monthly,
       },
       quarterly: {
         percentage: quarterlyData.percentage,
@@ -68,9 +109,11 @@ export const ProgressRings = ({ metrics, goals = {} }) => {
         total: quarterlyData.total,
         trend: quarterlyTrend.direction,
         trendPercent: quarterlyTrend.percentage,
-        label: 'This Quarter',
+        label: getDateLabel('quarterly', timeOffset.quarterly),
         emoji: '📊',
         color: '#E67E22',
+        period: 'quarterly',
+        offset: timeOffset.quarterly,
       },
       yearly: {
         percentage: yearlyData.percentage,
@@ -78,12 +121,21 @@ export const ProgressRings = ({ metrics, goals = {} }) => {
         total: yearlyData.total,
         trend: yearlyTrend.direction,
         trendPercent: yearlyTrend.percentage,
-        label: 'This Year',
+        label: getDateLabel('yearly', timeOffset.yearly),
         emoji: '🎯',
         color: '#27AE60',
+        period: 'yearly',
+        offset: timeOffset.yearly,
       },
     };
-  }, [metrics]);
+  }, [metrics, timeOffset]);
+
+  const handleNavigation = (period, direction) => {
+    setTimeOffset(prev => ({
+      ...prev,
+      [period]: Math.max(0, prev[period] + direction),
+    }));
+  };
 
   if (!progressData) return null;
 
@@ -96,7 +148,11 @@ export const ProgressRings = ({ metrics, goals = {} }) => {
       <Grid container spacing={isMobile ? 1 : 2}>
         {Object.entries(progressData).map(([key, data]) => (
           <Grid item xs={6} sm={6} md={3} key={key}>
-            <ProgressRingCard {...data} isMobile={isMobile} />
+            <ProgressRingCard
+              {...data}
+              isMobile={isMobile}
+              onNavigate={handleNavigation}
+            />
           </Grid>
         ))}
       </Grid>
@@ -117,10 +173,13 @@ const ProgressRingCard = ({
   emoji,
   color,
   isMobile,
+  period,
+  offset,
+  onNavigate,
 }) => {
   const radius = isMobile ? 35 : 45;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (percentage / 100) * circumference;
+  const progressOffset = circumference - (percentage / 100) * circumference;
 
   const getTrendIcon = () => {
     if (trend === 'up') return <TrendingUpIcon sx={{ fontSize: 16, color: '#27AE60' }} />;
@@ -138,11 +197,28 @@ const ProgressRingCard = ({
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardContent sx={{ p: isMobile ? 1 : 1.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
-        <Box sx={{ mb: 1.5 }}>
-          <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: isMobile ? '0.8rem' : '0.9rem' }}>
+        {/* Header with Navigation */}
+        <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <IconButton
+            size="small"
+            onClick={() => onNavigate(period, 1)}
+            sx={{ p: 0.25 }}
+          >
+            <ChevronLeftIcon fontSize="small" />
+          </IconButton>
+
+          <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: isMobile ? '0.75rem' : '0.85rem', textAlign: 'center', flex: 1 }}>
             {emoji} {label}
           </Typography>
+
+          <IconButton
+            size="small"
+            onClick={() => onNavigate(period, -1)}
+            disabled={offset === 0}
+            sx={{ p: 0.25 }}
+          >
+            <ChevronRightIcon fontSize="small" />
+          </IconButton>
         </Box>
 
         {/* SVG Circular Progress */}
@@ -167,7 +243,7 @@ const ProgressRingCard = ({
                 stroke={getStatusColor()}
                 strokeWidth={isMobile ? 3 : 4}
                 strokeDasharray={circumference}
-                strokeDashoffset={offset}
+                strokeDashoffset={progressOffset}
                 strokeLinecap="round"
                 style={{
                   transition: 'stroke-dashoffset 0.8s ease-in-out',

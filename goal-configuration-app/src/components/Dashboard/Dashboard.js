@@ -22,6 +22,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { format, startOfWeek, startOfMonth, startOfQuarter, startOfYear, endOfMonth, eachDayOfInterval, addMonths, subMonths } from 'date-fns';
 import { useMetrics } from '../../hooks/useMetrics';
+import { ProgressRings } from '../Analytics/ProgressRings';
 
 /**
  * Dashboard - Comprehensive overview of all goals
@@ -77,6 +78,9 @@ export const Dashboard = ({ goals = {}, config = {} }) => {
 
   return (
     <Container maxWidth="sm" sx={{ pb: 4, px: isMobile ? 1 : 2 }}>
+      {/* Progress Rings - Top Section */}
+      <ProgressRings metrics={metrics} goals={goals} />
+
       {/* Quick Stats Section */}
       <Box sx={{ mb: 3 }}>
         <Typography
