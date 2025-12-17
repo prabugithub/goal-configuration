@@ -2,7 +2,7 @@
 
 import './App.css';
 import { useEffect, useState } from 'react';
-import { Container, CssBaseline, IconButton, Typography, Tabs, Tab, Box, useMediaQuery, useTheme, Stack, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import { Container, CssBaseline, IconButton, Typography, Tabs, Tab, Box, useMediaQuery, useTheme, Stack, Dialog, DialogTitle, DialogContent, DialogActions, Button, Tooltip } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -155,20 +155,22 @@ function App() {
                   {/* Dashboard Tab */}
                   {((tabIndex === 0 && !isMobile) || (isMobile && showDashboard)) && (
                     <TabPanel value={tabIndex} index={0}>
-                      {/* Quick Actions - Compact View */}
-                      <Box
+                      {/* Quick Actions - Compact Icon Bar */}
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
                         sx={{
-                          mb: 2,
-                          display: 'flex',
                           justifyContent: 'flex-end',
-                          gap: 1,
+                          mb: 1,
+                          '& > *': {
+                            transform: 'scale(0.9)',
+                          },
                         }}
                       >
-                        <GoalSearch goals={goals} config={config} onSelectGoal={() => { }} />
                         <WhatsAppShare goals={goals} config={config} metrics={metrics} />
                         <ReportGenerator goals={goals} config={config} metrics={metrics} userId={user?.uid} />
                         <ExportButton goals={goals} config={config} userId={user?.uid} />
-                      </Box>
+                      </Stack>
 
                       {/* Main Dashboard */}
                       <Dashboard goals={goals} config={config} />
