@@ -182,7 +182,7 @@ export const useMetrics = (goals = {}, config = {}) => {
 
     // Generate all 7 days of the week starting from Sunday
     const weekDates = {};
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
     for (let i = 0; i < 7; i++) {
       const date = new Date(sunday);
@@ -252,9 +252,9 @@ export const useMetrics = (goals = {}, config = {}) => {
         };
       }
 
-      // 2. MONTHLY COMPLETION (based on daily goals from all planned days in all weeks)
+      // 2. MONTHLY COMPLETION (based on weekly goals' completion values)
       if (level === 'weekly' && periodType === 'month') {
-        if (!goals.weekly || !goals.daily) {
+        if (!goals.weekly) {
           return { percentage: 0, completed: 0, total: 0 };
         }
 
@@ -268,52 +268,47 @@ export const useMetrics = (goals = {}, config = {}) => {
           weekIdentifiers.add(getIdentifierForDate(date, 'weekly'));
         });
 
-        // First, count total planned days across all weeks
-        let totalPlannedDays = 0;
+        // Count total weeks with plans
+        let totalWeeksWithPlans = 0;
         weekIdentifiers.forEach(weekId => {
           const weeklyGoal = goals.weekly[weekId];
           if (weeklyGoal && weeklyGoal.taskSplitUp) {
             const planned = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
-            totalPlannedDays += planned.length;
+            if (planned.length > 0) {
+              totalWeeksWithPlans++;
+            }
           }
         });
 
-        if (totalPlannedDays === 0) {
+        if (totalWeeksWithPlans === 0) {
           return { percentage: 0, completed: 0, total: 0 };
         }
 
-        // Calculate completion for days that have data
+        // Sum the completion percentages of all weeks
         let totalCompletion = 0;
-        let completedDaysCount = 0;
+        let completedWeeks = 0;
 
         weekIdentifiers.forEach(weekId => {
           const weeklyGoal = goals.weekly[weekId];
           if (weeklyGoal && weeklyGoal.taskSplitUp) {
-            const weekDates = getWeekDates(weekId);
-
-            Object.entries(weeklyGoal.taskSplitUp).forEach(([day, task]) => {
-              if (task && task.trim() !== '') {
-                const dateKey = weekDates[day];
-                const dailyGoal = goals.daily[dateKey];
-
-                if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
-                  totalCompletion += Number(dailyGoal.performance.completion) || 0;
-                  completedDaysCount++;
-                }
+            const planned = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
+            if (planned.length > 0) {
+              // Use the auto-calculated performance.completion from weekly goal
+              if (weeklyGoal.performance && typeof weeklyGoal.performance.completion !== 'undefined') {
+                totalCompletion += Number(weeklyGoal.performance.completion) || 0;
+                completedWeeks++;
               }
-            });
+            }
           }
         });
 
-        // Each planned day represents a portion of the month
-        const dayWeight = 100 / totalPlannedDays;
-        const avgDayCompletion = completedDaysCount > 0 ? totalCompletion / completedDaysCount : 0;
-        const monthlyCompletion = (avgDayCompletion * completedDaysCount * dayWeight) / 100;
+        // Monthly completion = sum of all weekly completions / total weeks with plans
+        const monthlyCompletion = totalCompletion / totalWeeksWithPlans;
 
         return {
           percentage: Math.round(monthlyCompletion),
-          completed: completedDaysCount,
-          total: totalPlannedDays,
+          completed: completedWeeks,
+          total: totalWeeksWithPlans,
         };
       }
 
