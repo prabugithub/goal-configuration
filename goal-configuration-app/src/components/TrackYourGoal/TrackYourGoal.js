@@ -157,9 +157,10 @@ const TrackYourGoal = () => {
                     if (!isSelectedDateToday()) {
                         alert(`No data found! You might not saved any data for this ${getFormatedDate(selectedDate)} date. You may reset to today for quick reset!.`);
                     }
+                    
 
                 };
-                if (!data || tabIndex === levels.length - 1) {
+                if ((!data || tabIndex === levels.length - 1) || (isInitialLoad.current === false && data)) {
                     setLoading(false);
                 }
                 // Mark this tab as loaded

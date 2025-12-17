@@ -364,15 +364,17 @@ export const useMetrics = (goals = {}, config = {}) => {
         };
       }
 
-      // 3. QUARTERLY COMPLETION (based on monthly goals' completion values)
+      // 3. QUARTERLY COMPLETION (based on monthly completion calculated on-the-fly)
       if (level === 'monthly' && periodType === 'quarter') {
-        if (!goals.monthly) {
+        if (!goals.weekly || !goals.daily) {
           return { percentage: 0, completed: 0, total: 0 };
         }
 
         const quarterStart = startOfQuarter(now);
         const quarterEnd = endOfQuarter(now);
         const quarterMonths = eachDayOfInterval({ start: quarterStart, end: quarterEnd });
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
         const monthIdentifiers = new Set();
         quarterMonths.forEach(date => {
@@ -381,25 +383,108 @@ export const useMetrics = (goals = {}, config = {}) => {
 
         const totalMonths = monthIdentifiers.size; // Always 3 months in a quarter
 
-        let totalCompletion = 0;
-        let completedMonths = 0;
+        console.log('=== QUARTERLY CALCULATION DEBUG ===');
+        console.log('Quarter months:', Array.from(monthIdentifiers));
 
+        let totalCompletion = 0;
+        let monthsProcessed = 0;
+
+        // Calculate completion for each month in the quarter
         monthIdentifiers.forEach(monthId => {
-          const monthlyGoal = goals.monthly[monthId];
-          if (monthlyGoal && monthlyGoal.performance && typeof monthlyGoal.performance.completion !== 'undefined') {
-            totalCompletion += Number(monthlyGoal.performance.completion) || 0;
-            completedMonths++;
+          const [year, month] = monthId.split('-');
+          const monthDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+          const monthStart = startOfMonth(monthDate);
+          const monthEnd = endOfMonth(monthDate);
+          const monthDates = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+          // Get all weeks in this month
+          const weekIdentifiers = new Set();
+          monthDates.forEach(date => {
+            weekIdentifiers.add(getIdentifierForDate(date, 'weekly'));
+          });
+
+          console.log(`\nMonth ${monthId}:`);
+          console.log('  Weeks in month:', Array.from(weekIdentifiers));
+
+          // Count total weeks with plans
+          let totalWeeksWithPlans = 0;
+          weekIdentifiers.forEach(weekId => {
+            const weeklyGoal = goals.weekly[weekId];
+            if (weeklyGoal && weeklyGoal.taskSplitUp) {
+              const planned = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
+              if (planned.length > 0) {
+                totalWeeksWithPlans++;
+              }
+            }
+          });
+
+          if (totalWeeksWithPlans === 0) {
+            console.log('  No weeks with plans - 0%');
+            // Month with no plans = 0%
+            monthsProcessed++;
+            return;
           }
+
+          // Calculate completion for each week in this month
+          let totalWeeklyCompletion = 0;
+          let weeksProcessed = 0;
+
+          weekIdentifiers.forEach(weekId => {
+            const weeklyGoal = goals.weekly[weekId];
+            if (weeklyGoal && weeklyGoal.taskSplitUp) {
+              const planned = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
+              if (planned.length > 0) {
+                const weekDates = getWeekDates(weekId);
+                let totalDailyCompletion = 0;
+                let daysPassedWithPlans = 0;
+
+                // Check each planned day in this week
+                Object.entries(weeklyGoal.taskSplitUp).forEach(([day, task]) => {
+                  if (task && task.trim() !== '') {
+                    const dateKey = weekDates[day];
+                    const dayDate = new Date(dateKey);
+                    dayDate.setHours(0, 0, 0, 0);
+
+                    // Only consider days that have passed
+                    if (dayDate <= today) {
+                      daysPassedWithPlans++;
+                      const dailyGoal = goals.daily[dateKey];
+
+                      if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
+                        totalDailyCompletion += Number(dailyGoal.performance.completion) || 0;
+                      }
+                    }
+                  }
+                });
+
+                let weekCompletion = 0;
+                if (daysPassedWithPlans > 0) {
+                  const totalPlannedDaysInWeek = planned.length;
+                  weekCompletion = totalDailyCompletion / totalPlannedDaysInWeek;
+                }
+
+                totalWeeklyCompletion += weekCompletion;
+                weeksProcessed++;
+              }
+            }
+          });
+
+          // Calculate this month's completion
+          const monthCompletion = weeksProcessed > 0 ? totalWeeklyCompletion / totalWeeksWithPlans : 0;
+          console.log(`  Month completion: ${totalWeeklyCompletion.toFixed(2)} / ${totalWeeksWithPlans} weeks = ${monthCompletion.toFixed(2)}%`);
+
+          totalCompletion += monthCompletion;
+          monthsProcessed++;
         });
 
-        // Each month = 33.33% of the quarter
-        const monthWeight = 100 / totalMonths;
-        const avgMonthCompletion = completedMonths > 0 ? totalCompletion / completedMonths : 0;
-        const quarterlyCompletion = (avgMonthCompletion * completedMonths * monthWeight) / 100;
+        // Quarterly completion = average of all 3 months
+        const quarterlyCompletion = monthsProcessed > 0 ? totalCompletion / totalMonths : 0;
+        console.log(`\nQuarterly total: ${totalCompletion.toFixed(2)} / ${totalMonths} months = ${quarterlyCompletion.toFixed(2)}%`);
+        console.log('=== END QUARTERLY CALCULATION ===\n');
 
         return {
           percentage: Math.round(quarterlyCompletion),
-          completed: completedMonths,
+          completed: monthsProcessed,
           total: totalMonths,
         };
       }
