@@ -179,7 +179,7 @@ export const Dashboard = ({ goals = {}, config = {} }) => {
       </Box>
 
       {/* Recent Goals Section */}
-      <Box sx={{ mb: 3 }}>
+      {/* <Box sx={{ mb: 3 }}>
         <Typography
           variant={isMobile ? 'h6' : 'h5'}
           sx={{ fontWeight: 'bold', mb: 2 }}
@@ -188,7 +188,7 @@ export const Dashboard = ({ goals = {}, config = {} }) => {
         </Typography>
 
         <RecentEntriesTimeline goals={goals} isMobile={isMobile} />
-      </Box>
+      </Box> */}
 
       {/* Insights Section */}
       <Box>

@@ -191,9 +191,6 @@ function App() {
                   {(tabIndex === 2 || (!isMobile && !showDashboard)) && (
                     <TabPanel value={tabIndex} index={2}>
                       <Box sx={{ mb: 3 }}>
-                        <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold', mb: 2 }}>
-                          📊 Advanced Analytics
-                        </Typography>
                         <AnalyticsCharts metrics={metrics} goals={goals} />
                       </Box>
                     </TabPanel>
