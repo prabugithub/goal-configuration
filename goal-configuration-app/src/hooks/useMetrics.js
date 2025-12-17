@@ -489,39 +489,139 @@ export const useMetrics = (goals = {}, config = {}) => {
         };
       }
 
-      // 4. YEARLY COMPLETION (based on quarterly goals with partial weighting)
+      // 4. YEARLY COMPLETION (based on quarterly completion calculated on-the-fly)
       if (level === 'quarterly' && periodType === 'year') {
-        if (!goals.quarterly) {
+        if (!goals.weekly || !goals.daily) {
           return { percentage: 0, completed: 0, total: 0 };
         }
 
         // Get all 4 quarters
         const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
         const currentYear = now.getFullYear();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-        let totalWeightedCompletion = 0;
-        let completedQuarters = 0;
+        console.log('=== YEARLY CALCULATION DEBUG ===');
+        console.log('Year:', currentYear);
 
-        quarters.forEach((q, index) => {
-          const quarterId = `${currentYear}-${q}`;
-          const quarterlyGoal = goals.quarterly[quarterId];
+        let totalCompletion = 0;
+        let quartersProcessed = 0;
 
-          if (quarterlyGoal && quarterlyGoal.performance && typeof quarterlyGoal.performance.completion !== 'undefined') {
-            const qCompletion = Number(quarterlyGoal.performance.completion) || 0;
-            totalWeightedCompletion += qCompletion;
-            completedQuarters++;
-          }
+        // Calculate completion for each quarter
+        quarters.forEach((q, quarterIndex) => {
+          const quarterNum = quarterIndex + 1;
+          const quarterStart = startOfQuarter(new Date(currentYear, quarterNum * 3 - 3, 1));
+          const quarterEnd = endOfQuarter(quarterStart);
+          const quarterMonths = eachDayOfInterval({ start: quarterStart, end: quarterEnd });
+
+          const monthIdentifiers = new Set();
+          quarterMonths.forEach(date => {
+            monthIdentifiers.add(getIdentifierForDate(date, 'monthly'));
+          });
+
+          console.log(`\n${q} (${Array.from(monthIdentifiers).join(', ')}):`);
+
+          let quarterCompletion = 0;
+          let monthsInQuarter = 0;
+
+          // Calculate completion for each month in this quarter
+          monthIdentifiers.forEach(monthId => {
+            const [year, month] = monthId.split('-');
+            const monthDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+            const monthStart = startOfMonth(monthDate);
+            const monthEnd = endOfMonth(monthDate);
+            const monthDates = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+            // Get all weeks in this month
+            const weekIdentifiers = new Set();
+            monthDates.forEach(date => {
+              weekIdentifiers.add(getIdentifierForDate(date, 'weekly'));
+            });
+
+            // Count total weeks with plans
+            let totalWeeksWithPlans = 0;
+            weekIdentifiers.forEach(weekId => {
+              const weeklyGoal = goals.weekly[weekId];
+              if (weeklyGoal && weeklyGoal.taskSplitUp) {
+                const planned = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
+                if (planned.length > 0) {
+                  totalWeeksWithPlans++;
+                }
+              }
+            });
+
+            if (totalWeeksWithPlans === 0) {
+              // Month with no plans = 0%
+              monthsInQuarter++;
+              return;
+            }
+
+            // Calculate completion for each week in this month
+            let totalWeeklyCompletion = 0;
+            let weeksProcessed = 0;
+
+            weekIdentifiers.forEach(weekId => {
+              const weeklyGoal = goals.weekly[weekId];
+              if (weeklyGoal && weeklyGoal.taskSplitUp) {
+                const planned = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
+                if (planned.length > 0) {
+                  const weekDates = getWeekDates(weekId);
+                  let totalDailyCompletion = 0;
+                  let daysPassedWithPlans = 0;
+
+                  // Check each planned day in this week
+                  Object.entries(weeklyGoal.taskSplitUp).forEach(([day, task]) => {
+                    if (task && task.trim() !== '') {
+                      const dateKey = weekDates[day];
+                      const dayDate = new Date(dateKey);
+                      dayDate.setHours(0, 0, 0, 0);
+
+                      // Only consider days that have passed
+                      if (dayDate <= today) {
+                        daysPassedWithPlans++;
+                        const dailyGoal = goals.daily[dateKey];
+
+                        if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
+                          totalDailyCompletion += Number(dailyGoal.performance.completion) || 0;
+                        }
+                      }
+                    }
+                  });
+
+                  let weekCompletion = 0;
+                  if (daysPassedWithPlans > 0) {
+                    const totalPlannedDaysInWeek = planned.length;
+                    weekCompletion = totalDailyCompletion / totalPlannedDaysInWeek;
+                  }
+
+                  totalWeeklyCompletion += weekCompletion;
+                  weeksProcessed++;
+                }
+              }
+            });
+
+            // Calculate this month's completion
+            const monthCompletion = weeksProcessed > 0 ? totalWeeklyCompletion / totalWeeksWithPlans : 0;
+            quarterCompletion += monthCompletion;
+            monthsInQuarter++;
+          });
+
+          // Calculate this quarter's completion (average of 3 months)
+          const avgQuarterCompletion = monthsInQuarter > 0 ? quarterCompletion / 3 : 0;
+          console.log(`  ${q} completion: ${quarterCompletion.toFixed(2)} / 3 months = ${avgQuarterCompletion.toFixed(2)}%`);
+
+          totalCompletion += avgQuarterCompletion;
+          quartersProcessed++;
         });
 
-        // Each quarter = 25% of the year
-        // If 2 quarters completed with avg 70%, yearly = (70% * 2) * 25% = 35%
-        const quarterWeight = 25; // Each quarter is 25% of the year
-        const avgQuarterCompletion = completedQuarters > 0 ? totalWeightedCompletion / completedQuarters : 0;
-        const yearlyCompletion = (avgQuarterCompletion * completedQuarters * quarterWeight) / 100;
+        // Yearly completion = average of all 4 quarters
+        const yearlyCompletion = quartersProcessed > 0 ? totalCompletion / 4 : 0;
+        console.log(`\nYearly total: ${totalCompletion.toFixed(2)} / 4 quarters = ${yearlyCompletion.toFixed(2)}%`);
+        console.log('=== END YEARLY CALCULATION ===\n');
 
         return {
           percentage: Math.round(yearlyCompletion),
-          completed: completedQuarters,
+          completed: quartersProcessed,
           total: 4,
         };
       }
