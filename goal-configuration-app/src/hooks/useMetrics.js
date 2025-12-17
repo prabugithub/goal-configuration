@@ -288,6 +288,8 @@ export const useMetrics = (goals = {}, config = {}) => {
           weekIdentifiers.add(getIdentifierForDate(date, 'weekly'));
         });
 
+        const totalWeeksInMonth = weekIdentifiers.size; // Total calendar weeks
+
         // Count total weeks with plans
         let totalWeeksWithPlans = 0;
         weekIdentifiers.forEach(weekId => {
@@ -301,7 +303,7 @@ export const useMetrics = (goals = {}, config = {}) => {
         });
 
         if (totalWeeksWithPlans === 0) {
-          return { percentage: 0, completed: 0, total: 0 };
+          return { percentage: 0, completed: 0, total: totalWeeksInMonth };
         }
 
         // Calculate completion for each week based on daily completion %
@@ -378,7 +380,7 @@ export const useMetrics = (goals = {}, config = {}) => {
         return {
           percentage: Math.round(monthlyCompletion),
           completed: weeksProcessed,
-          total: totalWeeksWithPlans,
+          total: totalWeeksInMonth, // Show total calendar weeks, not just weeks with plans
         };
       }
 
