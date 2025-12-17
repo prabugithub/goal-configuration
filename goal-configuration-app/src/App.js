@@ -155,16 +155,19 @@ function App() {
                   {/* Dashboard Tab */}
                   {((tabIndex === 0 && !isMobile) || (isMobile && showDashboard)) && (
                     <TabPanel value={tabIndex} index={0}>
-                      <Box sx={{ mb: 3 }}>
-                        <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold', mb: 2 }}>
-                          🎯 Quick Actions
-                        </Typography>
-                        <Stack direction={isMobile ? 'column' : 'row'} spacing={1}>
-                          <GoalSearch goals={goals} config={config} onSelectGoal={() => { }} />
-                          <WhatsAppShare goals={goals} config={config} metrics={metrics} />
-                          <ReportGenerator goals={goals} config={config} metrics={metrics} userId={user?.uid} />
-                          <ExportButton goals={goals} config={config} userId={user?.uid} />
-                        </Stack>
+                      {/* Quick Actions - Compact View */}
+                      <Box
+                        sx={{
+                          mb: 2,
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          gap: 1,
+                        }}
+                      >
+                        <GoalSearch goals={goals} config={config} onSelectGoal={() => { }} />
+                        <WhatsAppShare goals={goals} config={config} metrics={metrics} />
+                        <ReportGenerator goals={goals} config={config} metrics={metrics} userId={user?.uid} />
+                        <ExportButton goals={goals} config={config} userId={user?.uid} />
                       </Box>
 
                       {/* Main Dashboard */}
