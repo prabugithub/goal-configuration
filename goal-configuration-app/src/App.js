@@ -153,35 +153,73 @@ function App() {
 
                 <MobileContentPadding>
                   {/* Dashboard Tab */}
-                  {((tabIndex === 0 && !isMobile) || (isMobile && showDashboard)) && (
-                    <TabPanel value={tabIndex} index={0}>
-                      {/* Quick Actions - Compact Icon Bar */}
-                      <Stack
-                        direction="row"
-                        spacing={0.5}
-                        sx={{
-                          justifyContent: 'flex-end',
-                          mb: 1,
-                          '& > *': {
-                            transform: 'scale(0.9)',
-                          },
-                        }}
-                      >
-                        <WhatsAppShare goals={goals} config={config} metrics={metrics} />
-                        <ReportGenerator goals={goals} config={config} metrics={metrics} userId={user?.uid} />
-                        <ExportButton goals={goals} config={config} userId={user?.uid} />
-                      </Stack>
+                  {!isMobile ? (
+                    // Desktop: Use tabIndex
+                    tabIndex === 0 && (
+                      <TabPanel value={tabIndex} index={0}>
+                        {/* Quick Actions - Compact Icon Bar */}
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          sx={{
+                            justifyContent: 'flex-end',
+                            mb: 1,
+                            '& > *': {
+                              transform: 'scale(0.9)',
+                            },
+                          }}
+                        >
+                          <WhatsAppShare goals={goals} config={config} metrics={metrics} />
+                          <ReportGenerator goals={goals} config={config} metrics={metrics} userId={user?.uid} />
+                          <ExportButton goals={goals} config={config} userId={user?.uid} />
+                        </Stack>
 
-                      {/* Main Dashboard */}
-                      <Dashboard goals={goals} config={config} />
-                    </TabPanel>
+                        {/* Main Dashboard */}
+                        <Dashboard goals={goals} config={config} />
+                      </TabPanel>
+                    )
+                  ) : (
+                    // Mobile: Use showDashboard
+                    showDashboard && (
+                      <Box sx={{ py: 2 }}>
+                        {/* Quick Actions - Compact Icon Bar */}
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          sx={{
+                            justifyContent: 'flex-end',
+                            mb: 1,
+                            '& > *': {
+                              transform: 'scale(0.9)',
+                            },
+                          }}
+                        >
+                          <WhatsAppShare goals={goals} config={config} metrics={metrics} />
+                          <ReportGenerator goals={goals} config={config} metrics={metrics} userId={user?.uid} />
+                          <ExportButton goals={goals} config={config} userId={user?.uid} />
+                        </Stack>
+
+                        {/* Main Dashboard */}
+                        <Dashboard goals={goals} config={config} />
+                      </Box>
+                    )
                   )}
 
                   {/* Goal Entry Tab */}
-                  {((tabIndex === 1 && !isMobile) || (isMobile && !showDashboard)) && (
-                    <TabPanel value={tabIndex} index={1}>
-                      <TrackYourGoal />
-                    </TabPanel>
+                  {!isMobile ? (
+                    // Desktop: Use tabIndex
+                    tabIndex === 1 && (
+                      <TabPanel value={tabIndex} index={1}>
+                        <TrackYourGoal />
+                      </TabPanel>
+                    )
+                  ) : (
+                    // Mobile: Use showDashboard
+                    !showDashboard && (
+                      <Box sx={{ py: 2 }}>
+                        <TrackYourGoal />
+                      </Box>
+                    )
                   )}
 
                   {/* Analytics Tab - Hidden */}
