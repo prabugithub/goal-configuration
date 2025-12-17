@@ -158,7 +158,7 @@ function App() {
 
                 <MobileContentPadding>
                   {/* Dashboard Tab */}
-                  {(tabIndex === 0 || !isMobile) && !showDashboard && (
+                  {((tabIndex === 0 && !isMobile) || (isMobile && showDashboard)) && (
                     <TabPanel value={tabIndex} index={0}>
                       <Box sx={{ mb: 3 }}>
                         <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold', mb: 2 }}>
@@ -181,7 +181,7 @@ function App() {
                   )}
 
                   {/* Goal Entry Tab */}
-                  {(tabIndex === 1 || (isMobile && !showDashboard)) && (
+                  {((tabIndex === 1 && !isMobile) || (isMobile && !showDashboard)) && (
                     <TabPanel value={tabIndex} index={1}>
                       <TrackYourGoal />
                     </TabPanel>
@@ -197,7 +197,7 @@ function App() {
                   )} */}
 
                   {/* Reports Tab */}
-                  {(tabIndex === 2 || (!isMobile && !showDashboard)) && (
+                  {(tabIndex === 2 && !isMobile) && (
                     <TabPanel value={tabIndex} index={2}>
                       <Box sx={{ mb: 3 }}>
                         <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold', mb: 2 }}>

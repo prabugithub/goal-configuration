@@ -15,7 +15,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 /**
  * MobileBottomNav - Mobile-optimized bottom navigation
- * Shows level selection + dashboard on mobile
+ * Shows Dashboard and Goal Entry navigation on mobile
  * Responsive: Bottom nav on mobile, top tabs on desktop
  */
 export const MobileBottomNav = ({
@@ -32,22 +32,6 @@ export const MobileBottomNav = ({
     return null; // Only show on mobile
   }
 
-  const levelIcons = {
-    daily: '📅',
-    weekly: '📊',
-    monthly: '📈',
-    quarterly: '📋',
-    yearly: '🎯',
-  };
-
-  const levelLabels = {
-    daily: 'Daily',
-    weekly: 'Weekly',
-    monthly: 'Monthly',
-    quarterly: 'Q',
-    yearly: 'Year',
-  };
-
   return (
     <Paper
       sx={{
@@ -61,11 +45,12 @@ export const MobileBottomNav = ({
       elevation={3}
     >
       <BottomNavigation
-        value={showDashboard ? -1 : selectedLevel}
+        value={showDashboard ? 0 : 1}
         onChange={(event, newValue) => {
-          if (newValue !== -1) {
+          if (newValue === 0) {
+            onDashboardToggle(true);
+          } else if (newValue === 1) {
             onDashboardToggle(false);
-            onLevelChange(newValue);
           }
         }}
         sx={{
@@ -79,8 +64,7 @@ export const MobileBottomNav = ({
         <BottomNavigationAction
           label="Dashboard"
           icon={<BarChartIcon />}
-          onClick={() => onDashboardToggle(true)}
-          selected={showDashboard}
+          value={0}
           sx={{
             minWidth: '60px',
             py: 1,
@@ -90,37 +74,19 @@ export const MobileBottomNav = ({
           }}
         />
 
-        {/* Level Navigation */}
-        {levels.map((level, idx) => (
-          <BottomNavigationAction
-            key={level}
-            label={levelLabels[level]}
-            icon={<span>{levelIcons[level]}</span>}
-            value={idx}
-            sx={{
-              minWidth: '60px',
-              py: 1,
-              '& .MuiBottomNavigationAction-label': {
-                fontSize: '0.7rem',
-              },
-            }}
-          />
-        ))}
-
-        {/* Menu for more */}
-        {levels.length > 4 && (
-          <BottomNavigationAction
-            label="More"
-            icon={<MoreVertIcon />}
-            sx={{
-              minWidth: '60px',
-              py: 1,
-              '& .MuiBottomNavigationAction-label': {
-                fontSize: '0.7rem',
-              },
-            }}
-          />
-        )}
+        {/* Goal Entry View */}
+        <BottomNavigationAction
+          label="Goal Entry"
+          icon={<EditNoteIcon />}
+          value={1}
+          sx={{
+            minWidth: '60px',
+            py: 1,
+            '& .MuiBottomNavigationAction-label': {
+              fontSize: '0.7rem',
+            },
+          }}
+        />
       </BottomNavigation>
     </Paper>
   );
