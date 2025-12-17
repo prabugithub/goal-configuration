@@ -38,7 +38,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tabIndex, setTabIndex] = useState(1);
-  const [showDashboard, setShowDashboard] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(true); // Default to true so mobile shows dashboard by default
   const [allGoals, setAllGoals] = useState({});
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [deleteConfigDialogOpen, setDeleteConfigDialogOpen] = useState(false);
