@@ -153,15 +153,14 @@ export const useMetrics = (goals = {}, config = {}) => {
         return format(date, 'yyyy-MM-dd');
 
       case 'weekly':
-        const d = new Date(Date.UTC(year, month, date.getDate()));
-        const dayNum = d.getUTCDay() || 7;
-        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-        const weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+        // Get the week start (Sunday) and return as YYYY-MM-DD
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - date.getDay());
+        return format(weekStart, 'yyyy-MM-dd');
 
       case 'monthly':
-        return `${year}-${String(month + 1).padStart(2, '0')}`;
+        // Use format YYYY-M (without zero padding)
+        return `${year}-${month + 1}`;
 
       case 'quarterly':
         const quarter = Math.floor(month / 3) + 1;
@@ -177,27 +176,17 @@ export const useMetrics = (goals = {}, config = {}) => {
 
   // Helper to get dates for a week based on week identifier
   const getWeekDates = useCallback((weekIdentifier) => {
-    // Parse week identifier like "2025-W50"
-    const [yearStr, weekStr] = weekIdentifier.split('-W');
-    const year = parseInt(yearStr);
-    const week = parseInt(weekStr);
+    // Parse week identifier like "2025-12-07" (Sunday date)
+    const [year, month, day] = weekIdentifier.split('-').map(Number);
+    const sunday = new Date(year, month - 1, day);
 
-    // Calculate the date of the Monday of that week
-    const jan4 = new Date(year, 0, 4);
-    const jan4Day = jan4.getDay() || 7;
-    const mondayOfWeek1 = new Date(jan4);
-    mondayOfWeek1.setDate(jan4.getDate() - jan4Day + 1);
-
-    const monday = new Date(mondayOfWeek1);
-    monday.setDate(mondayOfWeek1.getDate() + (week - 1) * 7);
-
-    // Generate all 7 days of the week
+    // Generate all 7 days of the week starting from Sunday
     const weekDates = {};
-    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     for (let i = 0; i < 7; i++) {
-      const date = new Date(monday);
-      date.setDate(monday.getDate() + i);
+      const date = new Date(sunday);
+      date.setDate(sunday.getDate() + i);
       weekDates[dayNames[i]] = format(date, 'yyyy-MM-dd');
     }
 

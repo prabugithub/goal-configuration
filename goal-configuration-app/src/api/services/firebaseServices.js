@@ -108,20 +108,23 @@ const getRecentIdentifiers = (level) => {
       identifiers.push(date.toISOString().split('T')[0]); // YYYY-MM-DD
     }
   } else if (level === 'weekly') {
-    // Get last 12 weeks
+    // Get last 12 weeks - using week start date format (YYYY-MM-DD)
     for (let i = 0; i < 12; i++) {
       const date = new Date(now);
       date.setDate(date.getDate() - (i * 7));
-      const year = date.getFullYear();
-      const week = getWeekNumber(date);
-      identifiers.push(`${year}-W${String(week).padStart(2, '0')}`);
+      // Get the week start (Sunday)
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - date.getDay());
+      weekStart.setTime(weekStart.getTime() - (weekStart.getTimezoneOffset() * 60000));
+      const dateAsString = weekStart.toISOString().substring(0, 19);
+      identifiers.push(dateAsString.split('T')[0]); // YYYY-MM-DD format
     }
   } else if (level === 'monthly') {
-    // Get last 12 months
+    // Get last 12 months - using format YYYY-M (without zero padding)
     for (let i = 0; i < 12; i++) {
       const date = new Date(now);
       date.setMonth(date.getMonth() - i);
-      identifiers.push(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+      identifiers.push(`${date.getFullYear()}-${date.getMonth() + 1}`);
     }
   } else if (level === 'quarterly') {
     // Get last 8 quarters
@@ -140,15 +143,6 @@ const getRecentIdentifiers = (level) => {
   }
 
   return identifiers;
-};
-
-// Helper to get week number
-const getWeekNumber = (date) => {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 };
 
 // Get all goals for a user across all levels
