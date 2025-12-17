@@ -14,9 +14,7 @@ import Login from './components/Login/LoginPage';
 import Signup from './components/Login/SignUp';
 import AppGuide from './components/AppGuide/AppGuide';
 import TrackYourGoal from './components/TrackYourGoal/TrackYourGoal';
-import ProgressDashboard from './components/ProgressDashboard/ProgressDashboard';
 import Dashboard from './components/Dashboard/Dashboard';
-import AnalyticsCharts from './components/Analytics/AnalyticsCharts';
 import GoalSearch from './components/GoalSearch/GoalSearch';
 import WhatsAppShare from './components/ShareReport/WhatsAppShare';
 import ReportGenerator from './components/ShareReport/ReportGenerator';
@@ -150,8 +148,6 @@ function App() {
                   <Tabs value={tabIndex} onChange={(e, newVal) => setTabIndex(newVal)} centered sx={{ mb: 2 }}>
                     <Tab label="📊 Dashboard" />
                     <Tab label="📝 Goal Entry" />
-                    {/* <Tab label="📈 Analytics" /> */}
-                    <Tab label="📋 Reports" />
                   </Tabs>
                 )}
 
@@ -192,17 +188,7 @@ function App() {
                     </TabPanel>
                   )} */}
 
-                  {/* Reports Tab */}
-                  {(tabIndex === 2 && !isMobile) && (
-                    <TabPanel value={tabIndex} index={2}>
-                      <Box sx={{ mb: 3 }}>
-                        <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold', mb: 2 }}>
-                          📋 Reports & Sharing
-                        </Typography>
-                        <ProgressDashboard userId={user?.uid} view="monthly" />
-                      </Box>
-                    </TabPanel>
-                  )}
+                  {/* Reports Tab - Removed (functionality integrated into Dashboard Quick Actions) */}
                 </MobileContentPadding>
 
                 {/* Mobile Bottom Navigation */}

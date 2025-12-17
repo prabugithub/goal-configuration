@@ -78,8 +78,6 @@ export const Dashboard = ({ goals = {}, config = {} }) => {
 
   return (
     <Container maxWidth="sm" sx={{ pb: 4, px: isMobile ? 1 : 2 }}>
-      {/* Progress Rings - Top Section */}
-      <ProgressRings metrics={metrics} goals={goals} />
 
       {/* Quick Stats Section */}
       <Box sx={{ mb: 3 }}>
@@ -127,11 +125,48 @@ export const Dashboard = ({ goals = {}, config = {} }) => {
         </Grid>
       </Box>
 
-      {/* Period Cards Section */}
+      {/* Progress Rings - Top Section */}
+      <ProgressRings metrics={metrics} goals={goals} />
+      {/* Recent Goals Section */}
+      {/* <Box sx={{ mb: 3 }}>
+        <Typography
+          variant={isMobile ? 'h6' : 'h5'}
+          sx={{ fontWeight: 'bold', mb: 2 }}
+        >
+          📌 Recent Entries
+        </Typography>
+
+        <RecentEntriesTimeline goals={goals} isMobile={isMobile} />
+      </Box> */}
+
+      {/* Activity Heatmap Section */}
       <Box sx={{ mb: 3 }}>
         <Typography
           variant={isMobile ? 'h6' : 'h5'}
           sx={{ fontWeight: 'bold', mb: 2 }}
+        >
+          🔥 Activity Heatmap
+        </Typography>
+
+        <MonthHeatmap goals={goals} isMobile={isMobile} />
+      </Box>
+
+      {/* Insights Section */}
+      <Box>
+        <Typography
+          variant={isMobile ? 'h6' : 'h5'}
+          sx={{ fontWeight: 'bold', mb: 2 }}
+        >
+          💡 Insights
+        </Typography>
+
+        <InsightsCards metrics={metrics} isMobile={isMobile} />
+      </Box>
+       {/* Period Cards Section */}
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant={isMobile ? 'h6' : 'h5'}
+          sx={{ fontWeight: 'bold', mt: 2 }}
         >
           📅 Progress by Period
         </Typography>
@@ -183,42 +218,6 @@ export const Dashboard = ({ goals = {}, config = {} }) => {
             />
           )}
         </Stack>
-      </Box>
-
-      {/* Recent Goals Section */}
-      {/* <Box sx={{ mb: 3 }}>
-        <Typography
-          variant={isMobile ? 'h6' : 'h5'}
-          sx={{ fontWeight: 'bold', mb: 2 }}
-        >
-          📌 Recent Entries
-        </Typography>
-
-        <RecentEntriesTimeline goals={goals} isMobile={isMobile} />
-      </Box> */}
-
-      {/* Activity Heatmap Section */}
-      <Box sx={{ mb: 3 }}>
-        <Typography
-          variant={isMobile ? 'h6' : 'h5'}
-          sx={{ fontWeight: 'bold', mb: 2 }}
-        >
-          🔥 Activity Heatmap
-        </Typography>
-
-        <MonthHeatmap goals={goals} isMobile={isMobile} />
-      </Box>
-
-      {/* Insights Section */}
-      <Box>
-        <Typography
-          variant={isMobile ? 'h6' : 'h5'}
-          sx={{ fontWeight: 'bold', mb: 2 }}
-        >
-          💡 Insights
-        </Typography>
-
-        <InsightsCards metrics={metrics} isMobile={isMobile} />
       </Box>
     </Container>
   );
