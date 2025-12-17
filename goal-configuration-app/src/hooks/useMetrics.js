@@ -282,13 +282,23 @@ export const useMetrics = (goals = {}, config = {}) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Get all weeks in this month
+        // Get all weeks where at least 4 days fall in this month (majority of week)
         const weekIdentifiers = new Set();
+        const weekDayCounts = new Map(); // Track how many days of each week are in this month
+
         monthDates.forEach(date => {
-          weekIdentifiers.add(getIdentifierForDate(date, 'weekly'));
+          const weekId = getIdentifierForDate(date, 'weekly');
+          weekDayCounts.set(weekId, (weekDayCounts.get(weekId) || 0) + 1);
         });
 
-        const totalWeeksInMonth = weekIdentifiers.size; // Total calendar weeks
+        // Only include weeks where at least 4 days (majority) are in this month
+        weekDayCounts.forEach((dayCount, weekId) => {
+          if (dayCount >= 4) {
+            weekIdentifiers.add(weekId);
+          }
+        });
+
+        const totalWeeksInMonth = weekIdentifiers.size; // Total weeks with majority in month
 
         // Count total weeks with plans
         let totalWeeksWithPlans = 0;
