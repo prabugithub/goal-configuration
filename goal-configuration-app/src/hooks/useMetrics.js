@@ -290,14 +290,21 @@ export const useMetrics = (goals = {}, config = {}) => {
         let totalWeeklyCompletion = 0;
         let weeksProcessed = 0;
 
+        console.log('=== MONTHLY CALCULATION DEBUG ===');
+        console.log('Total weeks with plans:', totalWeeksWithPlans);
+
         weekIdentifiers.forEach(weekId => {
           const weeklyGoal = goals.weekly[weekId];
           if (weeklyGoal && weeklyGoal.taskSplitUp) {
             const planned = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
             if (planned.length > 0) {
+              console.log(`\nWeek ${weekId}:`);
+              console.log('  Total planned days:', planned.length);
+
               const weekDates = getWeekDates(weekId);
               let totalDailyCompletion = 0;
               let daysPassedWithPlans = 0;
+              let daysWithData = 0;
 
               // Check each planned day in this week
               Object.entries(weeklyGoal.taskSplitUp).forEach(([day, task]) => {
@@ -312,9 +319,16 @@ export const useMetrics = (goals = {}, config = {}) => {
                     const dailyGoal = goals.daily[dateKey];
 
                     if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
-                      totalDailyCompletion += Number(dailyGoal.performance.completion) || 0;
+                      const completion = Number(dailyGoal.performance.completion) || 0;
+                      totalDailyCompletion += completion;
+                      daysWithData++;
+                      console.log(`  ${day} (${dateKey}): ${completion}% ✓`);
+                    } else {
+                      console.log(`  ${day} (${dateKey}): 0% (no data)`);
                     }
                     // If day passed but no data saved, it counts as 0%
+                  } else {
+                    console.log(`  ${day} (${dateKey}): future (ignored)`);
                   }
                 }
               });
@@ -325,6 +339,10 @@ export const useMetrics = (goals = {}, config = {}) => {
                 // Week completion = sum of daily completions / total planned days in week
                 const totalPlannedDaysInWeek = planned.length;
                 weekCompletion = totalDailyCompletion / totalPlannedDaysInWeek;
+                console.log(`  Week completion: ${totalDailyCompletion} / ${totalPlannedDaysInWeek} = ${weekCompletion.toFixed(2)}%`);
+                console.log(`  (${daysWithData} days with data out of ${daysPassedWithPlans} passed days)`);
+              } else {
+                console.log('  Week is in the future: 0%');
               }
               // else: week is completely in the future, stays 0%
 
@@ -336,6 +354,8 @@ export const useMetrics = (goals = {}, config = {}) => {
 
         // Monthly completion = average of all weeks' completion percentages
         const monthlyCompletion = weeksProcessed > 0 ? totalWeeklyCompletion / totalWeeksWithPlans : 0;
+        console.log(`\nMonthly total: ${totalWeeklyCompletion.toFixed(2)} / ${totalWeeksWithPlans} weeks = ${monthlyCompletion.toFixed(2)}%`);
+        console.log('=== END MONTHLY CALCULATION ===\n');
 
         return {
           percentage: Math.round(monthlyCompletion),
