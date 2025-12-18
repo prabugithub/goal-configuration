@@ -14,6 +14,8 @@ import {
   LinearProgress,
   CircularProgress,
   IconButton,
+  Tooltip,
+  ClickAwayListener,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
@@ -414,6 +416,7 @@ const getInsightEmoji = (type) => {
  */
 const MonthHeatmap = ({ goals = {}, isMobile }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
 
   const heatmapData = useMemo(() => {
     if (!goals.daily) return [];
@@ -546,34 +549,61 @@ const MonthHeatmap = ({ goals = {}, isMobile }) => {
         {/* Calendar grid */}
         {weeks.map((week, weekIdx) => (
           <Box key={weekIdx} sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap, mb: gap }}>
-            {week.map((day, dayIdx) => (
-              <Box
-                key={`${weekIdx}-${dayIdx}`}
-                title={day ? `${day.displayDate}: ${day.value ? day.completion + '%' : 'No data'}` : ''}
-                sx={{
-                  width: cellSize,
-                  height: cellSize,
-                  backgroundColor: day ? getColor(day.value, day.completion) : 'transparent',
-                  borderRadius: '6px',
-                  cursor: day ? 'pointer' : 'default',
-                  border: day ? `1px solid ${day.value ? '#ccc' : '#e0e0e0'}` : 'none',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: isMobile ? '0.65rem' : '0.75rem',
-                  fontWeight: day?.value ? 'bold' : 'normal',
-                  color: day?.completion >= 60 ? '#fff' : '#333',
-                  '&:hover': day ? {
-                    transform: 'scale(1.15)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    zIndex: 1,
-                  } : {},
-                }}
-              >
-                {day?.day}
-              </Box>
-            ))}
+            {week.map((day, dayIdx) => {
+              const isSelected = selectedDate === day?.date;
+
+              return (
+                <ClickAwayListener
+                  key={`${weekIdx}-${dayIdx}`}
+                  onClickAway={() => {
+                    if (isSelected) setSelectedDate(null);
+                  }}
+                >
+                  <Box>
+                    <Tooltip
+                      title={day ? `${day.displayDate}: ${day.value ? day.completion + '%' : 'No data'}` : ''}
+                      open={isSelected}
+                      onClose={() => setSelectedDate(null)}
+                      disableFocusListener
+                      disableHoverListener
+                      disableTouchListener
+                      arrow
+                      placement="top"
+                    >
+                      <Box
+                        onClick={() => {
+                          if (day) {
+                            setSelectedDate(isSelected ? null : day.date);
+                          }
+                        }}
+                        sx={{
+                          width: cellSize,
+                          height: cellSize,
+                          backgroundColor: day ? getColor(day.value, day.completion) : 'transparent',
+                          borderRadius: '6px',
+                          cursor: day ? 'pointer' : 'default',
+                          border: isSelected ? '2px solid #000' : (day ? `1px solid ${day.value ? '#ccc' : '#e0e0e0'}` : 'none'),
+                          transition: 'all 0.2s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: isMobile ? '0.65rem' : '0.75rem',
+                          fontWeight: day?.value ? 'bold' : 'normal',
+                          color: day?.completion >= 60 ? '#fff' : '#333',
+                          '&:hover': day ? {
+                            transform: 'scale(1.15)',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                            zIndex: 1,
+                          } : {},
+                        }}
+                      >
+                        {day?.day}
+                      </Box>
+                    </Tooltip>
+                  </Box>
+                </ClickAwayListener>
+              );
+            })}
           </Box>
         ))}
 
