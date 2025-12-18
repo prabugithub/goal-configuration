@@ -162,7 +162,7 @@ export const Dashboard = ({ goals = {}, config = {} }) => {
 
         <InsightsCards metrics={metrics} isMobile={isMobile} />
       </Box>
-       {/* Period Cards Section */}
+      {/* Period Cards Section */}
       <Box sx={{ mb: 3 }}>
         <Typography
           variant={isMobile ? 'h6' : 'h5'}
@@ -425,7 +425,10 @@ const MonthHeatmap = ({ goals = {}, isMobile }) => {
     return daysInMonth.map(date => {
       const dateKey = format(date, 'yyyy-MM-dd');
       const dailyGoal = goals.daily[dateKey];
-      const completion = dailyGoal?.performance?.completion || 0;
+      let completion = dailyGoal?.performance?.completion || 0;
+      if (typeof completion === 'object') {
+        completion = completion.completion || 0;
+      }
 
       return {
         date: dateKey,
@@ -462,7 +465,7 @@ const MonthHeatmap = ({ goals = {}, isMobile }) => {
   };
 
   const cellSize = isMobile ? 32 : 40;
-  const gap = isMobile ? 4 : 6;
+  const gap = isMobile ? '4px' : '6px';
 
   // Calculate stats for the month
   const totalDays = heatmapData.length;

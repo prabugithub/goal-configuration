@@ -41,6 +41,8 @@ import PercentIcon from '@mui/icons-material/Percent';
 import TrackChangesIcon from '@mui/icons-material/TrackChanges';
 import TimerIcon from '@mui/icons-material/Timer';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
+import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { useGoalConfig } from '../../context/GoalConfigContext';
 import { deleteGoal, getGoal, saveGoal } from '../../api/services/firebaseServices';
 import { useAuth } from '../../context/AuthContext';
@@ -63,12 +65,14 @@ const TrackYourGoal = () => {
     const [formValues, setFormValues] = useState({});
     const [tabIndex, setTabIndex] = useState(0);
     const [savedData, setSavedData] = useState({});
+    const [previousDayData, setPreviousDayData] = useState(null);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [loading, setLoading] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [tempFormValues, setTempFormValues] = useState({});
     const [todoOpen, setTodoOpen] = useState(false);
     const [yesterdayTodo, setYesterdayTodo] = useState("");
+    const [newTaskInputs, setNewTaskInputs] = useState({});
 
     const isInitialLoad = useRef(true);
     const loadedTabs = useRef(new Set()); // Track which tabs have been loaded
@@ -157,9 +161,19 @@ const TrackYourGoal = () => {
                     if (!isSelectedDateToday()) {
                         alert(`No data found! You might not saved any data for this ${getFormatedDate(selectedDate)} date. You may reset to today for quick reset!.`);
                     }
-                    
 
                 };
+
+                // If daily level, fetch previous day's data for task carry-over
+                if (level === 'daily') {
+                    const prevDate = new Date(selectedDate);
+                    prevDate.setDate(prevDate.getDate() - 1);
+                    const prevIdentifier = getIdentifier('daily', prevDate);
+                    const prevData = await getGoal(user.uid, 'daily', prevIdentifier);
+                    setPreviousDayData(prevData);
+                } else {
+                    setPreviousDayData(null);
+                }
                 if ((!data || tabIndex === levels.length - 1) || (isInitialLoad.current === false && data)) {
                     setLoading(false);
                 }
@@ -284,8 +298,16 @@ const TrackYourGoal = () => {
         }
     };
 
+    // Helper to calculate completion for task list
+    const calculateTaskCompletion = (tasks) => {
+        if (!tasks || tasks.length === 0) return 0;
+        const completed = tasks.filter(t => t.done).length;
+        return Math.round((completed / tasks.length) * 100);
+    };
+
     const renderField = (field, level, sectionName, index) => {
         const value = formValues[level]?.[sectionName]?.[field.name || field.label] || (field.type === 'checkbox' ? [] : '');
+        const section = config.sections[level].find(s => s.name === sectionName);
 
         switch (field.type) {
             case 'text':
@@ -573,11 +595,72 @@ const TrackYourGoal = () => {
                         </RadioGroup>
                     </Box>
                 );
+            case 'tasklist':
+                // Check if this field targets another section (Planning Mode)
+                // Fallback: also treat 'organize' section as planning mode by default to ensure completion is hidden
+                const isPlanningMode = !!section.targetSection || section.name === 'organize';
 
+                // Structure: { tasks: [], manualOverride: boolean, completion: number }
+                // or just handle if it's undefined
+                const taskData = value || { tasks: [], manualOverride: false, completion: 0 };
+                const tasks = taskData.tasks || [];
+                const completion = taskData.completion || 0;
+                const newTaskText = newTaskInputs[`${level}-${sectionName}-${field.name}`] || '';
 
-            case 'percentage':
+                const handleTaskAdd = () => {
+                    if (!newTaskText.trim()) return;
+
+                    const newTasks = [
+                        ...tasks,
+                        { id: Date.now().toString(), text: newTaskText.trim(), done: false }
+                    ];
+
+                    // In Planning Mode, we don't calculate completion
+                    const newCompletion = isPlanningMode ? 0 : (taskData.manualOverride ? completion : calculateTaskCompletion(newTasks));
+
+                    handleInputChange(level, sectionName, (field.name || field.label), {
+                        ...taskData,
+                        tasks: newTasks,
+                        completion: newCompletion
+                    });
+
+                    setNewTaskInputs(prev => ({
+                        ...prev,
+                        [`${level}-${sectionName}-${field.name}`]: ''
+                    }));
+                };
+
+                const handleTaskToggle = (taskId) => {
+                    // In Planning Mode, toggling might not be allowed or needed, 
+                    // but if we do allow it, it shouldn't affect completion if strictly planning.
+
+                    const newTasks = tasks.map(t =>
+                        t.id === taskId ? { ...t, done: !t.done } : t
+                    );
+
+                    const newCompletion = isPlanningMode ? 0 : (taskData.manualOverride ? completion : calculateTaskCompletion(newTasks));
+
+                    handleInputChange(level, sectionName, (field.name || field.label), {
+                        ...taskData,
+                        tasks: newTasks,
+                        completion: newCompletion
+                    });
+                };
+
+                const handleTaskDelete = (taskId) => {
+                    const newTasks = tasks.filter(t => t.id !== taskId);
+
+                    const newCompletion = isPlanningMode ? 0 : (taskData.manualOverride ? completion : calculateTaskCompletion(newTasks));
+
+                    handleInputChange(level, sectionName, (field.name || field.label), {
+                        ...taskData,
+                        tasks: newTasks,
+                        completion: newCompletion
+                    });
+                };
+
                 return (
-                    <Box sx={{ width: '100%', px: 1 }}>
+                    <Box sx={{ width: '100%' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 {getFieldIcon(field.type)}
@@ -585,31 +668,322 @@ const TrackYourGoal = () => {
                                     {field.label}
                                 </Typography>
                             </Box>
-                            <Typography variant="h6" color="primary.main" sx={{ fontWeight: 'bold' }}>
-                                {value || 0}%
+                            {!isPlanningMode && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Typography variant="h6" color="primary.main" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>
+                                        {completion}% Done
+                                    </Typography>
+                                    {tasks.length > 0 && (
+                                        <Typography variant="caption" color="text.secondary">
+                                            ({tasks.filter(t => t.done).length}/{tasks.length})
+                                        </Typography>
+                                    )}
+                                </Box>
+                            )}
+                        </Box>
+
+                        {/* Add Task Input */}
+                        <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                            <TextField
+                                size="small"
+                                fullWidth
+                                placeholder={isPlanningMode ? "Plan a task for tomorrow..." : "Add a new task..."}
+                                value={newTaskText}
+                                onChange={(e) => setNewTaskInputs(prev => ({
+                                    ...prev,
+                                    [`${level}-${sectionName}-${field.name}`]: e.target.value
+                                }))}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleTaskAdd();
+                                    }
+                                }}
+                            />
+                            <Button
+                                variant="contained"
+                                size="small"
+                                onClick={handleTaskAdd}
+                                sx={{ minWidth: '40px', px: 2 }}
+                            >
+                                <AddCircleOutlineIcon />
+                            </Button>
+                        </Box>
+
+                        {/* Task List */}
+                        <List dense sx={{
+                            bgcolor: 'grey.50',
+                            borderRadius: 1,
+                            mb: 2,
+                            maxHeight: '200px',
+                            overflowY: 'auto',
+                            display: tasks.length === 0 ? 'none' : 'block'
+                        }}>
+                            {tasks.map((task) => (
+                                <ListItem
+                                    key={task.id}
+                                    secondaryAction={
+                                        <IconButton edge="end" aria-label="delete" size="small" onClick={() => handleTaskDelete(task.id)}>
+                                            <DeleteIcon fontSize="small" />
+                                        </IconButton>
+                                    }
+                                    disablePadding
+                                >
+                                    {isPlanningMode ? (
+                                        <Box sx={{ display: 'flex', alignItems: 'center', px: 2, py: 1, width: '100%' }}>
+                                            <Typography variant="body2">{task.text}</Typography>
+                                        </Box>
+                                    ) : (
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={task.done}
+                                                    onChange={() => handleTaskToggle(task.id)}
+                                                    color="primary"
+                                                    size="small"
+                                                />
+                                            }
+                                            label={
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{
+                                                        textDecoration: task.done ? 'line-through' : 'none',
+                                                        color: task.done ? 'text.disabled' : 'text.primary'
+                                                    }}
+                                                >
+                                                    {task.text}
+                                                </Typography>
+                                            }
+                                            sx={{ ml: 1, width: '100%' }}
+                                        />
+                                    )}
+                                </ListItem>
+                            ))}
+                        </List>
+
+                        {/* Manual Override Controls - Hide in Planning Mode */}
+                        {!isPlanningMode && (
+                            <Box sx={{ mt: 1, p: 1, border: '1px dashed #e0e0e0', borderRadius: 1 }}>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            size="small"
+                                            checked={taskData.manualOverride || false}
+                                            onChange={(e) => {
+                                                const isManual = e.target.checked;
+                                                const newCompletion = isManual ? completion : calculateTaskCompletion(tasks);
+
+                                                handleInputChange(level, sectionName, (field.name || field.label), {
+                                                    ...taskData,
+                                                    manualOverride: isManual,
+                                                    completion: newCompletion
+                                                });
+                                            }}
+                                        />
+                                    }
+                                    label={<Typography variant="caption">Manual Percentage Override</Typography>}
+                                />
+
+                                {taskData.manualOverride && (
+                                    <Box sx={{ px: 1 }}>
+                                        <Slider
+                                            value={completion}
+                                            onChange={(e, newVal) => handleInputChange(level, sectionName, (field.name || field.label), {
+                                                ...taskData,
+                                                completion: newVal
+                                            })}
+                                            valueLabelDisplay="auto"
+                                            step={5}
+                                            marks
+                                            min={0}
+                                            max={100}
+                                        />
+                                    </Box>
+                                )}
+                            </Box>
+                        )}
+                    </Box>
+                );
+
+            case 'percentage':
+                // Check if this field is targeted by any previous day's section
+                let targetedTasks = null;
+
+                if (level === 'daily' && previousDayData) {
+                    // Iterate through yesterday's config/sections to find if any targets this field
+                    config.sections.daily.forEach(prevSection => {
+                        // Check if section targets this section OR fallback for 'organize' targeting 'performance'
+                        if (prevSection.targetSection === section.name || (prevSection.name === 'organize' && section.name === 'performance')) {
+                            prevSection.fields.forEach(prevField => {
+                                // Check target field name match
+                                // User config has: targetFieldName: 'percentage'
+                                // Field in this section is named 'completion' (type: percentage)
+                                // We match on targetFieldName === field.name OR special case 'percentage' if field type is percentage
+                                // Fallback: match if prevField is 'organize' and this field is percentage
+                                if (prevField.targetFieldName === field.name ||
+                                    (prevField.targetFieldName === 'percentage' && field.type === 'percentage') ||
+                                    (prevField.name === 'organize' && field.type === 'percentage')) {
+                                    // Found a source!
+                                    const srcValue = previousDayData[prevSection.name]?.[prevField.name || prevField.label];
+                                    if (srcValue && srcValue.tasks) {
+                                        targetedTasks = srcValue.tasks;
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+
+                // If targeted tasks found, render Execution View (Checklist) instead of simple Slider
+                if (targetedTasks && targetedTasks.length > 0) {
+
+                    const currentVal = value; // This field's value in current form
+
+                    // Determine tasks state to use
+                    let activeTasks = [];
+                    let activeCompletion = 0;
+                    let isManual = false;
+
+                    if (currentVal && typeof currentVal === 'object' && currentVal.tasks) {
+                        // We already have state for today
+                        activeTasks = currentVal.tasks;
+                        activeCompletion = currentVal.completion || 0;
+                        isManual = currentVal.manualOverride || false;
+                    } else {
+                        // Initialize from targeted tasks 
+                        // Start fresh (all false)
+                        activeTasks = targetedTasks.map(t => ({ ...t, done: false }));
+                        // If there is a numeric value already (manual entry before tasks appeared?), keep it or reset to 0?
+                        // Reset to 0 implies task driven.
+                        activeCompletion = typeof currentVal === 'number' ? currentVal : 0;
+                    }
+
+                    const handleExecTaskToggle = (taskId) => {
+                        const newTasks = activeTasks.map(t =>
+                            t.id === taskId ? { ...t, done: !t.done } : t
+                        );
+
+                        // Calculate new percentage
+                        const newCompletion = isManual ? activeCompletion : calculateTaskCompletion(newTasks);
+
+                        handleInputChange(level, sectionName, (field.name || field.label), {
+                            completion: newCompletion,
+                            tasks: newTasks,
+                            manualOverride: isManual
+                        });
+                    };
+
+                    return (
+                        <Box sx={{ width: '100%' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    {getFieldIcon(field.type)}
+                                    <Typography variant="body2" sx={{ fontWeight: 500, ml: 0.5 }}>
+                                        {field.label}
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Typography variant="h6" color="primary.main" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>
+                                        {activeCompletion}% Done
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        ({activeTasks.filter(t => t.done).length}/{activeTasks.length})
+                                    </Typography>
+                                </Box>
+                            </Box>
+
+                            <List dense sx={{ bgcolor: 'grey.50', borderRadius: 1, mb: 2 }}>
+                                {activeTasks.map((task) => (
+                                    <ListItem key={task.id} disablePadding>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={task.done}
+                                                    onChange={() => handleExecTaskToggle(task.id)}
+                                                    color="primary"
+                                                    size="small"
+                                                />
+                                            }
+                                            label={
+                                                <Typography variant="body2" sx={{
+                                                    textDecoration: task.done ? 'line-through' : 'none',
+                                                    color: task.done ? 'text.disabled' : 'text.primary'
+                                                }}>
+                                                    {task.text}
+                                                </Typography>
+                                            }
+                                            sx={{ ml: 1, width: '100%' }}
+                                        />
+                                    </ListItem>
+                                ))}
+                            </List>
+
+                            {/* Manual Override Controls for Execution Mode */}
+                            <Box sx={{ mt: 1, p: 1, border: '1px dashed #e0e0e0', borderRadius: 1 }}>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            size="small"
+                                            checked={isManual}
+                                            onChange={(e) => {
+                                                const newIsManual = e.target.checked;
+                                                const newCompletion = newIsManual ? activeCompletion : calculateTaskCompletion(activeTasks);
+
+                                                handleInputChange(level, sectionName, (field.name || field.label), {
+                                                    completion: newCompletion,
+                                                    tasks: activeTasks,
+                                                    manualOverride: newIsManual
+                                                });
+                                            }}
+                                        />
+                                    }
+                                    label={<Typography variant="caption">Manual Percentage Override</Typography>}
+                                />
+
+                                {isManual && (
+                                    <Box sx={{ px: 1 }}>
+                                        <Slider
+                                            value={activeCompletion}
+                                            onChange={(e, newVal) => handleInputChange(level, sectionName, (field.name || field.label), {
+                                                completion: newVal,
+                                                tasks: activeTasks,
+                                                manualOverride: true
+                                            })}
+                                            valueLabelDisplay="auto"
+                                            step={5}
+                                            marks
+                                            min={0}
+                                            max={100}
+                                        />
+                                    </Box>
+                                )}
+                            </Box>
+                        </Box>
+                    );
+                }
+
+                // Default Percentage View (Slider)
+                return (
+                    <Box sx={{ width: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, justifyContent: 'space-between' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {getFieldIcon(field.type)}
+                                <Typography variant="body2" sx={{ fontWeight: 500, ml: 0.5 }}>
+                                    {field.label}
+                                </Typography>
+                            </Box>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                                {typeof value === 'object' ? (value.completion || 0) : (value || 0)}%
                             </Typography>
                         </Box>
                         <Slider
-                            key={`${level}-${sectionName}-${index}`}
-                            value={Number(value) || 0}
-                            onChange={(e, newValue) =>
-                                handleInputChange(level, sectionName, (field.name || field.label), newValue)
-                            }
+                            value={typeof value === 'object' ? (value.completion || 0) : (Number(value) || 0)}
+                            onChange={(e, newVal) => handleInputChange(level, sectionName, (field.name || field.label), newVal)}
+                            valueLabelDisplay="auto"
+                            step={field.step || 10}
+                            marks
                             min={field.min || 0}
                             max={field.max || 100}
-                            step={field.step || 5}
-                            marks={[
-                                { value: 0, label: '0%' },
-                                { value: 50, label: '50%' },
-                                { value: 100, label: '100%' }
-                            ]}
-                            valueLabelDisplay="auto"
-                            valueLabelFormat={(v) => `${v}%`}
-                            sx={{
-                                '& .MuiSlider-markLabel': {
-                                    fontSize: '0.75rem'
-                                }
-                            }}
                         />
                     </Box>
                 );

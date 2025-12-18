@@ -254,7 +254,9 @@ export const useMetrics = (goals = {}, config = {}) => {
 
               const dailyGoal = goals.daily[dateStr];
               if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
-                totalCompletion += Number(dailyGoal.performance.completion) || 0;
+                const val = dailyGoal.performance.completion;
+                const completionVal = (typeof val === 'object' && val !== null) ? val.completion : val;
+                totalCompletion += Number(completionVal) || 0;
                 completedDaysCount++;
               }
             }
@@ -340,7 +342,9 @@ export const useMetrics = (goals = {}, config = {}) => {
 
                 const dailyGoal = goals.daily[dateStr];
                 if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
-                  const completion = Number(dailyGoal.performance.completion) || 0;
+                  const val = dailyGoal.performance.completion;
+                  const completionVal = (typeof val === 'object' && val !== null) ? val.completion : val;
+                  const completion = Number(completionVal) || 0;
                   totalDailyCompletion += completion;
                   daysWithData++;
                 }
@@ -651,7 +655,9 @@ export const useMetrics = (goals = {}, config = {}) => {
             const dailyGoal = goals.daily[dateKey];
 
             if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
-              totalCompletion += Number(dailyGoal.performance.completion) || 0;
+              const val = dailyGoal.performance.completion;
+              const completionVal = (typeof val === 'object' && val !== null) ? val.completion : val;
+              totalCompletion += Number(completionVal) || 0;
             }
           }
         });
@@ -711,7 +717,9 @@ export const useMetrics = (goals = {}, config = {}) => {
                 const dailyGoal = goals.daily[dateKey];
 
                 if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
-                  totalCompletion += Number(dailyGoal.performance.completion) || 0;
+                  const val = dailyGoal.performance.completion;
+                  const completionVal = (typeof val === 'object' && val !== null) ? val.completion : val;
+                  totalCompletion += Number(completionVal) || 0;
                   completedDaysCount++;
                 }
               }

@@ -124,7 +124,7 @@ const initialConfigState = {
             surprices,
         ],
         daily: [
-              {
+            {
                 name: 'rituals',
                 label: 'Rituals',
                 order: 2,
@@ -165,10 +165,18 @@ const initialConfigState = {
                     { name: 'went-well', icon: '✔', label: 'What went well in the past 24 hours?', type: 'text' },
                     { name: 'best-tomo', icon: '🎯', label: 'What is the one thing I can do best tomorrow?', type: 'text' },
                     { name: 'improve', icon: '🔁', label: 'How I can improve?', type: 'text' },
-                    { name: 'organize', icon: '📅', label: 'Organize tomorrow today', type: 'text' },
                 ]
             },
-            
+            {
+                name: 'organize',
+                label: 'Plan for tomorrow',
+                order: 5,
+                enabled: true,
+                targetSection: 'performance',
+                fields: [
+                    { name: 'organize', icon: '📅', label: 'Organize tomorrow today', type: 'tasklist', targetFieldName: 'percentage', calculatePercentage: true },
+                ]
+            },
             {
                 name: 'ratings',
                 label: 'Daily Rating',

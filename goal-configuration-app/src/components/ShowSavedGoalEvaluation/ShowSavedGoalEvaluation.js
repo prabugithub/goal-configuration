@@ -13,7 +13,8 @@ import {
 import {
     Timer as TimerIcon,
     CheckCircle as CheckCircleIcon,
-    Cancel as CancelIcon
+    Cancel as CancelIcon,
+    FormatListBulleted as FormatListBulletedIcon
 } from "@mui/icons-material";
 import GenericLogic from "../../common/utils/generic-logic";
 import CONSTANTS from "../../common/constants";
@@ -77,16 +78,26 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
 
         // Percentage field - show as progress bar
         if (field.type === 'percentage') {
-            const percentage = Number(value) || 0;
+            const valObj = (typeof value === 'object' && value !== null) ? value : { completion: Number(value) || 0 };
+            const percentage = valObj.completion || 0;
+            const tasks = valObj.tasks || [];
+
             const color = percentage >= 70 ? 'success.main' :
                 percentage >= 40 ? 'warning.main' : 'error.main';
 
             return (
                 <Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                        <Typography variant="h5" color="primary.main" fontWeight="bold">
-                            {percentage}%
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="h5" color="primary.main" fontWeight="bold">
+                                {percentage}%
+                            </Typography>
+                            {tasks.length > 0 && (
+                                <Typography variant="body2" color="text.secondary">
+                                    ({tasks.filter(t => t.done).length}/{tasks.length} tasks completed)
+                                </Typography>
+                            )}
+                        </Box>
                     </Box>
                     <LinearProgress
                         variant="determinate"
@@ -101,6 +112,24 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
                             }
                         }}
                     />
+                    {tasks.length > 0 && (
+                        <Box sx={{ mt: 2, pl: 1, maxHeight: 150, overflowY: 'auto', borderLeft: '2px solid #f0f0f0' }}>
+                            {tasks.map((task, idx) => (
+                                <Typography
+                                    key={idx}
+                                    variant="caption"
+                                    display="block"
+                                    sx={{
+                                        textDecoration: task.done ? 'line-through' : 'none',
+                                        color: task.done ? 'text.disabled' : 'text.primary',
+                                        mb: 0.5
+                                    }}
+                                >
+                                    {task.done ? '✓ ' : '○ '} {task.text}
+                                </Typography>
+                            ))}
+                        </Box>
+                    )}
                 </Box>
             );
         }
@@ -253,6 +282,69 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
             );
         }
 
+        // Tasklist field
+        if (field.type === 'tasklist') {
+            const taskData = value || { tasks: [], completion: 0 };
+            const tasks = taskData.tasks || [];
+            const completion = taskData.completion || 0;
+            const color = completion >= 70 ? 'success.main' :
+                completion >= 40 ? 'warning.main' : 'error.main';
+
+            return (
+                <Box sx={{ width: '100%' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <FormatListBulletedIcon color="action" fontSize="small" />
+                            <Typography variant="body2" fontWeight={600}>
+                                {tasks.filter(t => t.done).length}/{tasks.length}
+                            </Typography>
+                        </Box>
+                        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <LinearProgress
+                                variant="determinate"
+                                value={completion}
+                                sx={{
+                                    flex: 1,
+                                    height: 8,
+                                    borderRadius: 1,
+                                    bgcolor: 'grey.200',
+                                    '& .MuiLinearProgress-bar': {
+                                        bgcolor: color,
+                                        borderRadius: 1
+                                    }
+                                }}
+                            />
+                            <Typography variant="body2" fontWeight="bold" color={color}>
+                                {completion}%
+                            </Typography>
+                        </Box>
+                    </Box>
+
+                    <Box sx={{ pl: 1, maxHeight: 150, overflowY: 'auto', borderLeft: '2px solid #f0f0f0' }}>
+                        {tasks.map((task, idx) => (
+                            <Typography
+                                key={idx}
+                                variant="caption"
+                                display="block"
+                                sx={{
+                                    textDecoration: task.done ? 'line-through' : 'none',
+                                    color: task.done ? 'text.disabled' : 'text.primary',
+                                    mb: 0.5
+                                }}
+                            >
+                                {task.done ? '✓ ' : '○ '} {task.text}
+                            </Typography>
+                        ))}
+                        {tasks.length === 0 && (
+                            <Typography variant="caption" color="text.secondary" fontStyle="italic">
+                                No tasks added.
+                            </Typography>
+                        )}
+                    </Box>
+                </Box>
+            );
+        }
+
         // Default - render as is
         if (Array.isArray(value)) {
             return (
@@ -281,7 +373,10 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
 
         // Percentage field - show progress bar inline with percentage
         if (field.type === 'percentage') {
-            const percentage = Number(value) || 0;
+            const valObj = (typeof value === 'object' && value !== null) ? value : { completion: Number(value) || 0 };
+            const percentage = valObj.completion || 0;
+            const tasks = valObj.tasks || [];
+
             const color = percentage >= 70 ? 'success.main' :
                 percentage >= 40 ? 'warning.main' : 'error.main';
 
@@ -304,6 +399,28 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
                             }
                         }}
                     />
+                    {/* Show tasks list if available in compact view */}
+                    {tasks.length > 0 && (
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', ml: 1 }}>
+                            <Typography variant="caption" color="text.secondary">
+                                ({tasks.filter(t => t.done).length}/{tasks.length})
+                            </Typography>
+                            {tasks.map((task, i) => (
+                                <Typography key={i} variant="caption" sx={{
+                                    color: task.done ? 'text.disabled' : 'text.primary',
+                                    textDecoration: task.done ? 'line-through' : 'none',
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    borderRadius: 1,
+                                    px: 0.5,
+                                    bgcolor: 'background.paper',
+                                    display: { xs: 'none', md: 'block' } // Hide text on very small screens if compact
+                                }}>
+                                    {task.text}
+                                </Typography>
+                            ))}
+                        </Box>
+                    )}
                 </Box>
             );
         }
@@ -407,6 +524,47 @@ const ShowSavedGoalEvaluation = ({ savedData, config, level }) => {
                     {value}
                 </Typography>
             );
+        }
+
+        // Tasklist field - compact
+        if (field.type === 'tasklist') {
+            const taskData = value || { completion: 0 };
+            const completion = taskData.completion || 0;
+            const tasks = taskData.tasks || [];
+            const color = completion >= 70 ? 'success.main' : 'primary.main';
+
+            return (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <FormatListBulletedIcon fontSize="inherit" color="action" style={{ fontSize: '1rem' }} />
+                        <Typography variant="body2" fontWeight="bold" color={color}>
+                            {completion}%
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            ({tasks.filter(t => t.done).length}/{tasks.length})
+                        </Typography>
+                    </Box>
+                    {/* Show tasks list */}
+                    {tasks.length > 0 && (
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {tasks.map((task, i) => (
+                                <Typography key={i} variant="caption" sx={{
+                                    color: task.done ? 'text.disabled' : 'text.primary',
+                                    textDecoration: task.done ? 'line-through' : 'none',
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    borderRadius: 1,
+                                    px: 0.5,
+                                    bgcolor: 'background.paper'
+                                }}>
+                                    {task.text}
+                                </Typography>
+                            ))}
+                        </Box>
+                    )}
+                </Box>
+            );
+
         }
 
         // Default - render as is
