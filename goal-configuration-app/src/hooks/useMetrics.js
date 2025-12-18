@@ -197,10 +197,12 @@ export const useMetrics = (goals = {}, config = {}) => {
   const getPeriodCompletion = useCallback(
     (level, periodType, offset = 0) => {
       let now = new Date();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
       // Apply time offset based on period type
       if (offset > 0) {
-        switch(periodType) {
+        switch (periodType) {
           case 'week':
             now.setDate(now.getDate() - (offset * 7));
             break;
@@ -226,39 +228,42 @@ export const useMetrics = (goals = {}, config = {}) => {
 
         // Get current week identifier
         const currentWeekId = getIdentifierForDate(now, 'weekly');
-        const weeklyGoal = goals.weekly[currentWeekId];
-
-        if (!weeklyGoal || !weeklyGoal.taskSplitUp) {
-          return { percentage: 0, completed: 0, total: 0 };
-        }
-
-        // Get the actual dates for this week
         const weekDates = getWeekDates(currentWeekId);
 
-        // Count total planned days
-        const plannedDays = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
-        const totalPlannedDays = plannedDays.length;
+        // Count total planned days (Future = Always Planned, Past = Plan dependent)
+        let totalPlannedDays = 0;
+        let totalCompletion = 0;
+        let completedDaysCount = 0;
+
+        const weeklyGoal = goals.weekly[currentWeekId];
+        const taskSplitUp = weeklyGoal?.taskSplitUp || {};
+
+        Object.entries(weekDates).forEach(([dayName, dateStr]) => {
+          const date = new Date(dateStr);
+          date.setHours(0, 0, 0, 0);
+
+          if (date > today) {
+            // Future date: Always counts as a planned day
+            totalPlannedDays++;
+            // Completion is 0 for future
+          } else {
+            // Past/Today: Only counts if in plan
+            const task = taskSplitUp[dayName];
+            if (task && task.trim() !== '') {
+              totalPlannedDays++;
+
+              const dailyGoal = goals.daily[dateStr];
+              if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
+                totalCompletion += Number(dailyGoal.performance.completion) || 0;
+                completedDaysCount++;
+              }
+            }
+          }
+        });
 
         if (totalPlannedDays === 0) {
           return { percentage: 0, completed: 0, total: 0 };
         }
-
-        // Sum the completion percentages of all planned days
-        let totalCompletion = 0;
-        let completedDaysCount = 0;
-
-        Object.entries(weeklyGoal.taskSplitUp).forEach(([day, task]) => {
-          if (task && task.trim() !== '') {
-            // This day is planned
-            const dateKey = weekDates[day];
-            const dailyGoal = goals.daily[dateKey];
-
-            if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
-              totalCompletion += Number(dailyGoal.performance.completion) || 0;
-              completedDaysCount++;
-            }
-          }
-        });
 
         // Weekly completion = sum of all daily completions / total planned days
         const weeklyCompletion = totalCompletion / totalPlannedDays;
@@ -302,85 +307,62 @@ export const useMetrics = (goals = {}, config = {}) => {
 
         // Count total weeks with plans
         let totalWeeksWithPlans = 0;
+        let totalWeeklyCompletion = 0;
+        let weeksProcessed = 0;
+
+        console.log('=== MONTHLY CALCULATION DEBUG ===');
+
         weekIdentifiers.forEach(weekId => {
           const weeklyGoal = goals.weekly[weekId];
-          if (weeklyGoal && weeklyGoal.taskSplitUp) {
-            const planned = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
-            if (planned.length > 0) {
-              totalWeeksWithPlans++;
+          const taskSplitUp = weeklyGoal?.taskSplitUp || {};
+          const weekDates = getWeekDates(weekId);
+
+          let totalDailyCompletion = 0;
+          let totalPlannedDaysInWeek = 0;
+          let daysWithData = 0;
+          let hasFutureOrPlannedDays = false;
+
+          // Check each day in this week
+          Object.entries(weekDates).forEach(([dayName, dateStr]) => {
+            const date = new Date(dateStr);
+            date.setHours(0, 0, 0, 0);
+
+            if (date > today) {
+              // Future: Counts as planned
+              totalPlannedDaysInWeek++;
+              hasFutureOrPlannedDays = true;
+            } else {
+              // Past/Today: Check plan
+              const task = taskSplitUp[dayName];
+              if (task && task.trim() !== '') {
+                totalPlannedDaysInWeek++;
+                hasFutureOrPlannedDays = true;
+
+                const dailyGoal = goals.daily[dateStr];
+                if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
+                  const completion = Number(dailyGoal.performance.completion) || 0;
+                  totalDailyCompletion += completion;
+                  daysWithData++;
+                }
+              }
             }
+          });
+
+          if (hasFutureOrPlannedDays) {
+            totalWeeksWithPlans++;
+            let weekCompletion = 0;
+            if (totalPlannedDaysInWeek > 0) {
+              weekCompletion = totalDailyCompletion / totalPlannedDaysInWeek;
+            }
+            totalWeeklyCompletion += weekCompletion;
+            weeksProcessed++;
+            console.log(`  Week ${weekId}: ${weekCompletion.toFixed(2)}% (${totalPlannedDaysInWeek} planned days)`);
           }
         });
 
         if (totalWeeksWithPlans === 0) {
           return { percentage: 0, completed: 0, total: totalWeeksInMonth };
         }
-
-        // Calculate completion for each week based on daily completion %
-        let totalWeeklyCompletion = 0;
-        let weeksProcessed = 0;
-
-        console.log('=== MONTHLY CALCULATION DEBUG ===');
-        console.log('Total weeks with plans:', totalWeeksWithPlans);
-
-        weekIdentifiers.forEach(weekId => {
-          const weeklyGoal = goals.weekly[weekId];
-          if (weeklyGoal && weeklyGoal.taskSplitUp) {
-            const planned = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
-            if (planned.length > 0) {
-              console.log(`\nWeek ${weekId}:`);
-              console.log('  Total planned days:', planned.length);
-
-              const weekDates = getWeekDates(weekId);
-              let totalDailyCompletion = 0;
-              let daysPassedWithPlans = 0;
-              let daysWithData = 0;
-
-              // Check each planned day in this week
-              Object.entries(weeklyGoal.taskSplitUp).forEach(([day, task]) => {
-                if (task && task.trim() !== '') {
-                  const dateKey = weekDates[day];
-                  const dayDate = new Date(dateKey);
-                  dayDate.setHours(0, 0, 0, 0);
-
-                  // Only consider days that have passed (up to today)
-                  if (dayDate <= today) {
-                    daysPassedWithPlans++;
-                    const dailyGoal = goals.daily[dateKey];
-
-                    if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
-                      const completion = Number(dailyGoal.performance.completion) || 0;
-                      totalDailyCompletion += completion;
-                      daysWithData++;
-                      console.log(`  ${day} (${dateKey}): ${completion}% ✓`);
-                    } else {
-                      console.log(`  ${day} (${dateKey}): 0% (no data)`);
-                    }
-                    // If day passed but no data saved, it counts as 0%
-                  } else {
-                    console.log(`  ${day} (${dateKey}): future (ignored)`);
-                  }
-                }
-              });
-
-              // Calculate this week's completion percentage
-              let weekCompletion = 0;
-              if (daysPassedWithPlans > 0) {
-                // Week completion = sum of daily completions / total planned days in week
-                const totalPlannedDaysInWeek = planned.length;
-                weekCompletion = totalDailyCompletion / totalPlannedDaysInWeek;
-                console.log(`  Week completion: ${totalDailyCompletion} / ${totalPlannedDaysInWeek} = ${weekCompletion.toFixed(2)}%`);
-                console.log(`  (${daysWithData} days with data out of ${daysPassedWithPlans} passed days)`);
-              } else {
-                console.log('  Week is in the future: 0%');
-              }
-              // else: week is completely in the future, stays 0%
-
-              totalWeeklyCompletion += weekCompletion;
-              weeksProcessed++;
-            }
-          }
-        });
 
         // Monthly completion = average of all weeks' completion percentages
         const monthlyCompletion = weeksProcessed > 0 ? totalWeeklyCompletion / totalWeeksWithPlans : 0;
@@ -390,7 +372,7 @@ export const useMetrics = (goals = {}, config = {}) => {
         return {
           percentage: Math.round(monthlyCompletion),
           completed: weeksProcessed,
-          total: totalWeeksInMonth, // Show total calendar weeks, not just weeks with plans
+          total: totalWeeksInMonth, // Show total calendar weeks
         };
       }
 
@@ -436,68 +418,56 @@ export const useMetrics = (goals = {}, config = {}) => {
           console.log(`\nMonth ${monthId}:`);
           console.log('  Weeks in month:', Array.from(weekIdentifiers));
 
-          // Count total weeks with plans
+          // Count total weeks with plans/future days
           let totalWeeksWithPlans = 0;
-          weekIdentifiers.forEach(weekId => {
-            const weeklyGoal = goals.weekly[weekId];
-            if (weeklyGoal && weeklyGoal.taskSplitUp) {
-              const planned = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
-              if (planned.length > 0) {
-                totalWeeksWithPlans++;
-              }
-            }
-          });
-
-          if (totalWeeksWithPlans === 0) {
-            console.log('  No weeks with plans - 0%');
-            // Month with no plans = 0%
-            monthsProcessed++;
-            return;
-          }
-
-          // Calculate completion for each week in this month
           let totalWeeklyCompletion = 0;
           let weeksProcessed = 0;
 
           weekIdentifiers.forEach(weekId => {
             const weeklyGoal = goals.weekly[weekId];
-            if (weeklyGoal && weeklyGoal.taskSplitUp) {
-              const planned = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
-              if (planned.length > 0) {
-                const weekDates = getWeekDates(weekId);
-                let totalDailyCompletion = 0;
-                let daysPassedWithPlans = 0;
+            const taskSplitUp = weeklyGoal?.taskSplitUp || {};
+            const weekDates = getWeekDates(weekId);
 
-                // Check each planned day in this week
-                Object.entries(weeklyGoal.taskSplitUp).forEach(([day, task]) => {
-                  if (task && task.trim() !== '') {
-                    const dateKey = weekDates[day];
-                    const dayDate = new Date(dateKey);
-                    dayDate.setHours(0, 0, 0, 0);
+            let totalDailyCompletion = 0;
+            let totalPlannedDaysInWeek = 0;
+            let hasFutureOrPlannedDays = false;
 
-                    // Only consider days that have passed
-                    if (dayDate <= today) {
-                      daysPassedWithPlans++;
-                      const dailyGoal = goals.daily[dateKey];
+            Object.entries(weekDates).forEach(([dayName, dateStr]) => {
+              const date = new Date(dateStr);
+              date.setHours(0, 0, 0, 0);
 
-                      if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
-                        totalDailyCompletion += Number(dailyGoal.performance.completion) || 0;
-                      }
-                    }
+              if (date > today) {
+                totalPlannedDaysInWeek++;
+                hasFutureOrPlannedDays = true;
+              } else {
+                const task = taskSplitUp[dayName];
+                if (task && task.trim() !== '') {
+                  totalPlannedDaysInWeek++;
+                  hasFutureOrPlannedDays = true;
+                  const dailyGoal = goals.daily[dateStr];
+                  if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
+                    totalDailyCompletion += Number(dailyGoal.performance.completion) || 0;
                   }
-                });
-
-                let weekCompletion = 0;
-                if (daysPassedWithPlans > 0) {
-                  const totalPlannedDaysInWeek = planned.length;
-                  weekCompletion = totalDailyCompletion / totalPlannedDaysInWeek;
                 }
-
-                totalWeeklyCompletion += weekCompletion;
-                weeksProcessed++;
               }
+            });
+
+            if (hasFutureOrPlannedDays) {
+              totalWeeksWithPlans++;
+              let weekCompletion = 0;
+              if (totalPlannedDaysInWeek > 0) {
+                weekCompletion = totalDailyCompletion / totalPlannedDaysInWeek;
+              }
+              totalWeeklyCompletion += weekCompletion;
+              weeksProcessed++;
             }
           });
+
+          if (totalWeeksWithPlans === 0) {
+            // Month with no plans = 0%
+            monthsProcessed++;
+            return;
+          }
 
           // Calculate this month's completion
           const monthCompletion = weeksProcessed > 0 ? totalWeeklyCompletion / totalWeeksWithPlans : 0;
@@ -568,15 +538,48 @@ export const useMetrics = (goals = {}, config = {}) => {
               weekIdentifiers.add(getIdentifierForDate(date, 'weekly'));
             });
 
-            // Count total weeks with plans
+            // Count total weeks with plans/future days
             let totalWeeksWithPlans = 0;
+            let totalWeeklyCompletion = 0;
+            let weeksProcessed = 0;
+
             weekIdentifiers.forEach(weekId => {
               const weeklyGoal = goals.weekly[weekId];
-              if (weeklyGoal && weeklyGoal.taskSplitUp) {
-                const planned = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
-                if (planned.length > 0) {
-                  totalWeeksWithPlans++;
+              const taskSplitUp = weeklyGoal?.taskSplitUp || {};
+              const weekDates = getWeekDates(weekId);
+
+              let totalDailyCompletion = 0;
+              let totalPlannedDaysInWeek = 0;
+              let hasFutureOrPlannedDays = false;
+
+              Object.entries(weekDates).forEach(([dayName, dateStr]) => {
+                const date = new Date(dateStr);
+                date.setHours(0, 0, 0, 0);
+
+                if (date > today) {
+                  totalPlannedDaysInWeek++;
+                  hasFutureOrPlannedDays = true;
+                } else {
+                  const task = taskSplitUp[dayName];
+                  if (task && task.trim() !== '') {
+                    totalPlannedDaysInWeek++;
+                    hasFutureOrPlannedDays = true;
+                    const dailyGoal = goals.daily[dateStr];
+                    if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
+                      totalDailyCompletion += Number(dailyGoal.performance.completion) || 0;
+                    }
+                  }
                 }
+              });
+
+              if (hasFutureOrPlannedDays) {
+                totalWeeksWithPlans++;
+                let weekCompletion = 0;
+                if (totalPlannedDaysInWeek > 0) {
+                  weekCompletion = totalDailyCompletion / totalPlannedDaysInWeek;
+                }
+                totalWeeklyCompletion += weekCompletion;
+                weeksProcessed++;
               }
             });
 
@@ -585,50 +588,6 @@ export const useMetrics = (goals = {}, config = {}) => {
               monthsInQuarter++;
               return;
             }
-
-            // Calculate completion for each week in this month
-            let totalWeeklyCompletion = 0;
-            let weeksProcessed = 0;
-
-            weekIdentifiers.forEach(weekId => {
-              const weeklyGoal = goals.weekly[weekId];
-              if (weeklyGoal && weeklyGoal.taskSplitUp) {
-                const planned = Object.values(weeklyGoal.taskSplitUp).filter(t => t && t.trim() !== '');
-                if (planned.length > 0) {
-                  const weekDates = getWeekDates(weekId);
-                  let totalDailyCompletion = 0;
-                  let daysPassedWithPlans = 0;
-
-                  // Check each planned day in this week
-                  Object.entries(weeklyGoal.taskSplitUp).forEach(([day, task]) => {
-                    if (task && task.trim() !== '') {
-                      const dateKey = weekDates[day];
-                      const dayDate = new Date(dateKey);
-                      dayDate.setHours(0, 0, 0, 0);
-
-                      // Only consider days that have passed
-                      if (dayDate <= today) {
-                        daysPassedWithPlans++;
-                        const dailyGoal = goals.daily[dateKey];
-
-                        if (dailyGoal && dailyGoal.performance && typeof dailyGoal.performance.completion !== 'undefined') {
-                          totalDailyCompletion += Number(dailyGoal.performance.completion) || 0;
-                        }
-                      }
-                    }
-                  });
-
-                  let weekCompletion = 0;
-                  if (daysPassedWithPlans > 0) {
-                    const totalPlannedDaysInWeek = planned.length;
-                    weekCompletion = totalDailyCompletion / totalPlannedDaysInWeek;
-                  }
-
-                  totalWeeklyCompletion += weekCompletion;
-                  weeksProcessed++;
-                }
-              }
-            });
 
             // Calculate this month's completion
             const monthCompletion = weeksProcessed > 0 ? totalWeeklyCompletion / totalWeeksWithPlans : 0;
