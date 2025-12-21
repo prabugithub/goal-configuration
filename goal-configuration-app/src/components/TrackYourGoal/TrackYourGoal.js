@@ -48,6 +48,7 @@ import { deleteGoal, getGoal, saveGoal } from '../../api/services/firebaseServic
 import { useAuth } from '../../context/AuthContext';
 import { useGoals } from '../../hooks/useGoals';
 import { useMetrics } from '../../hooks/useMetrics';
+import { useToast } from '../../hooks/useToast';
 import GenericLogic from '../../common/utils/generic-logic';
 import ShowSavedGoalEvaluation from '../ShowSavedGoalEvaluation/ShowSavedGoalEvaluation';
 import BreadcrumbNavigation from '../BreadcrumbNavigation/BreadcrumbNavigation';
@@ -61,6 +62,7 @@ const TrackYourGoal = () => {
     const { user } = useAuth();
     const { goals } = useGoals(user?.uid);
     const metrics = useMetrics(goals, config);
+    const toast = useToast();
 
     const [formValues, setFormValues] = useState({});
     const [tabIndex, setTabIndex] = useState(0);
@@ -159,7 +161,7 @@ const TrackYourGoal = () => {
                         return { ...prev }
                     });
                     if (!isSelectedDateToday()) {
-                        alert(`No data found! You might not saved any data for this ${getFormatedDate(selectedDate)} date. You may reset to today for quick reset!.`);
+                        toast.warning(`No data found! You might not saved any data for this ${getFormatedDate(selectedDate)} date. You may reset to today for quick reset!.`, 5000);
                     }
 
                 };
@@ -190,6 +192,15 @@ const TrackYourGoal = () => {
 
     const handleTabChange = (event, newIndex) => {
         isInitialLoad.current = false;
+
+        // If switching to daily tab and current date is in the future, reset to today
+        const newLevel = levels[newIndex];
+        if (newLevel === 'daily' && isSelectedDateIsFuture(selectedDate)) {
+            loadedTabs.current.clear();
+            setSelectedDate(new Date());
+            toast.info('Daily goals cannot be planned for future dates. Resetting to today.');
+        }
+
         setTabIndex(newIndex);
     };
 
@@ -1133,7 +1144,7 @@ const TrackYourGoal = () => {
                     delete updatedValues[level];
                     return updatedValues;
                 });
-                alert(`${level} goals deleted successfully!`);
+                toast.success(`${level} goals deleted successfully!`);
                 break;
             case 'edit':
                 setTempFormValues(JSON.parse(JSON.stringify(savedData[level])));
@@ -1156,7 +1167,7 @@ const TrackYourGoal = () => {
                     [level]: goalDataToSave,
                 }));
                 setEditMode(false);
-                alert(`${level} goals updated successfully!`);
+                toast.success(`${level} goals updated successfully!`);
                 break;
             case 'cancel':
                 setFormValues((prev) => ({
@@ -1179,7 +1190,7 @@ const TrackYourGoal = () => {
                 }));
                 if (levels.length > tabIndex + 1)
                     setTabIndex(tabIndex + 1);
-                alert(`${level} goals saved successfully on ${getFormatedDate(selectedDate)}!`);
+                toast.success(`${level} goals saved successfully on ${getFormatedDate(selectedDate)}!`);
                 break;
         }
     };
@@ -1198,7 +1209,7 @@ const TrackYourGoal = () => {
             newDate.setFullYear(newDate.getFullYear() + (direction === 'prev' ? -1 : 1)); // Move one year back or forward
         }
         if (isSelectedDateIsFuture(newDate) && direction === 'next') {
-            alert(`Not allowing future ${levels[tabIndex]} plan.`);
+            toast.warning(`Not allowing future ${levels[tabIndex]} plan.`);
         } else {
             // Clear loaded tabs cache when date changes
             loadedTabs.current.clear();

@@ -4,15 +4,16 @@ import { db } from '../firebase/firebas';
 // Save user configuration to Firestore
 export const saveUserConfig = async (config, userId) => {
   if (!userId) {
-    alert("User is not authenticated. Please log in.");
-    return;
+    console.error("User is not authenticated. Please log in.");
+    throw new Error("User is not authenticated. Please log in.");
   }
   try {
     const userDocRef = doc(db, "users", userId, "configurations", "goalConfig");
     await setDoc(userDocRef, config, { merge: true }); // Merge updates
-    alert("Configuration saved successfully!");
+    console.log("Configuration saved successfully!");
   } catch (error) {
     console.error("Error saving user configuration:", error);
+    throw error;
   }
 };
 

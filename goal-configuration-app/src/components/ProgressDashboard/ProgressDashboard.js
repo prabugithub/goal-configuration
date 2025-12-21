@@ -38,7 +38,7 @@ const ProgressDashboard = ({ userId }) => {
           files: [file],
         });
       } else {
-        alert("Sharing not supported on this browser or device.");
+        console.log("Sharing not supported on this browser or device.");
       }
     } catch (error) {
       console.error("Sharing failed:", error);

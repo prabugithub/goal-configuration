@@ -28,12 +28,13 @@ import { useFieldConfig } from '../../context/FildConfigContext';
 import { saveUserConfig } from '../../api/services/firebaseServices';
 import { auth } from '../../api/firebase/firebas';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../hooks/useToast';
 
 const NextStep = () => {
     const { config, setHasConfiguration } = useGoalConfig();
     const { goNext, goBack } = useStep();
-
-    const {user} = useAuth();
+    const { user } = useAuth();
+    const toast = useToast();
 
     const [value, setValue] = React.useState(0);
 
@@ -45,8 +46,14 @@ const NextStep = () => {
     const handleSubmit = async () => {
         console.log('Sections:', config.sections);
 
-        await saveUserConfig(config, user.uid);
-        setHasConfiguration(true);
+        try {
+            await saveUserConfig(config, user.uid);
+            setHasConfiguration(true);
+            toast.success('Configuration saved successfully!');
+        } catch (error) {
+            console.error('Error saving configuration:', error);
+            toast.error('Failed to save configuration. Please try again.');
+        }
     };
 
     function CustomTabPanel(props) {
@@ -78,8 +85,8 @@ const NextStep = () => {
             <Box>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     <Tabs value={value} onChange={handleChange} aria-label="Yearly selection" key="levels_tab" variant="scrollable"
-                    scrollButtons="auto"
-                    allowScrollButtonsMobile>
+                        scrollButtons="auto"
+                        allowScrollButtonsMobile>
                         {Object.keys(config.levels)
                             .filter((level) => config.levels[level]) // Only display selected levels
                             .map((level, ind) => (

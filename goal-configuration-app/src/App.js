@@ -46,6 +46,7 @@ function App() {
   const { config, setConfig, hasConfiguration, setHasConfiguration, doResetConfig, setDoResetConfig } = useGoalConfig();
   const { goals } = useGoals(user?.uid);
   const metrics = useMetrics(goals, config);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -145,7 +146,10 @@ function App() {
 
                 {/* Top Navigation for Desktop, Bottom Nav for Mobile */}
                 {!isMobile && (
-                  <Tabs value={tabIndex} onChange={(e, newVal) => setTabIndex(newVal)} centered sx={{ mb: 2 }}>
+                  <Tabs value={tabIndex} onChange={(e, newVal) => {
+                    setTabIndex(newVal);
+                    setRefreshKey(prev => prev + 1); // Force Dashboard refresh
+                  }} centered sx={{ mb: 2 }}>
                     <Tab label="📊 Dashboard" />
                     <Tab label="📝 Goal Entry" />
                   </Tabs>
@@ -175,7 +179,7 @@ function App() {
                         </Stack>
 
                         {/* Main Dashboard */}
-                        <Dashboard goals={goals} config={config} />
+                        <Dashboard key={refreshKey} goals={goals} config={config} />
                       </TabPanel>
                     )
                   ) : (
@@ -200,7 +204,7 @@ function App() {
                         </Stack>
 
                         {/* Main Dashboard */}
-                        <Dashboard goals={goals} config={config} />
+                        <Dashboard key={refreshKey} goals={goals} config={config} />
                       </Box>
                     )
                   )}
@@ -241,7 +245,12 @@ function App() {
                     selectedLevel={tabIndex}
                     onLevelChange={setTabIndex}
                     showDashboard={showDashboard}
-                    onDashboardToggle={setShowDashboard}
+                    onDashboardToggle={(newValue) => {
+                      setShowDashboard(newValue);
+                      if (newValue) {
+                        setRefreshKey(prev => prev + 1); // Force Dashboard refresh when switching to it
+                      }
+                    }}
                   />
                 )}
               </>
