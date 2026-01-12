@@ -46,7 +46,7 @@ function App() {
   const { config, setConfig, hasConfiguration, setHasConfiguration, doResetConfig, setDoResetConfig } = useGoalConfig();
   const { goals } = useGoals(user?.uid);
   const metrics = useMetrics(goals, config);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -148,7 +148,7 @@ function App() {
                 {!isMobile && (
                   <Tabs value={tabIndex} onChange={(e, newVal) => {
                     setTabIndex(newVal);
-                    setRefreshKey(prev => prev + 1); // Force Dashboard refresh
+                    setRefreshKey(prev => !prev); // Force Dashboard refresh
                   }} centered sx={{ mb: 2 }}>
                     <Tab label="📊 Dashboard" />
                     <Tab label="📝 Goal Entry" />
@@ -248,7 +248,7 @@ function App() {
                     onDashboardToggle={(newValue) => {
                       setShowDashboard(newValue);
                       if (newValue) {
-                        setRefreshKey(prev => prev + 1); // Force Dashboard refresh when switching to it
+                        setRefreshKey(prev => !prev); // Force Dashboard refresh when switching to it
                       }
                     }}
                   />

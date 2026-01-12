@@ -7,8 +7,8 @@ const evaluationFields = [
 ];
 
 const planningFields = [
-    { name: 'to-do', label: 'List down 3-5 goals', type: 'text' },
-    { name: 'onething', label: 'Only one most important goal from the list:', type: 'text' },
+    // { name: 'to-do', label: 'List down 3-5 goals', type: 'text' },
+    { name: 'onething', label: 'Only one goal:', type: 'text' },
 ];
 
 
@@ -46,7 +46,7 @@ const initialConfigState = {
             },
             {
                 name: 'taskSplitUp',
-                label: 'Break down Year goal to quaters:',
+                label: 'Break down your goal into quaters:',
                 enabled: true,
                 fields: [
                     { name: 'q1', label: 'Quater 1', type: 'text' },
@@ -67,7 +67,7 @@ const initialConfigState = {
             { ...planning, enabled: true },
             {
                 name: 'taskSplitUp',
-                label: 'Break down Quater goal to months:',
+                label: 'Break down your Quater goal into months:',
                 enabled: true,
                 fields: [
                     { name: 'm1', label: 'Month 1', type: 'text' },
@@ -87,7 +87,7 @@ const initialConfigState = {
             { ...planning, enabled: true },
             {
                 name: 'taskSplitUp',
-                label: 'Break down Month goal to weeks:',
+                label: 'Break down your Month goal into weeks:',
                 enabled: true,
                 fields: [
                     { name: 'w1', label: 'Week 1', type: 'text' },
@@ -108,7 +108,7 @@ const initialConfigState = {
             { ...planning, enabled: true },
             {
                 name: 'taskSplitUp',
-                label: 'Break down Weekly goal to days:',
+                label: 'Break down your Weekly goal into days:',
                 enabled: true,
                 fields: [
                     { name: 'mon', label: 'Mon', type: 'text' },
