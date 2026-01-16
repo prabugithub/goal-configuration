@@ -7,7 +7,7 @@ const evaluationFields = [
 ];
 
 const planningFields = [
-    // { name: 'to-do', label: 'List down 3-5 goals', type: 'text' },
+    { name: 'to-do', label: 'List down 3-5 goals', type: 'tasklist' },
     { name: 'onething', label: 'Only one goal:', type: 'text' },
 ];
 

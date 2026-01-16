@@ -607,9 +607,10 @@ const TrackYourGoal = () => {
                     </Box>
                 );
             case 'tasklist':
-                // Check if this field targets another section (Planning Mode)
-                // Fallback: also treat 'organize' section as planning mode by default to ensure completion is hidden
-                const isPlanningMode = !!section.targetSection || section.name === 'organize';
+                // Check if this field targets another section (Execution Mode)
+                // If field has targetFieldName, it's for execution (shows percentage)
+                // If field does NOT have targetFieldName, it's for planning only (hides percentage)
+                const isPlanningMode = !field.targetFieldName;
 
                 // Structure: { tasks: [], manualOverride: boolean, completion: number }
                 // or just handle if it's undefined
