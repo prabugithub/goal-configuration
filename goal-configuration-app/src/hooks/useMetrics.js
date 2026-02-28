@@ -486,9 +486,19 @@ export const useMetrics = (goals = {}, config = {}) => {
         console.log(`\nQuarterly total: ${totalCompletion.toFixed(2)} / ${totalMonths} months = ${quarterlyCompletion.toFixed(2)}%`);
         console.log('=== END QUARTERLY CALCULATION ===\n');
 
+        // Count only months that have actually elapsed up to today.
+        // For a past quarter (offset > 0) all 3 months are elapsed.
+        const realToday = new Date();
+        const elapsedMonths = offset > 0
+          ? totalMonths
+          : Array.from(monthIdentifiers).filter(monthId => {
+            const [yr, mo] = monthId.split('-');
+            return new Date(parseInt(yr), parseInt(mo) - 1, 1) <= realToday;
+          }).length;
+
         return {
           percentage: Math.round(quarterlyCompletion),
-          completed: monthsProcessed,
+          completed: elapsedMonths,
           total: totalMonths,
         };
       }
@@ -612,9 +622,15 @@ export const useMetrics = (goals = {}, config = {}) => {
         console.log(`\nYearly total: ${totalCompletion.toFixed(2)} / 4 quarters = ${yearlyCompletion.toFixed(2)}%`);
         console.log('=== END YEARLY CALCULATION ===\n');
 
+        // Show only quarters elapsed so far (Q1=1, Q2=2, Q3=3, Q4=4).
+        // For a past year (offset > 0) all 4 quarters are elapsed.
+        const elapsedQuarters = offset > 0
+          ? 4
+          : Math.floor(now.getMonth() / 3) + 1;
+
         return {
           percentage: Math.round(yearlyCompletion),
-          completed: quartersProcessed,
+          completed: elapsedQuarters,
           total: 4,
         };
       }
