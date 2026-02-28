@@ -25,6 +25,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { format, startOfWeek, startOfMonth, startOfQuarter, startOfYear, endOfMonth, eachDayOfInterval, addMonths, subMonths } from 'date-fns';
 import { useMetrics } from '../../hooks/useMetrics';
 import { ProgressRings } from '../Analytics/ProgressRings';
+import { ActivityDashboard } from '../Analytics/ActivityDashboard';
 
 /**
  * Dashboard - Comprehensive overview of all goals
@@ -129,17 +130,9 @@ export const Dashboard = ({ goals = {}, config = {} }) => {
 
       {/* Progress Rings - Top Section */}
       <ProgressRings metrics={metrics} goals={goals} />
-      {/* Recent Goals Section */}
-      {/* <Box sx={{ mb: 3 }}>
-        <Typography
-          variant={isMobile ? 'h6' : 'h5'}
-          sx={{ fontWeight: 'bold', mb: 2 }}
-        >
-          📌 Recent Entries
-        </Typography>
 
-        <RecentEntriesTimeline goals={goals} isMobile={isMobile} />
-      </Box> */}
+      {/* ── NEW: Activity Dashboard (rituals, deep work, rating) ── */}
+      <ActivityDashboard goals={goals} />
 
       {/* Activity Heatmap Section */}
       <Box sx={{ mb: 3 }}>
