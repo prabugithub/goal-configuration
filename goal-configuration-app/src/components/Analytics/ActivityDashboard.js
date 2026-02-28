@@ -239,13 +239,6 @@ const TodaySnapshot = ({ stats, isMobile, rangeDays }) => {
                                 ? (todayVal != null ? `${todayVal}${unit}` : '—')
                                 : fmtDuration(todayVal);
 
-                    const avgDisplay =
-                        isRating
-                            ? `${rangeDays}d avg: ${avgVal}`
-                            : isGoal
-                                ? `${rangeDays}d avg: ${avgVal}%`
-                                : `${rangeDays}d avg: ${fmtDuration(avgVal)}`;
-
                     const isBetter = isRating || isGoal
                         ? (todayVal != null && avgVal !== '—' && Number(todayVal) >= Number(avgVal))
                         : (todayVal != null && todayVal >= avgVal);
@@ -273,29 +266,29 @@ const TodaySnapshot = ({ stats, isMobile, rangeDays }) => {
                                     >
                                         {React.cloneElement(icon, { sx: { fontSize: isMobile ? 18 : 22 } })}
                                     </Avatar>
-                                    <Typography
-                                        variant={isMobile ? 'h6' : 'h5'}
-                                        sx={{ fontWeight: 'bold', color, lineHeight: 1 }}
-                                    >
+                                    <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold', color, lineHeight: 1 }}>
                                         {display}
                                     </Typography>
-                                    <Typography
-                                        variant="caption"
-                                        sx={{ display: 'block', color: 'text.secondary', mt: 0.5, fontSize: '0.65rem' }}
-                                    >
+                                    <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mt: 0.5, fontSize: '0.65rem' }}>
                                         {label}
                                     </Typography>
-                                    <Chip
-                                        label={avgDisplay}
-                                        size="small"
+                                    <Box
                                         sx={{
-                                            mt: 0.5,
-                                            height: 18,
-                                            fontSize: '0.6rem',
+                                            mt: 1,
+                                            p: 0.5,
+                                            borderRadius: 1.5,
                                             bgcolor: todayVal != null && isBetter ? '#dcfce7' : '#f3f4f6',
                                             color: todayVal != null && isBetter ? '#15803d' : '#6b7280',
+                                            lineHeight: 1.1,
                                         }}
-                                    />
+                                    >
+                                        <Typography variant="caption" sx={{ display: 'block', fontSize: '0.62rem', fontWeight: 500, opacity: 0.8 }}>
+                                            {rangeDays}d avg
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', fontSize: '0.7rem', fontWeight: 'bold' }}>
+                                            {isRating ? avgVal : isGoal ? `${avgVal}%` : fmtDuration(avgVal)}
+                                        </Typography>
+                                    </Box>
                                 </CardContent>
                             </Card>
                         </Grid>
