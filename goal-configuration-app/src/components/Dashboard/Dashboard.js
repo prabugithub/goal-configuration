@@ -28,6 +28,7 @@ import { format, startOfWeek, startOfMonth, startOfQuarter, startOfYear, endOfMo
 import { useMetrics } from '../../hooks/useMetrics';
 import { ProgressRings } from '../Analytics/ProgressRings';
 import { ActivityDashboard } from '../Analytics/ActivityDashboard';
+import { MotivationPanel } from './MotivationPanel';
 
 /**
  * Dashboard - Comprehensive overview of all goals
@@ -129,6 +130,9 @@ export const Dashboard = ({ goals = {}, config = {} }) => {
           </Grid>
         </Grid>
       </Box>
+
+      {/* ── Motivation Panel: achievements, streaks, records ── */}
+      <MotivationPanel goals={goals} />
 
       {/* Progress Rings - Top Section */}
       <ProgressRings metrics={metrics} goals={goals} />
