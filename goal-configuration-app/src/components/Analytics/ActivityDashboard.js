@@ -10,8 +10,6 @@ import {
     Chip,
     Avatar,
     Stack,
-    ToggleButton,
-    ToggleButtonGroup,
 } from '@mui/material';
 import {
     AreaChart,
@@ -169,20 +167,35 @@ export const ActivityDashboard = ({ goals = {} }) => {
                 <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold' }}>
                     🏃 Daily Activities
                 </Typography>
-                <ToggleButtonGroup
-                    value={rangeDays}
-                    exclusive
-                    onChange={(_, v) => v && setRangeDays(v)}
-                    size="small"
-                >
-                    <ToggleButton value={7}>7d</ToggleButton>
-                    <ToggleButton value={14}>14d</ToggleButton>
-                    <ToggleButton value={30}>30d</ToggleButton>
-                </ToggleButtonGroup>
+                {/* Custom pill range selector */}
+                <Box sx={{ display: 'flex', gap: 0.5, p: 0.5, bgcolor: '#F1F5F9', borderRadius: '100px' }}>
+                    {[7, 14, 30].map((d) => (
+                        <Box
+                            key={d}
+                            onClick={() => setRangeDays(d)}
+                            sx={{
+                                px: 1.75,
+                                py: 0.4,
+                                borderRadius: '100px',
+                                cursor: 'pointer',
+                                userSelect: 'none',
+                                fontSize: '0.78rem',
+                                fontWeight: rangeDays === d ? 700 : 400,
+                                color: rangeDays === d ? '#fff' : '#64748B',
+                                bgcolor: rangeDays === d ? '#1E293B' : 'transparent',
+                                boxShadow: rangeDays === d ? '0 1px 4px rgba(0,0,0,0.18)' : 'none',
+                                transition: 'all 0.18s cubic-bezier(.4,0,.2,1)',
+                                '&:hover': { color: rangeDays === d ? '#fff' : '#1E293B' },
+                            }}
+                        >
+                            {d}d
+                        </Box>
+                    ))}
+                </Box>
             </Box>
 
             {/* Today's quick snapshot cards */}
-            <TodaySnapshot stats={summaryStats} isMobile={isMobile} />
+            <TodaySnapshot stats={summaryStats} isMobile={isMobile} rangeDays={rangeDays} />
 
             {/* Rituals duration comparison chart */}
             <RitualsChart chartData={chartData} isMobile={isMobile} />
@@ -209,7 +222,7 @@ const METRIC_CARDS = [
     { key: 'goal', label: 'Goal %', icon: <BoltIcon />, color: COLORS.goal, unit: '%', isGoal: true },
 ];
 
-const TodaySnapshot = ({ stats, isMobile }) => {
+const TodaySnapshot = ({ stats, isMobile, rangeDays }) => {
     return (
         <Box sx={{ mb: 3 }}>
             <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: 'text.secondary' }}>
@@ -228,10 +241,10 @@ const TodaySnapshot = ({ stats, isMobile }) => {
 
                     const avgDisplay =
                         isRating
-                            ? `avg ${avgVal}`
+                            ? `${rangeDays}d avg: ${avgVal}`
                             : isGoal
-                                ? `avg ${avgVal}%`
-                                : `avg ${fmtDuration(avgVal)}`;
+                                ? `${rangeDays}d avg: ${avgVal}%`
+                                : `${rangeDays}d avg: ${fmtDuration(avgVal)}`;
 
                     const isBetter = isRating || isGoal
                         ? (todayVal != null && avgVal !== '—' && Number(todayVal) >= Number(avgVal))

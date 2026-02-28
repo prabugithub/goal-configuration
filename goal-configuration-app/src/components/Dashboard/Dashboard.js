@@ -16,8 +16,6 @@ import {
   IconButton,
   Tooltip,
   ClickAwayListener,
-  ToggleButton,
-  ToggleButtonGroup,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
@@ -674,38 +672,68 @@ const MonthHeatmap = ({ goals = {}, isMobile }) => {
         </Box>
 
         {/* ── Activity mode switcher ──────────────────────────── */}
-        <Box sx={{ mb: 1.5, overflowX: 'auto', pb: 0.5 }}>
-          <ToggleButtonGroup
-            value={modeKey}
-            exclusive
-            onChange={(_, v) => { if (v) { setModeKey(v); setSelectedDate(null); } }}
-            size="small"
-            sx={{
-              display: 'flex',
-              flexWrap: 'nowrap',
-              gap: 0.5,
-              '& .MuiToggleButton-root': {
-                border: '1px solid #e0e0e0',
-                borderRadius: '20px !important',
-                px: 1.5,
-                py: 0.4,
-                fontSize: isMobile ? '0.75rem' : '0.8rem',
-                textTransform: 'none',
-                fontWeight: 500,
-                minWidth: 0,
-                transition: 'all 0.15s',
-              },
-              '& .Mui-selected': {
-                fontWeight: 'bold',
-              },
-            }}
-          >
-            {HEATMAP_MODES.map(m => (
-              <ToggleButton key={m.key} value={m.key}>
-                {m.label} {!isMobile && <span style={{ marginLeft: 4, fontSize: '0.72rem' }}>{m.title}</span>}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
+        <Box
+          sx={{
+            mb: 1.5,
+            display: 'flex',
+            gap: 0.75,
+            overflowX: 'auto',
+            pb: 0.5,
+            /* Hide scrollbar on all browsers */
+            '&::-webkit-scrollbar': { display: 'none' },
+            msOverflowStyle: 'none',
+            scrollbarWidth: 'none',
+          }}
+        >
+          {HEATMAP_MODES.map(m => {
+            const isActive = modeKey === m.key;
+            return (
+              <Box
+                key={m.key}
+                onClick={() => { setModeKey(m.key); setSelectedDate(null); }}
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: isMobile ? 1.25 : 1.5,
+                  py: 0.6,
+                  borderRadius: '100px',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  userSelect: 'none',
+                  border: '1.5px solid',
+                  borderColor: isActive ? '#1E293B' : '#E2E8F0',
+                  bgcolor: isActive ? '#1E293B' : '#F8FAFC',
+                  transition: 'all 0.16s cubic-bezier(.4,0,.2,1)',
+                  '&:hover': {
+                    borderColor: '#1E293B',
+                    bgcolor: isActive ? '#334155' : '#EEF2FF',
+                  },
+                }}
+              >
+                <Typography
+                  component="span"
+                  sx={{ fontSize: isMobile ? '0.85rem' : '0.95rem', lineHeight: 1 }}
+                >
+                  {m.label}
+                </Typography>
+                {!isMobile && (
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontSize: '0.72rem',
+                      fontWeight: isActive ? 700 : 400,
+                      color: isActive ? '#F1F5F9' : '#64748B',
+                      lineHeight: 1,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {m.title}
+                  </Typography>
+                )}
+              </Box>
+            );
+          })}
         </Box>
 
         {/* ── Stats row ───────────────────────────────────────── */}
